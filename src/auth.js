@@ -1,50 +1,19 @@
 import { supabase } from './supabaseClient';
 
-// Helper to send email via SMTP (SmtpJS relay)
+// Helper to send email via Supabase Edge Function
 export async function sendVerificationEmail(email, code) {
-  const host = import.meta.env.VITE_SMTP_HOST;
-  const port = import.meta.env.VITE_SMTP_PORT || '25';
-  const username = import.meta.env.VITE_SMTP_USER;
-  const password = import.meta.env.VITE_SMTP_PASS;
-  const from = import.meta.env.VITE_SMTP_FROM || username;
+  const { error } = await supabase.functions.invoke(
+    'send-verification-email',
+    {
+      body: {
+        email: email.toLowerCase().trim(),
+        code,
+      },
+    }
+  );
 
-  if (!host || !username || !password) {
-    console.warn('SMTP credentials not configured in .env. Logging verification code to console:', code);
-    return false;
-  }
-
-  const subject = "Verify your BOMA email address";
-  const body = `
-    <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
-      <h2 style="color: #0E4C8C; margin-top: 0;">Welcome to BOMA!</h2>
-      <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Please use the following 6-digit code to verify your email address and continue to the Learning Hub:</p>
-      <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #0E4C8C; background: #E1EBF7; padding: 12px 24px; border-radius: 8px; width: fit-content; margin: 20px 0;">${code}</div>
-      <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this, you can safely ignore this email.</p>
-    </div>
-  `;
-
-  const params = new URLSearchParams();
-  params.append('Action', 'Send');
-  params.append('host', host);
-  params.append('port', port);
-  params.append('username', username);
-  params.append('password', password);
-  params.append('to', email);
-  params.append('from', from);
-  params.append('subject', subject);
-  params.append('body', body);
-
-  const response = await fetch('https://smtpjs.com/v3/smtpjs.aspx', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: params.toString(),
-  });
-
-  const result = await response.text();
-  if (result !== 'OK') {
-    throw new Error(`Failed to send email: ${result}`);
+  if (error) {
+    throw error;
   }
   return true;
 }
