@@ -8,7 +8,8 @@ export default function Header({
   userOnboarded,
   onLogout,
   openAuthModal,
-  adminUser
+  adminUser,
+  currentUser
 }) {
   const [acctMenuOpen, setAcctMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -83,19 +84,74 @@ export default function Header({
               <button onClick={() => handleNav('about')} className={linkClass('about')}>About</button>
               <button onClick={() => handleNav('contact')} className={linkClass('contact')}>Contact</button>
             </nav>
-            <div className="hidden md:flex items-center gap-2.5 ml-auto">
-              <button
-                onClick={() => openAuthModal('login')}
-                className="bg-transparent border border-border text-ink rounded-lg px-4 py-2 text-sm font-bold hover:bg-panel-alt transition-all cursor-pointer"
-              >
-                Log in
-              </button>
-              <button
-                onClick={() => openAuthModal('signup')}
-                className="bg-amber text-white rounded-lg px-4 py-2 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
-              >
-                Get Started
-              </button>
+             <div className="hidden md:flex items-center gap-2.5 ml-auto">
+              {currentUser ? (
+                <div className="relative">
+                  <button
+                    onClick={handleAcctTriggerClick}
+                    className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
+                  >
+                    {currentUser.avatar_url ? (
+                      <img
+                        src={currentUser.avatar_url}
+                        className="w-8 h-8 rounded-full border border-border object-cover"
+                        alt={currentUser.name || 'User'}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
+                        {(currentUser.name || currentUser.email || 'U').substring(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
+                  </button>
+
+                  {/* Account Menu Dropdown */}
+                  {acctMenuOpen && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-[calc(100%+8px)] w-[220px] bg-white border border-border rounded-xl shadow-lg p-1.5 flex flex-col z-50 animate-fade"
+                    >
+                      <div className="px-3.5 py-2.5 border-b border-border flex flex-col mb-1.5 text-left">
+                        <span className="font-bold text-[13.5px] text-ink">{currentUser.name || 'User'}</span>
+                        <span className="text-[11.5px] text-ink-dim font-medium">{currentUser.email || 'user@boma.com'}</span>
+                      </div>
+                      <button
+                        onClick={() => { setAcctMenuOpen(false); handleNav('learning'); }}
+                        className="w-full text-left px-3.5 py-2 text-[13px] font-semibold text-ink-dim hover:text-ink hover:bg-panel-alt rounded-lg flex items-center gap-2"
+                      >
+                        <BookOpen className="w-4 h-4" /> Learning Hub
+                      </button>
+                      <button
+                        onClick={() => { setAcctMenuOpen(false); handleNav('profile'); }}
+                        className="w-full text-left px-3.5 py-2 text-[13px] font-semibold text-ink-dim hover:text-ink hover:bg-panel-alt rounded-lg flex items-center gap-2"
+                      >
+                        <User className="w-4 h-4" /> My Profile
+                      </button>
+                      <button
+                        onClick={() => { setAcctMenuOpen(false); onLogout(); }}
+                        className="w-full text-left px-3.5 py-2 text-[13px] font-semibold text-rust hover:bg-red-50 rounded-lg flex items-center gap-2 border-t border-border mt-1 pt-2"
+                      >
+                        <LogOut className="w-4 h-4" /> Log out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => openAuthModal('login')}
+                    className="bg-transparent border border-border text-ink rounded-lg px-4 py-2 text-sm font-bold hover:bg-panel-alt transition-all cursor-pointer"
+                  >
+                    Log in
+                  </button>
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    className="bg-amber text-white rounded-lg px-4 py-2 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -115,11 +171,17 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  <img
-                    src="https://i.pravatar.cc/60?img=68"
-                    className="w-8 h-8 rounded-full border border-border"
-                    alt="Jordan Lee"
-                  />
+                  {currentUser?.avatar_url ? (
+                    <img
+                      src={currentUser.avatar_url}
+                      className="w-8 h-8 rounded-full border border-border object-cover"
+                      alt={currentUser.name || 'User'}
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
+                      {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+                    </div>
+                  )}
                   <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
                 </button>
 
@@ -129,9 +191,9 @@ export default function Header({
                     onClick={(e) => e.stopPropagation()}
                     className="absolute right-0 top-[calc(100%+8px)] w-[220px] bg-white border border-border rounded-xl shadow-lg p-1.5 flex flex-col z-50 animate-fade"
                   >
-                    <div className="px-3.5 py-2.5 border-b border-border flex flex-col mb-1.5">
-                      <span className="font-bold text-[13.5px] text-ink">Jordan Lee</span>
-                      <span className="text-[11.5px] text-ink-dim font-medium">jordan@email.com</span>
+                    <div className="px-3.5 py-2.5 border-b border-border flex flex-col mb-1.5 text-left">
+                      <span className="font-bold text-[13.5px] text-ink">{currentUser?.name || 'User'}</span>
+                      <span className="text-[11.5px] text-ink-dim font-medium">{currentUser?.email || 'user@boma.com'}</span>
                     </div>
                     <button
                       onClick={() => { setAcctMenuOpen(false); handleNav('learning'); }}
@@ -245,7 +307,7 @@ export default function Header({
       {/* Mobile Drawer (Expandable menu) */}
       {mobileMenuOpen && (shellMode === 'marketing' || shellMode === 'app') && (
         <div className="md:hidden border-t border-border bg-white p-4 flex flex-col gap-3.5 z-50 animate-fade">
-          {shellMode === 'marketing' ? (
+          {shellMode === 'marketing' && !currentUser ? (
             <>
               <button onClick={() => handleNav('landing')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Home</button>
               <button onClick={() => handleNav('how-it-works')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">How it Works</button>
@@ -268,19 +330,34 @@ export default function Header({
             </>
           ) : (
             <>
+              {shellMode === 'marketing' && (
+                <>
+                  <button onClick={() => handleNav('landing')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Home</button>
+                  <button onClick={() => handleNav('how-it-works')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">How it Works</button>
+                  <button onClick={() => handleNav('about')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">About</button>
+                  <button onClick={() => handleNav('contact')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Contact</button>
+                  <div className="h-[1px] bg-border my-2"></div>
+                </>
+              )}
               <button onClick={() => handleNav('learning')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Learning</button>
               <button onClick={() => handleNav('profile')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Profile</button>
               <button onClick={() => handleNav('matching-status')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Matching</button>
               <button onClick={() => handleNav('commons-dashboard')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">The Commons</button>
               <div className="flex items-center gap-2 border-t border-border pt-4 mt-2">
-                <img
-                  src="https://i.pravatar.cc/60?img=68"
-                  className="w-8 h-8 rounded-full border border-border"
-                  alt="Jordan Lee"
-                />
-                <div className="flex flex-col flex-1 leading-tight">
-                  <span className="font-bold text-sm text-ink">Jordan Lee</span>
-                  <span className="text-xs text-ink-dim font-medium">jordan@email.com</span>
+                {currentUser?.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    className="w-8 h-8 rounded-full border border-border object-cover"
+                    alt={currentUser.name || 'User'}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
+                    {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex flex-col flex-1 leading-tight text-left">
+                  <span className="font-bold text-sm text-ink">{currentUser?.name || 'User'}</span>
+                  <span className="text-xs text-ink-dim font-medium">{currentUser?.email || 'user@boma.com'}</span>
                 </div>
                 <button
                   onClick={onLogout}

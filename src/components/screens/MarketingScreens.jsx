@@ -6,7 +6,7 @@ import Contact from './marketing/Contact';
 import SignupScreen from './marketing/SignupScreen';
 import LoginScreen from './marketing/LoginScreen';
 import ForgotPasswordScreen from './marketing/ForgotPasswordScreen';
-import ResetPasswordScreen from './marketing/ResetPasswordScreen';
+import ResetPasswordPage from './marketing/ResetPasswordPage';
 import VerifyEmail from './marketing/VerifyEmail';
 
 export default function MarketingScreens({
@@ -15,7 +15,8 @@ export default function MarketingScreens({
   openAuthModal,
   userOnboarded,
   setUserOnboarded,
-  registeredEmail
+  registeredEmail,
+  setCurrentUser
 }) {
   if (![
     'landing', 
@@ -54,7 +55,7 @@ export default function MarketingScreens({
       )}
 
       {activeScreen === 'login' && (
-        <LoginScreen setActiveScreen={setActiveScreen} setUserOnboarded={setUserOnboarded} />
+        <LoginScreen setActiveScreen={setActiveScreen} setUserOnboarded={setUserOnboarded} setCurrentUser={setCurrentUser} />
       )}
 
       {activeScreen === 'forgot-password' && (
@@ -62,11 +63,11 @@ export default function MarketingScreens({
       )}
 
       {activeScreen === 'reset-password' && (
-        <ResetPasswordScreen setActiveScreen={setActiveScreen} />
+        <ResetPasswordPage setActiveScreen={setActiveScreen} />
       )}
 
       {activeScreen === 'verify-email' && (
-        <VerifyEmail registeredEmail={registeredEmail} setActiveScreen={setActiveScreen} />
+        <VerifyEmail registeredEmail={registeredEmail} setActiveScreen={setActiveScreen} setCurrentUser={setCurrentUser} />
       )}
     </div>
   );

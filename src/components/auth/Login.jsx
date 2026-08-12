@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login({
   loginEmail,
@@ -7,8 +8,11 @@ export default function Login({
   setLoginPassword,
   handleLogin,
   loginWithGoogle,
-  setAuthOverlay
+  setAuthOverlay,
+  loading
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" className="flex-shrink-0">
       <path
@@ -69,22 +73,42 @@ export default function Login({
       </div>
       <div className="mb-2">
         <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Password</label>
-        <input
-          type="password"
-          placeholder="••••••••"
-          value={loginPassword}
-          onChange={(e) => setLoginPassword(e.target.value)}
-          required
-          className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
-        />
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            required
+            className="w-full bg-panel border border-border rounded-lg pl-3.5 pr-10 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink cursor-pointer focus:outline-none flex items-center justify-center"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
       <p className="mb-5 text-[13px] text-right">
         <span onClick={() => setAuthOverlay({ open: true, mode: 'forgot' })} className="text-teal underline font-medium hover:text-ink cursor-pointer">
           Forgot password?
         </span>
       </p>
-      <button type="submit" className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4">
-        Log in
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>Logging in...</span>
+          </>
+        ) : (
+          <span>Log in</span>
+        )}
       </button>
       <p className="text-center text-[13px] font-medium text-ink-dim">
         New to BOMA?{' '}

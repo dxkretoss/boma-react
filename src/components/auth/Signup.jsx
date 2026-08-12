@@ -16,7 +16,8 @@ export default function Signup({
   setShowConfirmPassword,
   handleSignup,
   loginWithGoogle,
-  setAuthOverlay
+  setAuthOverlay,
+  loading
 }) {
   const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" className="flex-shrink-0">
@@ -127,8 +128,19 @@ export default function Signup({
           </button>
         </div>
       </div>
-      <button type="submit" className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4">
-        Create account
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>Creating account...</span>
+          </>
+        ) : (
+          <span>Create account</span>
+        )}
       </button>
       <p className="text-center text-[13px] font-medium text-ink-dim">
         Already have an account?{' '}

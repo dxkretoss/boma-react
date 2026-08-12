@@ -81,8 +81,12 @@ const INITIAL_CHAT_MESSAGES = [
 function App() {
   // Global screens states
   const [activeScreen, setActiveScreen] = useState(() => {
-    if (window.location.pathname === '/admin' || window.location.pathname.endsWith('/admin')) {
+    const path = window.location.pathname;
+    if (path === '/admin' || path.endsWith('/admin')) {
       return 'admin-login';
+    }
+    if (path === '/reset-password' || path.endsWith('/reset-password')) {
+      return 'reset-password';
     }
     return 'landing';
   });
@@ -108,6 +112,31 @@ function App() {
       localStorage.removeItem('boma_admin_user');
     }
   }, [adminUser]);
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('boma_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('boma_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('boma_current_user');
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setUserOnboarded(currentUser.user_onboarded || false);
+    } else {
+      setUserOnboarded(false);
+    }
+  }, [currentUser]);
 
   const [registeredEmail, setRegisteredEmail] = useState('');
 
@@ -224,6 +253,7 @@ function App() {
     setAlignedAgreements([0, 1]);
     setChatMessages(INITIAL_CHAT_MESSAGES);
     setAdminUser(null);
+    setCurrentUser(null);
     navigateTo('landing');
   };
 
@@ -240,6 +270,7 @@ function App() {
           onLogout={handleLogout}
           openAuthModal={openAuthModal}
           adminUser={adminUser}
+          currentUser={currentUser}
         />
       )}
 
@@ -253,6 +284,7 @@ function App() {
             userOnboarded={userOnboarded}
             activePodId={activePodId}
             podData={INITIAL_POD_DATA}
+            currentUser={currentUser}
           />
         )}
 
@@ -284,6 +316,8 @@ function App() {
             setActiveScreen={navigateTo}
             userOnboarded={userOnboarded}
             setUserOnboarded={setUserOnboarded}
+            currentUser={currentUser}
+            setCurrentUser={setCurrentUser}
             activePodId={activePodId}
             setActivePodId={setActivePodId}
             suggestedPodId={suggestedPodId}
@@ -335,6 +369,8 @@ function App() {
         setUserOnboarded={setUserOnboarded}
         registeredEmail={registeredEmail}
         setRegisteredEmail={setRegisteredEmail}
+        currentUser={currentUser}
+        setCurrentUser={setCurrentUser}
       />
     </div>
   );

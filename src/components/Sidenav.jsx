@@ -83,7 +83,8 @@ export default function Sidenav({
   setActiveScreen,
   userOnboarded,
   activePodId,
-  podData
+  podData,
+  currentUser
 }) {
   // Determine which section we are in
   const getSectionKey = () => {
@@ -144,11 +145,17 @@ export default function Sidenav({
                 alt={m.name}
               />
             ))}
-            <img
-              src="https://i.pravatar.cc/60?img=68"
-              className="inline-block w-8 h-8 rounded-full ring-2 ring-white object-cover"
-              alt="Jordan Lee"
-            />
+            {currentUser?.avatar_url ? (
+              <img
+                src={currentUser.avatar_url}
+                className="inline-block w-8 h-8 rounded-full ring-2 ring-white object-cover"
+                alt={currentUser.name || 'User'}
+              />
+            ) : (
+              <div className="inline-block w-8 h-8 rounded-full ring-2 ring-white bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[10px] font-display flex-shrink-0">
+                {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+              </div>
+            )}
           </div>
 
           <div className="font-display font-bold text-sm text-ink leading-tight">

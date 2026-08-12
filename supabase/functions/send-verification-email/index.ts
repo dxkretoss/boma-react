@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, code } = await req.json();
+    const { email, code, type = 'verification' } = await req.json();
 
     if (!email || !code) {
       return new Response(
@@ -45,18 +45,29 @@ serve(async (req) => {
       },
     });
 
+    const isReset = type === 'reset';
+    const subject = isReset ? 'Reset your BOMA password' : 'Verify your BOMA email address';
+    const html = isReset ? `
+      <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
+        <h2 style="color: #0E4C8C; margin-top: 0;">Reset your password</h2>
+        <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Click the button below to reset your BOMA password. This link will expire shortly.</p>
+        <a href="http://localhost:5173/reset-password?email=${encodeURIComponent(email)}&token=${code}" style="display: inline-block; background: #0E4C8C; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; margin: 20px 0;">Reset Password</a>
+        <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this password reset, you can safely ignore this email.</p>
+      </div>
+    ` : `
+      <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
+        <h2 style="color: #0E4C8C; margin-top: 0;">Welcome to BOMA!</h2>
+        <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Please use the following 6-digit code to verify your email address and continue to the Learning Hub:</p>
+        <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #0E4C8C; background: #E1EBF7; padding: 12px 24px; border-radius: 8px; width: fit-content; margin: 20px 0;">${code}</div>
+        <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this, you can safely ignore this email.</p>
+      </div>
+    `;
+
     const mailOptions = {
       from: `"BOMA" <${from}>`,
       to: email,
-      subject: 'Verify your BOMA email address',
-      html: `
-        <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
-          <h2 style="color: #0E4C8C; margin-top: 0;">Welcome to BOMA!</h2>
-          <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Please use the following 6-digit code to verify your email address and continue to the Learning Hub:</p>
-          <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #0E4C8C; background: #E1EBF7; padding: 12px 24px; border-radius: 8px; width: fit-content; margin: 20px 0;">${code}</div>
-          <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this, you can safely ignore this email.</p>
-        </div>
-      `,
+      subject,
+      html,
     };
 
     await transporter.sendMail(mailOptions);

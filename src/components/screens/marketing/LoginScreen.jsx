@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { customLogin } from '../../../auth';
 import Toast from '../../Toast';
 
-export default function LoginScreen({ setActiveScreen, setUserOnboarded }) {
+export default function LoginScreen({ setActiveScreen, setUserOnboarded, setCurrentUser }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +25,9 @@ export default function LoginScreen({ setActiveScreen, setUserOnboarded }) {
       }
       setToast({ show: true, message: `Welcome back, ${user.name}!`, type: 'success' });
       
+      if (setCurrentUser) {
+        setCurrentUser(user);
+      }
       if (setUserOnboarded) {
         setUserOnboarded(user.user_onboarded || false);
       }
@@ -61,14 +66,23 @@ export default function LoginScreen({ setActiveScreen, setUserOnboarded }) {
           </div>
           <div>
             <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-panel border border-border rounded-lg pl-3.5 pr-10 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink cursor-pointer focus:outline-none flex items-center justify-center"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <p className="text-[13px] text-right">

@@ -124,6 +124,8 @@ export default function AppScreens({
   setActiveScreen,
   userOnboarded,
   setUserOnboarded,
+  currentUser,
+  setCurrentUser,
   activePodId,
   setActivePodId,
   suggestedPodId,
@@ -473,23 +475,31 @@ export default function AppScreens({
             className="rounded-[20px] p-[30px] border border-border flex items-center gap-5 mb-[26px]"
             style={{ background: 'linear-gradient(120deg, var(--color-teal-soft) 0%, var(--color-panel) 70%)' }}
           >
-            <img 
-              src="https://i.pravatar.cc/160?img=68" 
-              className="rounded-full object-cover shrink-0 w-[72px] h-[72px]" 
-              alt="Jordan Lee" 
-            />
+            {currentUser?.avatar_url ? (
+              <img 
+                src={currentUser.avatar_url} 
+                className="rounded-full object-cover shrink-0 w-[72px] h-[72px] border border-border" 
+                alt={currentUser.name || 'User'} 
+              />
+            ) : (
+              <div className="w-[72px] h-[72px] rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display flex-shrink-0">
+                {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+              </div>
+            )}
             <div className="text-left">
-              <h3 className="font-display font-extrabold text-[22px] text-ink leading-tight">Jordan Lee</h3>
+              <h3 className="font-display font-extrabold text-[22px] text-ink leading-tight">{currentUser?.name || 'User'}</h3>
               {userOnboarded ? (
                 <span className="inline-block bg-[#EAFDF8] text-sage border border-sage/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 select-none">
-                  Readiness: 82 — Match-Ready
+                  Readiness: {currentUser?.readiness_score || 82} — Match-Ready
                 </span>
               ) : (
                 <span className="inline-block bg-[#FDE8E8] text-rust border border-rust/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 select-none">
                   Readiness: Incomplete — Onboarding Pending
                 </span>
               )}
-              <span className="block text-[13px] text-ink-dim mt-1">Austin, TX · Member since June 2026</span>
+              <span className="block text-[13px] text-ink-dim mt-1">
+                {currentUser?.location_city || 'Austin, TX'} · Member since {currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'June 2026'}
+              </span>
             </div>
           </div>
 
@@ -497,7 +507,7 @@ export default function AppScreens({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-[26px] select-none text-left">
             <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
               <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-                {userOnboarded ? '82' : '--'}
+                {userOnboarded ? (currentUser?.readiness_score || '82') : '--'}
               </div>
               <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
                 Readiness Score
@@ -513,7 +523,7 @@ export default function AppScreens({
             </div>
             <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
               <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-                {userOnboarded ? 'Austin, TX' : 'Not Set'}
+                {userOnboarded ? (currentUser?.location_city || 'Austin, TX') : 'Not Set'}
               </div>
               <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
                 Preferred Location
@@ -521,7 +531,7 @@ export default function AppScreens({
             </div>
             <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
               <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-                {userOnboarded ? '5+ yrs' : 'Not Set'}
+                {userOnboarded ? (currentUser?.commitment_timeline || '5+ yrs') : 'Not Set'}
               </div>
               <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
                 Commitment
@@ -1116,9 +1126,15 @@ export default function AppScreens({
             {/* Jordan Lee (Me) */}
             <div className="flex justify-between items-center gap-3 pt-3.5 border-t border-border/70">
               <div className="flex items-center gap-3">
-                <img src="https://i.pravatar.cc/80?img=68" className="w-10 h-10 rounded-full object-cover border border-border" alt="Jordan Lee" />
+                {currentUser?.avatar_url ? (
+                  <img src={currentUser.avatar_url} className="w-10 h-10 rounded-full object-cover border border-border" alt={currentUser.name || 'User'} />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
+                    {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col">
-                  <b className="text-sm font-bold text-ink leading-tight">Jordan Lee (you)</b>
+                  <b className="text-sm font-bold text-ink leading-tight">{currentUser?.name || 'User'} (you)</b>
                   <span className="text-[11.5px] text-ink-dim font-medium mt-0.5">Joined today</span>
                 </div>
               </div>

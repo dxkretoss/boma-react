@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { customResendVerification, customVerifyEmail } from '../../../auth';
 import Toast from '../../Toast';
 
-export default function VerifyEmail({ registeredEmail, setActiveScreen }) {
+export default function VerifyEmail({ setActiveScreen, registeredEmail, setCurrentUser }) {
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+  // Auto-focus code input
+  useEffect(() => {
+    const input = document.getElementById('verification-input');
+    if (input) input.focus();
+  }, []);
 
   const handleResend = async () => {
     if (!registeredEmail) {
@@ -31,8 +37,11 @@ export default function VerifyEmail({ registeredEmail, setActiveScreen }) {
     }
     setVerifying(true);
     try {
-      await customVerifyEmail(registeredEmail, verificationCode);
+      const user = await customVerifyEmail(registeredEmail, verificationCode);
       setToast({ show: true, message: 'Email verified successfully!', type: 'success' });
+      if (setCurrentUser) {
+        setCurrentUser(user);
+      }
       setTimeout(() => {
         setActiveScreen('learning');
       }, 1500);

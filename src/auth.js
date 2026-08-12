@@ -1,13 +1,14 @@
 import { supabase } from './supabaseClient';
 
 // Helper to send email via Supabase Edge Function
-export async function sendVerificationEmail(email, code) {
+export async function sendVerificationEmail(email, code, type = 'verification') {
   const { error } = await supabase.functions.invoke(
     'send-verification-email',
     {
       body: {
         email: email.toLowerCase().trim(),
         code,
+        type,
       },
     }
   );
@@ -23,17 +24,38 @@ export async function customRegister(email, password, name) {
   // 1. Check if user already exists
   const { data: existing, error: checkError } = await supabase
     .from('users')
-    .select('id')
+    .select('id, email_verified')
     .eq('email', email.toLowerCase().trim())
     .maybeSingle();
 
   if (checkError) throw checkError;
-  if (existing) {
-    throw new Error('User already exists');
-  }
 
-  // Generate random 6-digit numeric verification code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  if (existing) {
+    if (existing.email_verified) {
+      throw new Error('Email already registered');
+    }
+
+    // Update existing unverified user name, password, and code
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        name,
+        password,
+        verification_code: code
+      })
+      .eq('id', existing.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Send verification email via Edge Function
+    await sendVerificationEmail(email.toLowerCase().trim(), code);
+
+    return data;
+  }
 
   // 2. Insert new user
   const { data, error } = await supabase
@@ -54,12 +76,8 @@ export async function customRegister(email, password, name) {
 
   if (error) throw error;
 
-  // 3. Send verification email via SMTP
-  try {
-    await sendVerificationEmail(email.toLowerCase().trim(), code);
-  } catch (emailErr) {
-    console.error('SMTP email send error:', emailErr);
-  }
+  // 3. Send verification email via Edge Function
+  await sendVerificationEmail(email.toLowerCase().trim(), code);
 
   return data;
 }
@@ -152,4 +170,64 @@ export async function updateOnboarding(userId, onboardingData) {
 
   if (error) throw error;
   return data;
+}
+
+// Request password reset
+export async function customRequestPasswordReset(email) {
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  // 1. Check if user exists
+  const { data, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('User not found');
+
+  // 2. Generate reset code (re-using verification_code)
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ verification_code: code })
+    .eq('email', normalizedEmail);
+
+  if (updateError) throw updateError;
+
+  // 3. Send email with type 'reset'
+  await sendVerificationEmail(normalizedEmail, code, 'reset');
+  return true;
+}
+
+// Reset password using token/code
+export async function customResetPassword(email, token, newPassword) {
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  // 1. Query user to verify code
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('User not found');
+
+  if (!data.verification_code || data.verification_code !== token) {
+    throw new Error('Invalid or expired reset link');
+  }
+
+  // 2. Update password and clear verification code
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      password: newPassword,
+      verification_code: null
+    })
+    .eq('email', normalizedEmail);
+
+  if (updateError) throw updateError;
+  return true;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Play, Pause, Download } from 'lucide-react';
-import { customRegister, customLogin } from '../auth';
+import { customRegister, customLogin, customRequestPasswordReset } from '../auth';
 import Toast from './Toast';
 import Login from './auth/Login';
 import Signup from './auth/Signup';
@@ -19,7 +19,9 @@ export default function Modals({
   setUserOnboarded,
   updateOnboardUI,
   registeredEmail,
-  setRegisteredEmail
+  setRegisteredEmail,
+  currentUser,
+  setCurrentUser
 }) {
   // Video mock state
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -36,8 +38,14 @@ export default function Modals({
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
+  // Forgot password input state
+  const [forgotEmail, setForgotEmail] = useState('');
+
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+  // Processing state
+  const [loading, setLoading] = useState(false);
 
   if (!authOverlay.open && !videoModal.open && !whatsBomaModalOpen && !agreementDocModalOpen) {
     return null;
@@ -76,6 +84,7 @@ export default function Modals({
       return;
     }
 
+    setLoading(true);
     try {
       const user = await customLogin(loginEmail, loginPassword);
       if (user.role === 'admin') {
@@ -85,6 +94,7 @@ export default function Modals({
 
       setTimeout(() => {
         closeAuth();
+        setCurrentUser(user);
         setUserOnboarded(user.user_onboarded || false);
         if (updateOnboardUI) updateOnboardUI(user.user_onboarded || false);
 
@@ -96,9 +106,11 @@ export default function Modals({
 
         setLoginEmail('');
         setLoginPassword('');
+        setLoading(false);
       }, 1500);
     } catch (err) {
       setToast({ show: true, message: err.message || 'Login failed.', type: 'error' });
+      setLoading(false);
     }
   };
 
@@ -122,6 +134,7 @@ export default function Modals({
       return;
     }
 
+    setLoading(true);
     try {
       await customRegister(signupEmail, signupPassword, signupName);
       setToast({ show: true, message: 'Account created successfully!', type: 'success' });
@@ -134,16 +147,34 @@ export default function Modals({
         setSignupEmail('');
         setSignupPassword('');
         setSignupConfirmPassword('');
+        setLoading(false);
       }, 1500);
     } catch (err) {
       setToast({ show: true, message: err.message || 'Registration failed.', type: 'error' });
+      setLoading(false);
     }
   };
 
-  const handleForgot = (e) => {
+  const handleForgot = async (e) => {
     e.preventDefault();
-    closeAuth();
-    setActiveScreen('reset-password');
+    if (!forgotEmail.trim() || !/\S+@\S+\.\S+/.test(forgotEmail)) {
+      setToast({ show: true, message: 'Please enter a valid email address.', type: 'error' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await customRequestPasswordReset(forgotEmail);
+      setToast({ show: true, message: 'Password reset link sent to your email!', type: 'success' });
+      setTimeout(() => {
+        closeAuth();
+        setForgotEmail('');
+        setLoading(false);
+      }, 2000);
+    } catch (err) {
+      setToast({ show: true, message: err.message || 'Failed to request reset.', type: 'error' });
+      setLoading(false);
+    }
   };
   return (
     <>
@@ -215,7 +246,7 @@ export default function Modals({
 
             {/* Right Form Panel */}
             <div className="p-8 flex flex-col justify-center">
-              {/* LOGIN MODE */}
+               {/* LOGIN MODE */}
               {authOverlay.mode === 'login' && (
                 <Login
                   loginEmail={loginEmail}
@@ -225,6 +256,7 @@ export default function Modals({
                   handleLogin={handleLogin}
                   loginWithGoogle={loginWithGoogle}
                   setAuthOverlay={setAuthOverlay}
+                  loading={loading}
                 />
               )}
 
@@ -246,6 +278,7 @@ export default function Modals({
                   handleSignup={handleSignup}
                   loginWithGoogle={loginWithGoogle}
                   setAuthOverlay={setAuthOverlay}
+                  loading={loading}
                 />
               )}
 
@@ -254,6 +287,9 @@ export default function Modals({
                 <ForgotPassword
                   handleForgot={handleForgot}
                   setAuthOverlay={setAuthOverlay}
+                  forgotEmail={forgotEmail}
+                  setForgotEmail={setForgotEmail}
+                  loading={loading}
                 />
               )}
             </div>
