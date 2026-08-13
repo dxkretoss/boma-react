@@ -2,7 +2,7 @@ export const SCREENS_ORDER = [
   "landing", "how-it-works", "about", "contact", "signup", "login", "forgot-password", "reset-password", "verify-email", "join-pod", "learning",
   "entry-path", "onboarding-welcome", "onboarding-age", "onboarding-lifestyle", "onboarding-community", "onboarding-location", "onboarding-budget",
   "onboarding-intent", "onboarding-commitment", "onboarding-review", "onboarding-score", "onboarding-approval", "pod-create", "pod-invite",
-  "pod-member-onboarding", "pod-review", "pod-pending", "profile", "profile-edit", "readiness-detail", "status-tracking", "pod-history",
+  "pod-member-onboarding", "pod-review", "pod-pending", "profile", "profile-update", "profile-edit", "readiness-detail", "status-tracking", "pod-history",
   "matching-status", "pod-suggestion", "pod-preview", "confirm-join", "commons-dashboard", "commons-members", "commons-agreement",
   "commons-chat", "commons-settings", "admin-dashboard", "admin-users", "admin-matching", "admin-questions", "admin-pod-review",
   "admin-pod-management", "admin-pod-detail", "admin-existing-pod-queue"
@@ -18,7 +18,7 @@ export const SCREENS_LABELS = {
   "onboarding-intent": "Onboarding — Intent", "onboarding-commitment": "Onboarding — Commitment", "onboarding-review": "Onboarding — Review",
   "onboarding-score": "Onboarding — Score", "onboarding-approval": "Onboarding — Admin Review", "pod-create": "Create Pod Group", "pod-invite": "Invite Members",
   "pod-member-onboarding": "Member Onboarding", "pod-review": "Submission Review", "pod-pending": "Pending Verification",
-  "profile": "My Profile", "profile-edit": "Edit Preferences", "readiness-detail": "Readiness Detail", "status-tracking": "Status Tracking", "pod-history": "My Pods",
+  "profile": "My Profile", "profile-update": "Update Profile", "profile-edit": "Edit Preferences", "readiness-detail": "Readiness Detail", "status-tracking": "Status Tracking", "pod-history": "My Pods",
   "matching-status": "Matching Status", "pod-suggestion": "Pod Suggestion", "pod-preview": "Pod Preview", "confirm-join": "Confirm Join",
   "commons-dashboard": "Pod Dashboard", "commons-members": "Member Overview", "commons-agreement": "Agreement Scaffolding",
   "commons-chat": "Pod Chat", "commons-settings": "Pod Settings", "admin-dashboard": "Admin Dashboard", "admin-users": "User Management",
@@ -27,7 +27,7 @@ export const SCREENS_LABELS = {
 };
 
 export const GATED_SCREENS = [
-  'profile-edit', 'matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join',
+  'profile-update', 'profile-edit', 'matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join',
   'commons-dashboard', 'commons-members', 'commons-agreement', 'commons-chat', 'commons-settings',
   'readiness-detail'
 ];
@@ -45,7 +45,7 @@ export const SHELL_MODES = {
   'onboarding-review': 'onboarding', 'onboarding-score': 'onboarding', 'onboarding-approval': 'onboarding',
   'pod-create': 'onboarding', 'pod-invite': 'onboarding', 'pod-member-onboarding': 'onboarding',
   'pod-review': 'onboarding', 'pod-pending': 'onboarding',
-  profile: 'app', 'profile-edit': 'app', 'readiness-detail': 'app', 'status-tracking': 'app', 'pod-history': 'app',
+  profile: 'app', 'profile-update': 'app', 'profile-edit': 'app', 'readiness-detail': 'app', 'status-tracking': 'app', 'pod-history': 'app',
   'matching-status': 'app', 'pod-suggestion': 'app', 'pod-preview': 'app', 'confirm-join': 'app',
   'commons-dashboard': 'app', 'commons-members': 'app', 'commons-agreement': 'app', 'commons-chat': 'app', 'commons-settings': 'app',
   'admin-dashboard': 'admin', 'admin-users': 'admin', 'admin-matching': 'admin', 'admin-questions': 'admin', 'admin-pod-review': 'admin',
@@ -67,7 +67,7 @@ export const SCREEN_URLS = {
   'pod-create': 'boma.app/onboarding/create-pod', 'pod-invite': 'boma.app/onboarding/invite',
   'pod-member-onboarding': 'boma.app/onboarding/member-onboard', 'pod-review': 'boma.app/onboarding/pod-review',
   'pod-pending': 'boma.app/onboarding/pod-pending',
-  profile: 'boma.app/profile', 'profile-edit': 'boma.app/profile/edit', 'readiness-detail': 'boma.app/profile/readiness',
+  profile: 'boma.app/profile', 'profile-update': 'boma.app/profile/update', 'profile-edit': 'boma.app/profile/edit', 'readiness-detail': 'boma.app/profile/readiness',
   'status-tracking': 'boma.app/profile/status', 'pod-history': 'boma.app/profile/pods',
   'matching-status': 'boma.app/matching', 'pod-suggestion': 'boma.app/matching/suggestion',
   'pod-preview': 'boma.app/matching/preview', 'confirm-join': 'boma.app/matching/confirm',

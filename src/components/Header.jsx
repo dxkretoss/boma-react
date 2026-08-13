@@ -193,7 +193,7 @@ export default function Header({
     if (activeScreen === 'contact') return 'contact';
 
     if (activeScreen === 'learning') return 'learning';
-    if (['profile', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
+    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
     if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) return 'matching';
     if (activeScreen.startsWith('commons-')) return 'commons';
 

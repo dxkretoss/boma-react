@@ -17,7 +17,10 @@ import {
   Activity,
   Clock,
   Loader2,
-  Upload
+  Upload,
+  MapPin,
+  ChevronDown,
+  Edit3
 } from 'lucide-react';
 import { GATED_SCREENS } from '../../constants/screens';
 import { updateUser, fetchUserProfile, updateUserPreferencesAndScore } from '../../api/users';
@@ -130,6 +133,7 @@ function LockedFeatureView({ screenId, currentUser, onStartOnboarding, onReturnT
   }
 
   const metaTitles = {
+    'profile-update': { title: 'Unlock Edit Profile', icon: Edit3, desc: 'Complete your 9 onboarding questions to calculate your readiness score and update your profile.' },
     'profile-edit': { title: 'Unlock Edit Preferences', icon: Settings, desc: 'Complete your 9 onboarding questions to calculate your readiness score and edit your preferences.' },
     'matching-status': { title: 'Unlock Pod Matching Engine', icon: SearchIcon, desc: 'Complete your 9 onboarding questions to enter the matching pool and find compatible neighbor Pods.' },
     'pod-suggestion': { title: 'Unlock Pod Match Suggestions', icon: Sparkles, desc: 'BOMA calculates lifestyle & location compatibility scores before presenting Pod suggestions.' },
@@ -357,9 +361,23 @@ export default function AppScreens({
   const [editCity, setEditCity] = useState('Austin, TX');
   const [editSetting, setEditSetting] = useState('Suburban');
   const [editIntent, setEditIntent] = useState('Purchase primary residence');
+  const [editName, setEditName] = useState('');
 
   const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [editCityDropdownOpen, setEditCityDropdownOpen] = useState(false);
+  const cityDropdownRef = useRef(null);
+
+  // Close city dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target)) {
+        setEditCityDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -377,14 +395,14 @@ export default function AppScreens({
       try {
         const base64String = reader.result;
         await updateUser(currentUser.id, { avatar_url: base64String });
-        
+
         if (setCurrentUser) {
           setCurrentUser({
             ...currentUser,
             avatar_url: base64String
           });
         }
-        
+
         showToast("Profile image updated successfully!", "success");
       } catch (err) {
         console.error("Failed to update profile image:", err);
@@ -412,6 +430,23 @@ export default function AppScreens({
   useEffect(() => {
     setSuggestedPod(null);
   }, [currentUser]);
+
+  // Pre-populate edit form fields when entering profile-edit or profile-update screen
+  useEffect(() => {
+    if (activeScreen === 'profile-edit' && currentUser) {
+      setEditCity(currentUser.location_city || 'Austin, TX');
+      const setting = currentUser.setting_preference || 'urban';
+      setEditSetting(setting.charAt(0).toUpperCase() + setting.slice(1));
+      const intent = currentUser.housing_intent;
+      if (intent === 'purchase') setEditIntent('Purchase primary residence');
+      else if (intent === 'co-develop') setEditIntent('Co-develop property');
+      else if (intent === 'investment') setEditIntent('Investment hold');
+      else setEditIntent('Purchase primary residence');
+    }
+    if (activeScreen === 'profile-update' && currentUser) {
+      setEditName(currentUser.name || '');
+    }
+  }, [activeScreen, currentUser]);
 
   useEffect(() => {
     if (!currentUser?.id) {
@@ -553,7 +588,7 @@ export default function AppScreens({
     }
   }, [chatMessages, activeScreen]);
 
-  if (!['learning', 'profile', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history', 'matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join', 'commons-dashboard', 'commons-members', 'commons-agreement', 'commons-chat', 'commons-settings'].includes(activeScreen)) {
+  if (!['learning', 'profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history', 'matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join', 'commons-dashboard', 'commons-members', 'commons-agreement', 'commons-chat', 'commons-settings'].includes(activeScreen)) {
     return null;
   }
 
@@ -1221,43 +1256,18 @@ export default function AppScreens({
             className="rounded-[20px] p-[30px] border border-border flex items-center gap-5 mb-[26px]"
             style={{ background: 'linear-gradient(120deg, var(--color-teal-soft) 0%, var(--color-panel) 70%)' }}
           >
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="relative group cursor-pointer w-[72px] h-[72px] rounded-full border border-border bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm"
-              title="Change Profile Image"
-            >
-              {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-                <img
-                  src={currentUser.avatar_url}
-                  className="w-full h-full object-cover rounded-full"
-                  alt="Profile"
-                />
-              ) : (
-                <div className="w-full h-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display">
-                  {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
-                </div>
-              )}
-              
-              <div className="absolute inset-0 bg-black/45 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                {uploadingAvatar ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <>
-                    <Upload className="w-4.5 h-4.5 text-white mb-1" />
-                    <span className="text-[8.5px] font-mono font-bold uppercase tracking-wider">Edit</span>
-                  </>
-                )}
+            {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
+              <img
+                src={currentUser.avatar_url}
+                className="rounded-full object-cover shrink-0 w-[72px] h-[72px] border border-border shadow-sm"
+                alt="Profile"
+              />
+            ) : (
+              <div className="w-[72px] h-[72px] rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display flex-shrink-0">
+                {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
               </div>
-            </div>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleAvatarChange} 
-              accept="image/*" 
-              className="hidden" 
-            />
-            <div className="text-left">
+            )}
+            <div className="text-left flex-1">
               <h3 className="font-display font-extrabold text-[22px] text-ink leading-tight">{currentUser?.name || 'User'}</h3>
               {isProfileApproved ? (
                 <span className="inline-block bg-[#EAFDF8] text-sage border border-sage/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 ">
@@ -1280,6 +1290,12 @@ export default function AppScreens({
                 {currentUser?.location_city || 'Austin, TX'} · Member since {currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'June 2026'}
               </span>
             </div>
+            <button
+              onClick={() => setActiveScreen('profile-update')}
+              className="self-start bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2 px-4 rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+            >
+              Edit Profile
+            </button>
           </div>
 
           {/* KPI grid */}
@@ -1449,21 +1465,176 @@ export default function AppScreens({
         </div>
       )}
 
-      {/* ===================== 3. EDIT PROFILE PREFERENCES ===================== */}
+      {/* ===================== 3. UPDATE PROFILE ===================== */}
+      {activeScreen === 'profile-update' && (
+        <div className="pad py-12 px-6 md:px-8 text-left">
+          <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Profile / Edit Profile</div>
+          <h3 className="font-display font-extrabold text-2xl text-ink mb-5">Profile</h3>
+
+          <div className="border border-border rounded-2xl p-6 bg-white shadow-sm max-w-[520px]">
+            {/* Avatar Upload Section */}
+            <div className="flex items-center gap-5 mb-6 pb-6 border-b border-border/60">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="relative group cursor-pointer w-[80px] h-[80px] rounded-full border border-border bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm"
+                title="Change Profile Image"
+              >
+                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    className="w-full h-full object-cover rounded-full"
+                    alt="Profile"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display">
+                    {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+                  </div>
+                )}
+
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 text-white mb-0.5" />
+                      <span className="text-[8px] font-mono font-bold uppercase tracking-wider">Change</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-ink mb-1">{currentUser?.name || 'User'}</span>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="text-[12px] text-[#2F5FE0] font-bold hover:underline cursor-pointer disabled:opacity-50 text-left flex items-center gap-1"
+                >
+                  {uploadingAvatar ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Upload className="w-3 h-3" /> Upload new photo</>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Display Name */}
+            <div className="mb-6">
+              <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Display name</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder={currentUser?.name || 'Your name'}
+                className="w-full bg-panel border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-semibold"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setActiveScreen('profile')}
+                className="bg-transparent border border-border text-ink rounded-lg py-2 px-5 text-sm font-bold hover:bg-panel-alt transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (currentUser?.id && editName.trim()) {
+                    try {
+                      const updatedUser = await updateUser(currentUser.id, { name: editName.trim() });
+                      if (setCurrentUser) {
+                        setCurrentUser({ ...currentUser, name: editName.trim() });
+                      }
+                      showToast("Profile updated successfully!", "success");
+                    } catch (err) {
+                      console.error('Error updating profile:', err);
+                      showToast("Failed to save profile changes.", "error");
+                    }
+                  }
+                  setActiveScreen('profile');
+                }}
+                className="bg-ink text-white rounded-lg py-2 px-5 text-sm font-bold hover:bg-[#2450C4] transition-all cursor-pointer shadow-md"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== 3b. EDIT PREFERENCES ===================== */}
       {activeScreen === 'profile-edit' && (
         <div className="pad py-12 px-6 md:px-8 text-left">
           <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Profile / Edit Preferences</div>
           <h3 className="font-display font-extrabold text-2xl text-ink mb-5">Edit preferences</h3>
 
-          <div className="border border-border rounded-2xl p-6 bg-white shadow-sm max-w-[520px] ">
-            <div className="mb-4">
+          <div className="border border-border rounded-2xl p-6 bg-white shadow-sm max-w-[520px]">
+            {/* Preferred City */}
+            <div className="mb-4" ref={cityDropdownRef}>
               <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Preferred city or metro</label>
-              <input
-                type="text"
-                value={editCity}
-                onChange={(e) => setEditCity(e.target.value)}
-                className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-semibold"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={editCity}
+                  onChange={(e) => {
+                    setEditCity(e.target.value);
+                    setEditCityDropdownOpen(true);
+                  }}
+                  onFocus={() => setEditCityDropdownOpen(true)}
+                  placeholder="e.g. Austin, TX"
+                  className="w-full bg-panel border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-semibold pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditCityDropdownOpen(!editCityDropdownOpen)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink cursor-pointer"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${editCityDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {editCityDropdownOpen && (() => {
+                  const EDIT_CITIES = [
+                    'Austin, TX', 'Atlanta, GA', 'Boston, MA', 'Charlotte, NC', 'Chicago, IL',
+                    'Dallas, TX', 'Denver, CO', 'Detroit, MI', 'Houston, TX', 'Las Vegas, NV',
+                    'Los Angeles, CA', 'Miami, FL', 'Minneapolis, MN', 'Nashville, TN',
+                    'New York, NY', 'Orlando, FL', 'Philadelphia, PA', 'Phoenix, AZ',
+                    'Portland, OR', 'Salt Lake City, UT', 'San Antonio, TX', 'San Diego, CA',
+                    'San Francisco, CA', 'Seattle, WA', 'Tampa, FL', 'Washington, DC'
+                  ];
+                  const filtered = EDIT_CITIES.filter(c => c.toLowerCase().includes(editCity.toLowerCase()));
+                  return (
+                    <div className="absolute z-50 left-0 right-0 top-[calc(100%+4px)] bg-white border border-border rounded-xl shadow-lg overflow-hidden animate-fade">
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {filtered.length > 0 ? filtered.map((city) => (
+                          <button
+                            key={city}
+                            type="button"
+                            onClick={() => { setEditCity(city); setEditCityDropdownOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-2.5 transition-colors cursor-pointer ${editCity === city ? 'bg-amber-soft text-ink font-bold' : 'text-ink hover:bg-panel-alt'
+                              }`}
+                          >
+                            <MapPin className="w-3.5 h-3.5 text-ink-dim shrink-0" />
+                            {city}
+                          </button>
+                        )) : (
+                          <div className="px-4 py-6 text-center text-xs text-ink-dim font-medium">
+                            No cities match "{editCity}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -1505,16 +1676,19 @@ export default function AppScreens({
                 onClick={async () => {
                   if (currentUser?.id) {
                     try {
-                      const updatedUser = await updateUserPreferencesAndScore(currentUser.id, {
+                      const updates = {
                         location_city: editCity,
                         setting_preference: editSetting.toLowerCase(),
                         housing_intent: editIntent === 'Purchase primary residence' ? 'purchase' : editIntent === 'Co-develop property' ? 'co-develop' : 'investment'
-                      });
+                      };
+                      const updatedUser = await updateUserPreferencesAndScore(currentUser.id, updates);
                       if (setCurrentUser) {
                         setCurrentUser(updatedUser);
                       }
+                      showToast("Preferences updated successfully!", "success");
                     } catch (err) {
-                      console.error('Error updating profile preferences:', err);
+                      console.error('Error updating preferences:', err);
+                      showToast("Failed to save preference changes.", "error");
                     }
                   }
                   setActiveScreen('profile');

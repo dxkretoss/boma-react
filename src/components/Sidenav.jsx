@@ -26,7 +26,8 @@ const ICON_MAP = {
   home: Home,
   doc: FileText,
   chat: MessageSquare,
-  gear: Settings
+  gear: Settings,
+  settings: Settings
 };
 
 const SIDENAV_CONFIG = {
@@ -43,7 +44,8 @@ const SIDENAV_CONFIG = {
       { id: 'profile-edit', label: 'Edit Preferences', icon: 'edit' },
       { id: 'readiness-detail', label: 'Readiness Breakdown', icon: 'gauge' },
       { id: 'status-tracking', label: 'Status Tracker', icon: 'list' },
-      { id: 'pod-history', label: 'My Pods', icon: 'home' }
+      { id: 'pod-history', label: 'My Pods', icon: 'home' },
+      { id: 'profile-update', label: 'Profile', icon: 'settings' },
     ]
   },
   matching: {
@@ -88,7 +90,7 @@ export default function Sidenav({
   // Determine which section we are in
   const getSectionKey = () => {
     if (activeScreen === 'learning') return 'learning';
-    if (['profile', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
+    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
     if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) return 'matching';
     if (activeScreen.startsWith('commons-')) return 'commons';
     if (activeScreen.startsWith('admin-')) return 'admin';
