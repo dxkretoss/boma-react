@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { GATED_SCREENS } from '../../constants/screens';
 import { updateUser, fetchUserProfile, updateUserPreferencesAndScore } from '../../api/users';
-import { fetchPodDetails, fetchPodMembers, leavePod as leavePodApi, dissolvePod } from '../../api/pods';
+import { fetchPodDetails, fetchPodMembers, leavePod as leavePodApi, dissolvePod, updatePodAgreements } from '../../api/pods';
 import { findSuggestedMatches, acceptMatchedPod, declineMatchedPod, joinMatchedPod } from '../../api/matching';
 import ConfirmModal from '../ConfirmModal';
 
@@ -383,6 +383,10 @@ export default function AppScreens({
         setUserPod(details);
 
         if (details) {
+          if (details.aligned_agreements) {
+            setAlignedAgreements(details.aligned_agreements);
+          }
+
           const mems = await fetchPodMembers(details.id);
           setPodMembersList(mems);
 
@@ -518,7 +522,7 @@ export default function AppScreens({
 
   // Path B Specific Gating Redirects
   if (isExistingPod && !loadingPod && GATED_SCREENS.includes(activeScreen)) {
-    if (!isUserOnboarded) {
+    if (!isUserOnboarded && userPod?.status !== 'ACTIVE') {
       return (
         <div className="max-w-[480px] mx-auto py-24 px-6 text-center  animate-fade">
           <div className="w-14 h-14 rounded-2xl bg-amber-soft text-amber flex items-center justify-center mx-auto mb-5">
@@ -715,6 +719,10 @@ export default function AppScreens({
       const details = await fetchPodDetails(currentUser.id);
       setUserPod(details);
       if (details) {
+        if (details.aligned_agreements) {
+          setAlignedAgreements(details.aligned_agreements);
+        }
+
         const mems = await fetchPodMembers(details.id);
         setPodMembersList(mems);
         if (details.status === 'ACTIVE') {
@@ -829,11 +837,29 @@ export default function AppScreens({
   };
 
   // ---------------- POD COMMONS AGREEMENTS ----------------
-  const toggleAgreementItem = (idx) => {
+  const toggleAgreementItem = async (idx) => {
+    if (!userPod) return;
+
+    let nextAgreements;
     if (alignedAgreements.includes(idx)) {
-      setAlignedAgreements(alignedAgreements.filter(i => i !== idx));
+      nextAgreements = alignedAgreements.filter(i => i !== idx);
     } else {
-      setAlignedAgreements([...alignedAgreements, idx]);
+      nextAgreements = [...alignedAgreements, idx];
+    }
+
+    // Optimistic UI update
+    setAlignedAgreements(nextAgreements);
+
+    try {
+      if (!userPod.is_simulated) {
+        const updated = await updatePodAgreements(userPod.id, userPod.description, nextAgreements);
+        setUserPod(updated);
+      }
+    } catch (e) {
+      console.error("Failed to persist agreement alignment:", e);
+      // Revert local state on error
+      setAlignedAgreements(alignedAgreements);
+      showToast("Failed to sync agreement checklist: " + e.message, "error");
     }
   };
 

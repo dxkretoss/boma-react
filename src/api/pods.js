@@ -13,6 +13,53 @@ async function hashToken(token) {
 }
 
 /**
+ * Utility to parse aligned agreements out of a pod's description.
+ */
+function parseDescription(pod) {
+  if (!pod) return null;
+  const desc = pod.description || '';
+  const parts = desc.split(' ||| ');
+  let cleanDesc = desc;
+  let aligned = [0, 1]; // default starting alignment
+  if (parts.length >= 2) {
+    cleanDesc = parts[0];
+    try {
+      aligned = JSON.parse(parts[1]);
+    } catch (e) {
+      console.error("Failed to parse aligned agreements:", e);
+    }
+  }
+  return {
+    ...pod,
+    description: cleanDesc,
+    aligned_agreements: aligned
+  };
+}
+
+/**
+ * Updates the pod's aligned agreements array inside the description column.
+ */
+export async function updatePodAgreements(podId, currentDescription, alignedArray) {
+  if (!podId) throw new Error('Pod ID is required.');
+  const payload = `${currentDescription || ''} ||| ${JSON.stringify(alignedArray)}`;
+  
+  const { data, error } = await supabase
+    .from('pods')
+    .update({
+      description: payload,
+      updated_at: new Date()
+    })
+    .eq('id', podId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update agreements: ${error.message}`);
+  }
+  return parseDescription(data);
+}
+
+/**
  * Creates a new Pod in the database and registers the creator.
  */
 export async function createPod(creatorId, name, description, groupType) {
@@ -23,7 +70,7 @@ export async function createPod(creatorId, name, description, groupType) {
     .from('pods')
     .insert({
       name,
-      description,
+      description: `${description || ''} ||| [0,1]`,
       group_type: groupType,
       created_by: creatorId,
       status: 'CREATING'
@@ -59,7 +106,7 @@ export async function createPod(creatorId, name, description, groupType) {
     throw new Error(`Failed to update creator entry path: ${userError.message}`);
   }
 
-  return pod;
+  return parseDescription(pod);
 }
 
 /**
@@ -92,7 +139,7 @@ export async function fetchPodDetails(userId) {
   }
 
   if (!pods || pods.length === 0) return null;
-  const pod = pods[0];
+  const pod = parseDescription(pods[0]);
 
   return {
     ...pod,
@@ -114,7 +161,7 @@ export async function fetchPodById(podId) {
   if (error) {
     throw new Error(`Failed to fetch pod by ID: ${error.message}`);
   }
-  return data && data.length > 0 ? data[0] : null;
+  return data && data.length > 0 ? parseDescription(data[0]) : null;
 }
 
 /**
@@ -188,7 +235,30 @@ export async function createAndSendInvitation(podId, email, invitedById, inviter
 
   const normEmail = email.toLowerCase().trim();
 
-  // 1. Check if there is an active pending invitation already
+  // 1. Check if user is already in another active/pending pod
+  const { data: targetUser, error: targetUserError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', normEmail)
+    .maybeSingle();
+
+  if (targetUser) {
+    const { data: activeMemberships, error: membershipError } = await supabase
+      .from('pod_members')
+      .select('pod_id, pods(status)')
+      .eq('user_id', targetUser.id);
+
+    if (!membershipError && activeMemberships && activeMemberships.length > 0) {
+      const hasActiveOrPending = activeMemberships.some(m => 
+        m.pods && ['ACTIVE', 'UNDER_REVIEW'].includes(m.pods.status)
+      );
+      if (hasActiveOrPending) {
+        throw new Error('This user is already a member of another active or pending Pod.');
+      }
+    }
+  }
+
+  // 2. Check if there is an active pending invitation already
   const { data: existing, error: existError } = await supabase
     .from('pod_invitations')
     .select('id')
@@ -361,6 +431,29 @@ export async function verifyInvitationToken(token) {
     throw new Error('This Pod has already been finalized and is no longer accepting members.');
   }
 
+  // 3. Check if user is already in another active/pending pod
+  const { data: targetUser, error: targetUserError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', invite.email.toLowerCase().trim())
+    .maybeSingle();
+
+  if (targetUser) {
+    const { data: activeMemberships, error: membershipError } = await supabase
+      .from('pod_members')
+      .select('pod_id, pods(status)')
+      .eq('user_id', targetUser.id);
+
+    if (!membershipError && activeMemberships && activeMemberships.length > 0) {
+      const hasActiveOrPending = activeMemberships.some(m => 
+        m.pods && ['ACTIVE', 'UNDER_REVIEW'].includes(m.pods.status)
+      );
+      if (hasActiveOrPending) {
+        throw new Error('You are already a member of another active or pending Pod. You cannot join this group.');
+      }
+    }
+  }
+
   return {
     invitationId: invite.id,
     email: invite.email,
@@ -376,7 +469,22 @@ export async function verifyInvitationToken(token) {
 export async function acceptPodInvitation(invitationId, userId, userEmail) {
   if (!invitationId || !userId || !userEmail) throw new Error('Missing verification parameters.');
 
-  // 1. Fetch the invitation to verify details
+  // 1. Check if this user is already in any active or pending pod
+  const { data: activeMemberships, error: membershipError } = await supabase
+    .from('pod_members')
+    .select('pod_id, pods(status)')
+    .eq('user_id', userId);
+
+  if (!membershipError && activeMemberships && activeMemberships.length > 0) {
+    const hasActiveOrPending = activeMemberships.some(m => 
+      m.pods && ['ACTIVE', 'UNDER_REVIEW'].includes(m.pods.status)
+    );
+    if (hasActiveOrPending) {
+      throw new Error('You are already a member of another active or pending Pod.');
+    }
+  }
+
+  // 2. Fetch the invitation to verify details
   const { data: invite, error: fetchError } = await supabase
     .from('pod_invitations')
     .select('*')
@@ -437,6 +545,21 @@ export async function acceptPodInvitation(invitationId, userId, userEmail) {
 
   if (userError) throw userError;
 
+  // 5. Check if all invitations for this pod are now accepted
+  const { data: pendingInvites, error: pendingError } = await supabase
+    .from('pod_invitations')
+    .select('id')
+    .eq('pod_id', invite.pod_id)
+    .eq('status', 'PENDING');
+
+  if (!pendingError && (!pendingInvites || pendingInvites.length === 0)) {
+    // Auto-submit pod for Admin review
+    await supabase
+      .from('pods')
+      .update({ status: 'UNDER_REVIEW', updated_at: new Date() })
+      .eq('id', invite.pod_id);
+  }
+
   return invite.pod_id;
 }
 
@@ -476,7 +599,7 @@ export async function fetchAllPods() {
   }
 
   return (data || []).map(p => ({
-    ...p,
+    ...parseDescription(p),
     membersCount: p.pod_members?.length || 0
   }));
 }
@@ -495,7 +618,7 @@ export async function fetchPodsUnderReview() {
   if (error) {
     throw new Error(`Failed to fetch pods under review: ${error.message}`);
   }
-  return data || [];
+  return (data || []).map(p => parseDescription(p));
 }
 
 /**

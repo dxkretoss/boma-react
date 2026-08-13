@@ -129,18 +129,49 @@ export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
           <div className="space-y-6">
             <div className="border border-border rounded-2xl p-6 bg-white shadow-sm">
               <h4 className="font-display font-extrabold text-base text-ink mb-3.5">Agreement progress</h4>
-              <div className="flex flex-col mb-4">
-                <div className="flex justify-between items-center text-sm font-bold text-ink mb-1.5">
-                  <span>Completion</span>
-                  <span className="font-mono text-xs">2 / 5</span>
-                </div>
-                <div className="h-1 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-amber w-[40%]" />
-                </div>
-              </div>
-              <p className="text-xs text-ink-dim leading-relaxed">
-                Decision-making style and membership terms are set — exit terms and communication expectations are still open.
-              </p>
+              {(() => {
+                const allAgreementTitles = [
+                  "Decision-making style",
+                  "Membership terms",
+                  "Exit terms",
+                  "Communication expectations",
+                  "Timeline expectations"
+                ];
+                const alignedCount = pod.aligned_agreements ? pod.aligned_agreements.length : 0;
+                const alignedPercent = (alignedCount / 5) * 100;
+                
+                const alignedTitles = allAgreementTitles.filter((_, idx) => pod.aligned_agreements?.includes(idx));
+                const openTitles = allAgreementTitles.filter((_, idx) => !pod.aligned_agreements?.includes(idx));
+                
+                let summaryText = "";
+                if (alignedCount === 5) {
+                  summaryText = "All 5 core governance draft sections are aligned and agreed upon by the members.";
+                } else if (alignedCount === 0) {
+                  summaryText = "No agreement sections have been aligned yet. The group is still discussing the social draft.";
+                } else {
+                  summaryText = `${alignedTitles.slice(0, 2).join(" and ")}${alignedTitles.length > 2 ? ", etc." : ""} are aligned — ${openTitles.slice(0, 2).join(" and ")} are still open.`;
+                }
+
+                return (
+                  <>
+                    <div className="flex flex-col mb-4">
+                      <div className="flex justify-between items-center text-sm font-bold text-ink mb-1.5">
+                        <span>Completion</span>
+                        <span className="font-mono text-xs">{alignedCount} / 5</span>
+                      </div>
+                      <div className="h-1 bg-border rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-amber transition-all duration-300" 
+                          style={{ width: `${alignedPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-ink-dim leading-relaxed">
+                      {summaryText}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="border border-border rounded-2xl p-6 bg-white shadow-sm">
