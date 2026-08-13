@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingReview({ selectedLifestyles, decisionStyle, locationCity, locationRadius, settingPreference, budgetRange, downPaymentTier, housingIntent, commitmentTimeline, setActiveScreen, submitOnboarding }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 8 of 9 — Review
           </div>

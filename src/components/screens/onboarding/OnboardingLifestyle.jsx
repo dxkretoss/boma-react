@@ -11,7 +11,7 @@ export default function OnboardingLifestyle({ selectedLifestyles, toggleLifestyl
     { label: 'Family-oriented', icon: Heart }
   ];
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 2 of 9 — Lifestyle &amp; Values
           </div>
@@ -40,7 +40,7 @@ export default function OnboardingLifestyle({ selectedLifestyles, toggleLifestyl
                   }`}>
                     {Icon && <Icon className="w-4.5 h-4.5" />}
                   </div>
-                  <div className="text-[13px] font-extrabold text-ink leading-tight select-none">
+                  <div className="text-[13px] font-extrabold text-ink leading-tight ">
                     {opt.label}
                   </div>
                 </div>

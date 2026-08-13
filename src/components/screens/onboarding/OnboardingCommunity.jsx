@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, podSize, setPodSize, setActiveScreen, stepProgressBar }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 3 of 9 — Community Preferences
           </div>
@@ -28,10 +28,10 @@ export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, p
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="font-display text-sm font-extrabold text-ink mb-1 select-none">
+                <div className="font-display text-sm font-extrabold text-ink mb-1 ">
                   {opt.label}
                 </div>
-                <div className="text-[11px] text-ink-dim font-medium select-none">
+                <div className="text-[11px] text-ink-dim font-medium ">
                   {opt.sub}
                 </div>
               </div>
@@ -58,7 +58,7 @@ export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, p
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="text-[13px] font-extrabold text-ink leading-tight select-none">
+                <div className="text-[13px] font-extrabold text-ink leading-tight ">
                   {opt.label}
                 </div>
               </div>

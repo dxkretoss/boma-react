@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import ProtoBar from './components/ProtoBar';
 import Header from './components/Header';
 import Sidenav from './components/Sidenav';
@@ -10,70 +11,37 @@ import OnboardingScreens from './components/screens/OnboardingScreens';
 import AppScreens from './components/screens/AppScreens';
 import AdminScreens from './components/screens/AdminScreens';
 import { SHELL_MODES } from './constants/screens';
+import ConfirmModal from './components/ConfirmModal';
+import Toast from './components/Toast';
 
-// Constants for initial Pod data
-const INITIAL_POD_DATA = {
-  cedar: {
-    name: 'Cedar Grove Pod',
-    location: 'Austin, TX',
-    formed: '12 days ago',
-    photo: 'assets/pod_austin.png',
-    avgReadiness: 83,
-    health: 'Stable',
-    matchPct: 87,
-    origin: 'Matched via Engine',
-    tags: ['Austin, TX', 'Suburban', 'Sustainability', '5+ year commitment'],
-    members: [
-      { name: 'Sam Rivera', img: 12, detail: 'Purchase primary residence · 5+ yrs', score: 88, joined: '12 days ago' },
-      { name: 'Morgan Chen', img: 47, detail: 'Co-develop property · Flexible', score: 79, joined: '12 days ago' },
-      { name: 'Taylor Kim', img: 33, detail: 'Purchase primary residence · 5+ yrs', score: 84, joined: '9 days ago' }
-    ]
-  },
-  willow: {
-    name: 'Willow Creek Pod',
-    location: 'Denver, CO',
-    formed: 'Today',
-    photo: 'assets/pod_denver.png',
-    avgReadiness: 78,
-    health: 'Stable',
-    matchPct: 79,
-    origin: 'Matched via Engine',
-    tags: ['Denver, CO', 'Rural', 'Remote-work friendly', '2+ year commitment'],
-    members: [
-      { name: 'Alex Rivera', img: 15, detail: 'Co-develop property · 5+ yrs', score: 81, joined: '2 days ago' },
-      { name: 'Jamie Novak', img: 44, detail: 'Lifestyle-based co-living · Flexible', score: 76, joined: '2 days ago' },
-      { name: 'Casey Blue', img: 29, detail: 'Purchase primary residence · 2+ yrs', score: 74, joined: 'today' }
-    ]
-  }
-};
 
 const INITIAL_CHAT_MESSAGES = [
   {
     sender: 'Sam Rivera',
     text: 'Excited to have you join our Pod, Jordan! 🎉',
     time: '9:12 AM',
-    avatar: 'https://i.pravatar.cc/80?img=12',
+    avatar: null,
     isMe: false
   },
   {
     sender: 'You',
     text: 'Thanks — looking forward to getting to know everyone and building together.',
     time: '9:15 AM',
-    avatar: 'https://i.pravatar.cc/80?img=68',
+    avatar: null,
     isMe: true
   },
   {
     sender: 'Morgan Chen',
     text: 'Should we set a time to talk through the agreement scaffolding doc this week?',
     time: '9:20 AM',
-    avatar: 'https://i.pravatar.cc/80?img=47',
+    avatar: null,
     isMe: false
   },
   {
     sender: 'Taylor Kim',
     text: 'Thursday evening works great for me! We can review decision voting and equity transfer.',
     time: '9:24 AM',
-    avatar: 'https://i.pravatar.cc/80?img=33',
+    avatar: null,
     isMe: false
   }
 ];
@@ -82,8 +50,10 @@ function App() {
   // Global screens states
   const [activeScreen, setActiveScreen] = useState(() => {
     const path = window.location.pathname;
-    if (path === '/admin' || path.endsWith('/admin')) {
-      return 'admin-login';
+    if (path.startsWith('/admin')) {
+      const parts = path.split('/');
+      const subTab = parts[2];
+      return subTab ? 'admin-' + subTab : 'admin-dashboard';
     }
     if (path === '/reset-password' || path.endsWith('/reset-password')) {
       return 'reset-password';
@@ -91,7 +61,7 @@ function App() {
     return 'landing';
   });
   const [userOnboarded, setUserOnboarded] = useState(false);
-  const [activePodId, setActivePodId] = useState('cedar');
+  const [activePodId, setActivePodId] = useState(null);
   const [suggestedPodId, setSuggestedPodId] = useState(null);
   const [podHistory, setPodHistory] = useState([]);
   const [adminViewPodId, setAdminViewPodId] = useState('cedar');
@@ -130,6 +100,9 @@ function App() {
     }
   }, [currentUser]);
 
+  const [inviteToken, setInviteToken] = useState(null);
+  const [isInvitationFlow, setIsInvitationFlow] = useState(false);
+
   useEffect(() => {
     if (currentUser) {
       setUserOnboarded(currentUser.user_onboarded || false);
@@ -138,7 +111,102 @@ function App() {
     }
   }, [currentUser]);
 
+  // Handle OAuth Redirect Callbacks dynamically on mount
+  useEffect(() => {
+    async function handleOAuthCallback() {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (session?.user) {
+          const email = session.user.email;
+
+          // Check if this Google user exists in our custom 'users' table
+          let { data: customUser, error: queryError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email.toLowerCase().trim())
+            .maybeSingle();
+
+          if (queryError) throw queryError;
+
+          // If they don't exist in our custom 'users' table, register them automatically!
+          if (!customUser) {
+            const { data: newUser, error: insertError } = await supabase
+              .from('users')
+              .insert([
+                {
+                  id: session.user.id,
+                  email: email.toLowerCase().trim(),
+                  password: 'google_oauth_sso_' + Math.random().toString(36).substring(2, 10),
+                  name: session.user.user_metadata?.full_name || 'Google User',
+                  role: 'user',
+                  user_onboarded: false,
+                  email_verified: true,
+                  profile_status: 'INCOMPLETE',
+                  matching_status: 'NOT_ELIGIBLE'
+                }
+              ])
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+            customUser = newUser;
+          }
+
+          // Save session
+          setCurrentUser(customUser);
+          localStorage.setItem('boma_current_user', JSON.stringify(customUser));
+          setUserOnboarded(customUser.user_onboarded || false);
+
+          // Close the auth modal
+          setAuthOverlay({ open: false, mode: 'login' });
+
+          // Clear hash from URL cleanly
+          window.history.replaceState(null, '', window.location.pathname);
+
+          // Redirect
+          navigateTo('profile');
+        }
+      } catch (err) {
+        console.error('OAuth Callback Error:', err);
+      }
+    }
+
+    handleOAuthCallback();
+  }, []);
+
   const [registeredEmail, setRegisteredEmail] = useState('');
+
+  // Global Reusable Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: '',
+    onConfirm: () => { },
+    type: 'info'
+  });
+
+  const showConfirm = (title, message, onConfirm, type = 'info', confirmText = 'Confirm') => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText: 'Cancel',
+      onConfirm,
+      type
+    });
+  };
+
+  // Global Reusable Toast State
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+
+  const showToast = (message, type = 'error') => {
+    setToast({ show: true, message, type });
+  };
 
   // Overlays / Modals States
   const [authOverlay, setAuthOverlay] = useState({ open: false, mode: 'login' });
@@ -154,80 +222,131 @@ function App() {
     window.scrollTo(0, 0);
   }, [activeScreen]);
 
+  const checkAuthAndNavigate = (screenId, currentU = currentUser, adminU = adminUser) => {
+    // Read from localStorage directly if state is lagging to avoid async race condition
+    if (!adminU && screenId.startsWith('admin-')) {
+      try {
+        const saved = localStorage.getItem('boma_admin_user');
+        if (saved) adminU = JSON.parse(saved);
+      } catch { }
+    }
+    if (!currentU) {
+      try {
+        const saved = localStorage.getItem('boma_current_user');
+        if (saved) currentU = JSON.parse(saved);
+      } catch { }
+    }
+
+    if (screenId.startsWith('admin-') && screenId !== 'admin-login') {
+      if (!adminU) {
+        return 'admin-login';
+      }
+      return screenId;
+    }
+    const mode = SHELL_MODES[screenId];
+    const isUserAppScreen = mode === 'app' || (mode === 'onboarding' && screenId !== 'verify-email' && screenId !== 'join-pod');
+    if (isUserAppScreen && !currentU) {
+      setAuthOverlay({ open: true, mode: 'login' });
+      return 'landing';
+    }
+    return screenId;
+  };
+
   // Detect URL path changes and handle popstate routing
   const navigateTo = (screenId) => {
+    const resolvedScreenId = checkAuthAndNavigate(screenId);
+
     let path = '/';
-    if (screenId === 'how-it-works') path = '/howworks';
-    else if (screenId === 'about') path = '/about';
-    else if (screenId === 'contact') path = '/contact';
-    else if (screenId === 'landing') path = '/';
-    else if (screenId === 'verify-email') path = '/verify-email';
-    else if (screenId === 'reset-password') path = '/reset-password';
-    else if (screenId === 'learning') path = '/learning';
-    else if (screenId === 'profile') path = '/profile';
-    else if (screenId.startsWith('admin-')) path = '/admin';
-    else path = '/' + screenId;
+    if (resolvedScreenId === 'how-it-works') path = '/howworks';
+    else if (resolvedScreenId === 'about') path = '/about';
+    else if (resolvedScreenId === 'contact') path = '/contact';
+    else if (resolvedScreenId === 'landing') path = '/';
+    else if (resolvedScreenId === 'verify-email') path = '/verify-email';
+    else if (resolvedScreenId === 'reset-password') path = '/reset-password';
+    else if (resolvedScreenId === 'learning') path = '/learning';
+    else if (resolvedScreenId === 'profile') path = '/profile';
+    else if (resolvedScreenId.startsWith('admin-')) {
+      const subTab = resolvedScreenId.substring(6);
+      path = subTab === 'dashboard' ? '/admin' : `/admin/${subTab}`;
+    }
+    else path = '/' + resolvedScreenId;
 
     if (window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }
-    setActiveScreen(screenId);
+    setActiveScreen(resolvedScreenId);
   };
 
   useEffect(() => {
     const handleUrlChange = () => {
       const path = window.location.pathname;
+      let targetScreen = 'landing';
+
       if (path === '/howworks') {
-        setActiveScreen('how-it-works');
+        targetScreen = 'how-it-works';
       } else if (path === '/about') {
-        setActiveScreen('about');
+        targetScreen = 'about';
       } else if (path === '/contact') {
-        setActiveScreen('contact');
-      } else if (path === '/admin') {
-        if (adminUser) {
-          setActiveScreen('admin-dashboard');
-        } else {
-          setActiveScreen('admin-login');
-        }
+        targetScreen = 'contact';
+      } else if (path === '/admin' || path.startsWith('/admin/')) {
+        const parts = path.split('/');
+        const subTab = parts[2];
+        targetScreen = subTab ? 'admin-' + subTab : 'admin-dashboard';
       } else if (path === '/verify-email') {
-        setActiveScreen('verify-email');
+        targetScreen = 'verify-email';
       } else if (path === '/reset-password') {
-        setActiveScreen('reset-password');
+        targetScreen = 'reset-password';
       } else if (path === '/learning') {
-        setActiveScreen('learning');
+        targetScreen = 'learning';
       } else if (path === '/profile') {
-        setActiveScreen('profile');
+        targetScreen = 'profile';
       } else if (path === '/') {
-        setActiveScreen('landing');
+        targetScreen = 'landing';
       } else {
         const screenId = path.substring(1);
-        if (screenId) {
-          setActiveScreen(screenId);
-        } else {
-          setActiveScreen('landing');
-        }
+        targetScreen = screenId || 'landing';
       }
+
+      const storedUser = localStorage.getItem('boma_current_user');
+      const storedAdmin = localStorage.getItem('boma_admin_user');
+      const currentU = storedUser ? JSON.parse(storedUser) : null;
+      const adminU = storedAdmin ? JSON.parse(storedAdmin) : null;
+
+      const resolved = checkAuthAndNavigate(targetScreen, currentU, adminU);
+      setActiveScreen(resolved);
     };
 
     window.addEventListener('popstate', handleUrlChange);
     handleUrlChange();
 
     return () => window.removeEventListener('popstate', handleUrlChange);
-  }, [adminUser]);
+  }, []);
 
   // Determine active shell mode
   const shellMode = SHELL_MODES[activeScreen] || 'marketing';
+  const isAppOrAdmin = shellMode === 'app' || (shellMode === 'admin' && !!adminUser);
+  const isExistingPodFlow = [
+    'pod-create', 'pod-invite', 'pod-member-onboarding', 'pod-review', 'pod-pending'
+  ].includes(activeScreen);
 
   // Dynamic layout wrappers to match index.html styling hierarchy
   let shellFrameClass = "flex-1 w-full flex flex-col md:flex-row relative";
   let mainContentClass = "flex-1 w-full min-h-[500px]";
+  const outerContainerClass = isAppOrAdmin
+    ? "h-screen bg-bg flex flex-col text-ink font-sans overflow-hidden"
+    : "min-h-screen bg-bg flex flex-col text-ink font-sans";
 
-  if (shellMode === 'app' || shellMode === 'admin') {
-    shellFrameClass = "flex-1 w-full max-w-[1180px] mx-auto grid grid-cols-1 md:grid-cols-[236px_1fr] items-start relative";
-    mainContentClass = "flex-1 w-full min-h-[500px]";
+  if (isAppOrAdmin) {
+    shellFrameClass = "flex-1 min-h-0 w-full max-w-[1180px] mx-auto grid grid-cols-1 md:grid-cols-[236px_1fr] items-stretch relative overflow-hidden";
+    mainContentClass = "h-full overflow-y-auto w-full pb-16 px-1";
   } else if (shellMode === 'onboarding') {
-    shellFrameClass = "flex-1 w-full grid grid-cols-1 md:grid-cols-[400px_1fr] items-stretch min-h-[calc(100vh-64px)] relative";
-    mainContentClass = "flex-1 w-full min-h-[500px] flex items-center";
+    if (isExistingPodFlow) {
+      shellFrameClass = "flex-1 w-full mx-auto min-h-[calc(100vh-64px)] relative px-4 md:px-6";
+      mainContentClass = "flex-1 w-full min-h-[500px] py-6";
+    } else {
+      shellFrameClass = "flex-1 w-full grid grid-cols-1 md:grid-cols-[400px_1fr] items-stretch min-h-[calc(100vh-64px)] relative";
+      mainContentClass = "flex-1 w-full min-h-[500px] flex items-center";
+    }
   } else {
     // marketing
     shellFrameClass = "flex-1 w-full relative";
@@ -245,7 +364,12 @@ function App() {
     setVideoModal({ open: true, title, iframeUrl, desc });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Supabase signOut error:", e);
+    }
     setUserOnboarded(false);
     setActivePodId('cedar');
     setPodHistory([]);
@@ -258,7 +382,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col text-ink font-sans">
+    <div className={outerContainerClass}>
 
 
       {/* 2. Main Site Navigation */}
@@ -277,19 +401,17 @@ function App() {
       {/* 3. Core Shell Frame Layout */}
       <div className={shellFrameClass}>
         {/* Render Sidenav if in app/admin shells */}
-        {(shellMode === 'app' || shellMode === 'admin') && (
+        {isAppOrAdmin && (
           <Sidenav
             activeScreen={activeScreen}
             setActiveScreen={navigateTo}
             userOnboarded={userOnboarded}
-            activePodId={activePodId}
-            podData={INITIAL_POD_DATA}
             currentUser={currentUser}
           />
         )}
 
         {/* Render OnbPanel if in onboarding shell */}
-        {shellMode === 'onboarding' && (
+        {shellMode === 'onboarding' && !isExistingPodFlow && (
           <OnbPanel activeScreen={activeScreen} />
         )}
 
@@ -303,6 +425,12 @@ function App() {
             setUserOnboarded={setUserOnboarded}
             registeredEmail={registeredEmail}
             setCurrentUser={setCurrentUser}
+            currentUser={currentUser}
+            showToast={showToast}
+            inviteToken={inviteToken}
+            setInviteToken={setInviteToken}
+            isInvitationFlow={isInvitationFlow}
+            setIsInvitationFlow={setIsInvitationFlow}
           />
 
           <OnboardingScreens
@@ -312,6 +440,7 @@ function App() {
             setUserOnboarded={setUserOnboarded}
             currentUser={currentUser}
             setCurrentUser={setCurrentUser}
+            showToast={showToast}
           />
 
           <AppScreens
@@ -321,13 +450,8 @@ function App() {
             setUserOnboarded={setUserOnboarded}
             currentUser={currentUser}
             setCurrentUser={setCurrentUser}
-            activePodId={activePodId}
-            setActivePodId={setActivePodId}
-            suggestedPodId={suggestedPodId}
-            setSuggestedPodId={setSuggestedPodId}
             podHistory={podHistory}
             setPodHistory={setPodHistory}
-            podData={INITIAL_POD_DATA}
             openVideoModal={handleOpenVideo}
             openWhatsBomaModal={() => setWhatsBomaModalOpen(true)}
             openAgreementDocModal={() => setAgreementDocModalOpen(true)}
@@ -335,6 +459,8 @@ function App() {
             setChatMessages={setChatMessages}
             alignedAgreements={alignedAgreements}
             setAlignedAgreements={setAlignedAgreements}
+            showConfirm={showConfirm}
+            showToast={showToast}
           />
 
           <AdminScreens
@@ -342,9 +468,10 @@ function App() {
             setActiveScreen={navigateTo}
             adminViewPodId={adminViewPodId}
             setAdminViewPodId={setAdminViewPodId}
-            podData={INITIAL_POD_DATA}
             adminUser={adminUser}
             setAdminUser={setAdminUser}
+            showToast={showToast}
+            showConfirm={showConfirm}
           />
         </main>
       </div>
@@ -374,7 +501,31 @@ function App() {
         setRegisteredEmail={setRegisteredEmail}
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
+        showToast={showToast}
+        inviteToken={inviteToken}
+        isInvitationFlow={isInvitationFlow}
       />
+
+      {/* Global Full-Screen Custom Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        type={confirmModal.type}
+      />
+
+      {/* Global Toast Notifications */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(prev => ({ ...prev, show: false }))}
+        />
+      )}
     </div>
   );
 }

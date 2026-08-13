@@ -3,7 +3,7 @@ import React from 'react';
 export default function ResetPasswordScreen({ setActiveScreen }) {
   return (
     <div className="animate-fade py-16 px-4">
-      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left select-none">
+      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left ">
         <h3 className="font-display font-extrabold text-[22px] text-ink mb-5">
           Set a new password
         </h3>

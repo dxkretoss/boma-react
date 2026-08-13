@@ -3,7 +3,7 @@ import React from 'react';
 export default function SignupScreen({ setActiveScreen }) {
   return (
     <div className="animate-fade py-16 px-4">
-      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left select-none">
+      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left ">
         <div className="font-mono text-[10px] uppercase tracking-wider text-amber mb-1.5 font-bold">Create Account</div>
         <h3 className="font-display font-extrabold text-[22px] text-ink mb-5">
           Join BOMA

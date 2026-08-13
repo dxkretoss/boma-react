@@ -69,7 +69,7 @@ export default function ResetPasswordPage({ setActiveScreen }) {
   };
 
   return (
-    <div className="animate-fade py-16 px-6 max-w-[540px] mx-auto text-center select-none">
+    <div className="animate-fade py-16 px-6 max-w-[540px] mx-auto text-center ">
       <div className="w-full bg-white border border-border rounded-2xl p-10 shadow-custom flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-[14px] bg-amber-soft text-amber inline-flex items-center justify-center text-xl mb-4 shadow-sm">
           <Lock className="w-5 h-5" />

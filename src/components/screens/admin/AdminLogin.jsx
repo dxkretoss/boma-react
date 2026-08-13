@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 import { customLogin } from '../../../auth';
 
-export default function AdminLogin({ setActiveScreen, setAdminUser }) {
+export default function AdminLogin({ setActiveScreen, setAdminUser, currentScreen }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +20,12 @@ export default function AdminLogin({ setActiveScreen, setAdminUser }) {
         throw new Error('Access denied. Only the master admin account can access this panel.');
       }
       setAdminUser(user);
-      setActiveScreen('admin-dashboard');
+      localStorage.setItem('boma_admin_user', JSON.stringify(user));
+      if (currentScreen && currentScreen !== 'admin-login') {
+        setActiveScreen(currentScreen);
+      } else {
+        setActiveScreen('admin-dashboard');
+      }
     } catch (err) {
       setError(err.message || 'Incorrect credentials');
     } finally {

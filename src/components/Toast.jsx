@@ -18,7 +18,7 @@ export default function Toast({
   const isSuccess = type === 'success';
 
   const toastContent = (
-    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 bg-white border border-border rounded-xl p-4 shadow-custom-lg select-none min-w-[320px] max-w-[420px] animate-fade">
+    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 bg-white border border-border rounded-xl p-4 shadow-custom-lg  min-w-[320px] max-w-[420px] animate-fade">
       {/* Icon Indicator */}
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
         isSuccess ? 'bg-[#EAFDF8] text-sage' : 'bg-red-50 text-red-600'

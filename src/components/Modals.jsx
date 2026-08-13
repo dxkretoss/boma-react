@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Play, Pause, Download } from 'lucide-react';
 import { customRegister, customLogin, customRequestPasswordReset } from '../auth';
+import { supabase } from '../supabaseClient';
 import Toast from './Toast';
 import Login from './auth/Login';
 import Signup from './auth/Signup';
@@ -21,7 +22,10 @@ export default function Modals({
   registeredEmail,
   setRegisteredEmail,
   currentUser,
-  setCurrentUser
+  setCurrentUser,
+  showToast,
+  inviteToken,
+  isInvitationFlow
 }) {
   // Video mock state
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -70,11 +74,19 @@ export default function Modals({
     setAgreementDocModalOpen(false);
   };
 
-  const loginWithGoogle = () => {
-    closeAuth();
-    setUserOnboarded(true);
-    if (updateOnboardUI) updateOnboardUI(true);
-    setActiveScreen('profile');
+  const loginWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/profile'
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Google login failed:', err);
+      setToast({ show: true, message: err.message || 'Google Auth failed.', type: 'error' });
+    }
   };
 
   const handleLogin = async (e) => {
@@ -95,13 +107,18 @@ export default function Modals({
       setTimeout(() => {
         closeAuth();
         setCurrentUser(user);
+        localStorage.setItem('boma_current_user', JSON.stringify(user));
         setUserOnboarded(user.user_onboarded || false);
         if (updateOnboardUI) updateOnboardUI(user.user_onboarded || false);
 
         if (user.role === 'admin') {
           setActiveScreen('admin-dashboard');
         } else {
-          setActiveScreen('profile');
+          if (inviteToken && isInvitationFlow) {
+            setActiveScreen('join-pod');
+          } else {
+            setActiveScreen('profile');
+          }
         }
 
         setLoginEmail('');
@@ -125,8 +142,8 @@ export default function Modals({
       setToast({ show: true, message: 'Please enter a valid email address.', type: 'error' });
       return;
     }
-    if (signupPassword.length < 6) {
-      setToast({ show: true, message: 'Password must be at least 6 characters.', type: 'error' });
+    if (signupPassword.length < 8) {
+      setToast({ show: true, message: 'Password must be at least 8 characters.', type: 'error' });
       return;
     }
     if (signupPassword !== signupConfirmPassword) {
@@ -186,7 +203,7 @@ export default function Modals({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[920px]  overflow-hidden grid grid-cols-1 md:grid-cols-2 relative shadow-custom-lg select-none"
+            className="bg-white rounded-2xl w-full max-w-[920px]  overflow-hidden grid grid-cols-1 md:grid-cols-2 relative shadow-custom-lg "
           >
             {/* Close Button */}
             <button
@@ -231,11 +248,9 @@ export default function Modals({
                   "We found three families who wanted exactly what we wanted, in six weeks."
                 </p>
                 <div className="flex items-center gap-2.5">
-                  <img
-                    src="https://i.pravatar.cc/100?img=12"
-                    className="w-7 h-7 rounded-full object-cover border border-white/10"
-                    alt="Sam Rivera"
-                  />
+                  <div className="w-7 h-7 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[9px] font-display border border-white/10 flex-shrink-0">
+                    S
+                  </div>
                   <div>
                     <b className="block text-white text-[11.5px]">Sam Rivera</b>
                     <span className="text-[10.5px] text-[#7F92B0] font-medium">Cedar Grove Pod</span>
@@ -307,7 +322,7 @@ export default function Modals({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-navy-deep border border-white/10 rounded-2xl w-full max-w-[760px] p-6 text-white shadow-custom-lg relative select-none"
+            className="bg-navy-deep border border-white/10 rounded-2xl w-full max-w-[760px] p-6 text-white shadow-custom-lg relative "
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
@@ -390,7 +405,7 @@ export default function Modals({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[680px] p-8 border border-border shadow-custom-lg relative select-none"
+            className="bg-white rounded-2xl w-full max-w-[680px] p-8 border border-border shadow-custom-lg relative "
           >
             {/* Close Button */}
             <button
@@ -445,7 +460,7 @@ export default function Modals({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[660px] p-8 border border-border shadow-custom-lg relative select-none"
+            className="bg-white rounded-2xl w-full max-w-[660px] p-8 border border-border shadow-custom-lg relative "
           >
             {/* Close Button */}
             <button
@@ -504,7 +519,7 @@ export default function Modals({
             {/* Footer Buttons */}
             <div className="flex gap-3.5 flex-wrap sm:flex-nowrap">
               <button
-                onClick={() => alert('Exporting Cedar_Grove_Pod_Agreement.pdf (demo)')}
+                onClick={() => showToast('Exporting Cedar_Grove_Pod_Agreement.pdf... (demo)', 'success')}
                 className="flex-1 flex items-center justify-center gap-2 bg-amber text-white rounded-lg px-4 py-2.5 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
               >
                 <Download className="w-4 h-4" /> Download Document (.PDF)

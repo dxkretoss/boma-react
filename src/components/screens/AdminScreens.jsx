@@ -5,6 +5,7 @@ import AdminLogin from './admin/AdminLogin';
 import AdminDashboard from './admin/AdminDashboard';
 import AdminUsers from './admin/AdminUsers';
 import AdminMatching from './admin/AdminMatching';
+import AdminQuestions from './admin/AdminQuestions';
 import AdminPodReview from './admin/AdminPodReview';
 import AdminPodManagement from './admin/AdminPodManagement';
 import AdminPodDetail from './admin/AdminPodDetail';
@@ -15,9 +16,10 @@ export default function AdminScreens({
   setActiveScreen,
   adminViewPodId,
   setAdminViewPodId,
-  podData,
   adminUser,
-  setAdminUser
+  setAdminUser,
+  showToast,
+  showConfirm
 }) {
 
   // Matching Engine weight states
@@ -28,7 +30,7 @@ export default function AdminScreens({
 
   if (![
     'admin-login', 'admin-dashboard', 'admin-users', 'admin-matching', 'admin-pod-review',
-    'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue'
+    'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue', 'admin-questions'
   ].includes(activeScreen)) {
     return null;
   }
@@ -39,6 +41,7 @@ export default function AdminScreens({
       <AdminLogin 
         setActiveScreen={setActiveScreen} 
         setAdminUser={setAdminUser} 
+        currentScreen={activeScreen}
       />
     );
   }
@@ -54,6 +57,7 @@ export default function AdminScreens({
         <AdminLogin
           setActiveScreen={setActiveScreen}
           setAdminUser={setAdminUser}
+          currentScreen={activeScreen}
         />
       )}
       {activeScreen === 'admin-dashboard' && (
@@ -61,11 +65,10 @@ export default function AdminScreens({
           adminUser={adminUser}
           setActiveScreen={setActiveScreen}
           handleViewAdminPod={handleViewAdminPod}
-          podData={podData}
         />
       )}
       {activeScreen === 'admin-users' && (
-        <AdminUsers setActiveScreen={setActiveScreen} />
+        <AdminUsers setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} />
       )}
       {activeScreen === 'admin-matching' && (
         <AdminMatching
@@ -80,20 +83,25 @@ export default function AdminScreens({
           setActiveScreen={setActiveScreen}
         />
       )}
+      {activeScreen === 'admin-questions' && (
+        <AdminQuestions setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} showConfirm={showConfirm} />
+      )}
       {activeScreen === 'admin-pod-review' && (
-        <AdminPodReview setActiveScreen={setActiveScreen} />
+        <AdminPodReview setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} showConfirm={showConfirm} />
       )}
       {activeScreen === 'admin-pod-management' && (
         <AdminPodManagement
           setActiveScreen={setActiveScreen}
           handleViewAdminPod={handleViewAdminPod}
+          adminUser={adminUser}
+          showToast={showToast}
+          showConfirm={showConfirm}
         />
       )}
       {activeScreen === 'admin-pod-detail' && (
         <AdminPodDetail
           setActiveScreen={setActiveScreen}
           adminViewPodId={adminViewPodId}
-          podData={podData}
         />
       )}
       {activeScreen === 'admin-existing-pod-queue' && (

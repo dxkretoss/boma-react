@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingIntent({ housingIntent, setHousingIntent, setActiveScreen, stepProgressBar }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 6 of 9 — Primary Housing Intent
           </div>
@@ -29,7 +29,7 @@ export default function OnboardingIntent({ housingIntent, setHousingIntent, setA
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="flex flex-col leading-tight select-none">
+                <div className="flex flex-col leading-tight ">
                   <span className="text-[13.5px] font-extrabold text-ink mb-1">{opt.label}</span>
                   <span className="text-[11px] text-ink-dim font-medium">{opt.sub}</span>
                 </div>

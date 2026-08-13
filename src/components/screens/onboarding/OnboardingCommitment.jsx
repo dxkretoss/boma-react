@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingCommitment({ commitmentTimeline, setCommitmentTimeline, setActiveScreen, stepProgressBar }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 7 of 9 — Commitment Duration
           </div>
@@ -29,7 +29,7 @@ export default function OnboardingCommitment({ commitmentTimeline, setCommitment
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="text-[13px] font-extrabold text-ink leading-tight select-none">
+                <div className="text-[13px] font-extrabold text-ink leading-tight ">
                   {opt.label}
                 </div>
               </div>

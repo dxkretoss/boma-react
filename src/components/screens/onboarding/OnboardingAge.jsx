@@ -16,7 +16,7 @@ export default function OnboardingAge({ ageGroup, handleAgeSelect, setActiveScre
             BOMA adapts its communication style and question examples to align with your generation's life stage, while keeping scoring identical.
           </p>
           
-          <div className="flex flex-col gap-3.5 select-none">
+          <div className="flex flex-col gap-3.5 ">
             {[
               { label: '18–30 years', desc: 'Gen Z / Millennials • Nomads, Professionals & Creators' },
               { label: '31–60 years', desc: 'Gen X / Millennials • Families, Builders & Professionals' },

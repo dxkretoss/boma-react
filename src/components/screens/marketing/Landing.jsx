@@ -48,7 +48,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
       </div>
 
       {/* Three Stages */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-[18px] mx-8 mb-5 relative select-none">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[18px] mx-8 mb-5 relative ">
         {/* Stage 1 */}
         <div className="border border-border rounded-custom p-6 bg-panel shadow-custom flex flex-col relative text-left">
           <div className="w-[42px] h-[42px] rounded-xl bg-teal-soft flex items-center justify-center mb-3.5">
@@ -109,7 +109,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <circle cx="6" cy="6" r="3" fill="#0E4C8C" />
                   <circle cx="14" cy="6" r="3" fill="#0E4C8C" />
-                  <path d="M2 17c0-3 2-5 4-5s4 2 4 5M10 17c0-3 2-5 4-5s4 2 4 5" stroke="#0E4C8C" stroke-width="1.6" fill="none" />
+                  <path d="M2 17c0-3 2-5 4-5s4 2 4 5M10 17c0-3 2-5 4-5s4 2 4 5" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">Real alignment, not luck</h4>
@@ -123,7 +123,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               <div className="w-11 h-11 rounded-xl bg-teal-soft flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <rect x="3" y="8" width="14" height="9" rx="2" fill="#0E4C8C" />
-                  <path d="M6 8V6a4 4 0 018 0v2" stroke="#0E4C8C" stroke-width="1.6" fill="none" />
+                  <path d="M6 8V6a4 4 0 018 0v2" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">Trust before commitment</h4>
@@ -136,8 +136,8 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
             <div className="flex flex-col p-2 text-left">
               <div className="w-11 h-11 rounded-xl bg-teal-soft flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 17V9l6-5 6 5v8" stroke="#0E4C8C" stroke-width="1.6" fill="none" stroke-linejoin="round" />
-                  <path d="M8 17v-5h4v5" stroke="#0E4C8C" stroke-width="1.6" fill="none" />
+                  <path d="M4 17V9l6-5 6 5v8" stroke="#0E4C8C" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
+                  <path d="M8 17v-5h4v5" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">A path already built for groups</h4>
@@ -150,7 +150,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
       </div>
 
       {/* Photo Band (Parallax Banner Style) */}
-      <div className="relative w-full rounded-2xl overflow-hidden h-[380px] mb-16 shadow-custom-lg max-w-[1180px] mx-auto border border-border/5 select-none">
+      <div className="relative w-full rounded-2xl overflow-hidden h-[380px] mb-16 shadow-custom-lg max-w-[1180px] mx-auto border border-border/5 ">
         <img src="/assets/commons_gathering.png" className="w-full h-full object-cover" alt="Community gathering" />
         <div className="absolute inset-0 bg-gradient-to-r from-navy-deep/90 via-navy-deep/60 to-transparent p-8 md:p-12 flex items-center text-left">
           <div className="max-w-[480px] text-white">
@@ -210,7 +210,9 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <img src="https://i.pravatar.cc/100?img=12" className="w-10 h-10 rounded-full object-cover border border-border" alt="Member portrait" />
+              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
+                S
+              </div>
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Sam Rivera</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">Cedar Grove Pod, Austin TX</span>
@@ -226,7 +228,9 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <img src="https://i.pravatar.cc/100?img=47" className="w-10 h-10 rounded-full object-cover border border-border" alt="Member portrait" />
+              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
+                M
+              </div>
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Morgan Chen</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">Cedar Grove Pod, Austin TX</span>
@@ -242,7 +246,9 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <img src="https://i.pravatar.cc/100?img=33" className="w-10 h-10 rounded-full object-cover border border-border" alt="Member portrait" />
+              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
+                T
+              </div>
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Taylor Kim</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">The Fourplex Founders</span>
@@ -253,7 +259,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
       </div>
 
       {/* Founding Thesis Banner */}
-      <div className="max-w-[1180px] mx-auto px-6 md:px-8 py-16 text-center select-none text-white rounded-2xl shadow-custom-lg mb-16 border border-white/5"
+      <div className="max-w-[1180px] mx-auto px-6 md:px-8 py-16 text-center  text-white rounded-2xl shadow-custom-lg mb-16 border border-white/5"
         style={{
           background: `linear-gradient(rgba(37, 99, 235, 0.85), rgba(37, 99, 235, 0.85)), url('/assets/quote_bg.png') center/cover no-repeat`
         }}
@@ -296,7 +302,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
             <div key={idx} className="border border-border rounded-xl overflow-hidden bg-white shadow-custom">
               <div
                 onClick={() => toggleFaq(idx)}
-                className="flex justify-between items-center px-5 py-4 font-bold text-[15px] text-ink cursor-pointer hover:bg-panel-alt/50 select-none transition-colors"
+                className="flex justify-between items-center px-5 py-4 font-bold text-[15px] text-ink cursor-pointer hover:bg-panel-alt/50  transition-colors"
               >
                 <span>{faq.q}</span>
                 <span className={`transform transition-transform duration-200 ${openFaq === idx ? 'rotate-180' : ''}`}>
@@ -314,7 +320,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
       </div>
 
       {/* CTA Section Bottom */}
-      <div className="py-16 px-6 md:px-8 text-center max-w-[800px] mx-auto border border-border rounded-2xl bg-white shadow-custom mb-16 select-none">
+      <div className="py-16 px-6 md:px-8 text-center max-w-[800px] mx-auto border border-border rounded-2xl bg-white shadow-custom mb-16 ">
         <h2 className="font-display text-3xl font-extrabold text-ink mb-8">Ready to find your people?</h2>
         <div className="flex items-center gap-3.5 justify-center flex-wrap">
           <button

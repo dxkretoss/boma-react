@@ -8,6 +8,7 @@ import LoginScreen from './marketing/LoginScreen';
 import ForgotPasswordScreen from './marketing/ForgotPasswordScreen';
 import ResetPasswordPage from './marketing/ResetPasswordPage';
 import VerifyEmail from './marketing/VerifyEmail';
+import JoinPod from './onboarding/JoinPod';
 
 export default function MarketingScreens({
   activeScreen,
@@ -16,7 +17,13 @@ export default function MarketingScreens({
   userOnboarded,
   setUserOnboarded,
   registeredEmail,
-  setCurrentUser
+  setCurrentUser,
+  currentUser,
+  showToast,
+  inviteToken,
+  setInviteToken,
+  isInvitationFlow,
+  setIsInvitationFlow
 }) {
   if (![
     'landing', 
@@ -27,7 +34,8 @@ export default function MarketingScreens({
     'login', 
     'forgot-password', 
     'reset-password', 
-    'verify-email'
+    'verify-email',
+    'join-pod'
   ].includes(activeScreen)) {
     return null;
   }
@@ -47,7 +55,7 @@ export default function MarketingScreens({
       )}
 
       {activeScreen === 'contact' && (
-        <Contact setActiveScreen={setActiveScreen} />
+        <Contact setActiveScreen={setActiveScreen} showToast={showToast} />
       )}
 
       {activeScreen === 'signup' && (
@@ -55,7 +63,13 @@ export default function MarketingScreens({
       )}
 
       {activeScreen === 'login' && (
-        <LoginScreen setActiveScreen={setActiveScreen} setUserOnboarded={setUserOnboarded} setCurrentUser={setCurrentUser} />
+        <LoginScreen 
+          setActiveScreen={setActiveScreen} 
+          setUserOnboarded={setUserOnboarded} 
+          setCurrentUser={setCurrentUser}
+          inviteToken={inviteToken}
+          isInvitationFlow={isInvitationFlow}
+        />
       )}
 
       {activeScreen === 'forgot-password' && (
@@ -67,7 +81,26 @@ export default function MarketingScreens({
       )}
 
       {activeScreen === 'verify-email' && (
-        <VerifyEmail registeredEmail={registeredEmail} setActiveScreen={setActiveScreen} setCurrentUser={setCurrentUser} />
+        <VerifyEmail 
+          registeredEmail={registeredEmail} 
+          setActiveScreen={setActiveScreen} 
+          setCurrentUser={setCurrentUser}
+          inviteToken={inviteToken}
+          isInvitationFlow={isInvitationFlow}
+        />
+      )}
+
+      {activeScreen === 'join-pod' && (
+        <JoinPod 
+          setActiveScreen={setActiveScreen} 
+          currentUser={currentUser} 
+          setCurrentUser={setCurrentUser} 
+          openAuthModal={openAuthModal}
+          inviteToken={inviteToken}
+          setInviteToken={setInviteToken}
+          isInvitationFlow={isInvitationFlow}
+          setIsInvitationFlow={setIsInvitationFlow}
+        />
       )}
     </div>
   );

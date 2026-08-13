@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function PodPending({ setActiveScreen }) {
   return (
-    <div className="max-w-[480px] mx-auto text-center select-none py-10">
+    <div className="max-w-[480px] mx-auto text-center  py-10">
           <div className="w-full bg-white border border-border rounded-2xl p-10 shadow-custom flex flex-col items-center">
             <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-semibold">Under Review</div>
             

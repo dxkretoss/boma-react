@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PodMemberOnboarding({ setActiveScreen }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="w-full bg-white border border-border rounded-2xl p-8 shadow-custom">
             <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
               Short Onboarding — For Existing Pod Members

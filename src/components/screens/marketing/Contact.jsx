@@ -1,9 +1,9 @@
 import React from 'react';
 
-export default function Contact({ setActiveScreen }) {
+export default function Contact({ setActiveScreen, showToast }) {
   return (
     <div className="animate-fade py-16 px-4">
-      <div className="max-w-[480px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left select-none">
+      <div className="max-w-[480px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left ">
         <h3 className="font-display font-extrabold text-[22px] text-ink mb-6">
           Contact BOMA
         </h3>
@@ -24,7 +24,7 @@ export default function Contact({ setActiveScreen }) {
         </div>
 
         <button
-          onClick={() => { alert('Message sent (demo)'); setActiveScreen('landing'); }}
+          onClick={() => { showToast('Message sent! (demo)', 'success'); setActiveScreen('landing'); }}
           className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md"
         >
           Send message

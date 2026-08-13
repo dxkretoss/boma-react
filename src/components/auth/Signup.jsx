@@ -58,7 +58,7 @@ export default function Signup({
         <span>Sign up with Google</span>
       </button>
 
-      <div className="flex items-center gap-3 mb-5 select-none">
+      <div className="flex items-center gap-3 mb-5 ">
         <div className="flex-1 h-[1px] bg-border"></div>
         <span className="text-[10.5px] text-ink-dim font-semibold uppercase tracking-wider">
           or sign up with email

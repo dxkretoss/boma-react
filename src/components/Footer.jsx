@@ -6,7 +6,7 @@ export default function Footer({
   userOnboarded 
 }) {
   return (
-    <footer className="bg-navy-deep text-white px-6 md:px-8 py-16 mt-auto select-none w-full">
+    <footer className="bg-navy-deep text-white px-6 md:px-8 py-16 mt-auto  w-full">
       <div className="max-w-[1180px] mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 md:gap-12 border-b border-white/10 pb-12">
         {/* Brand Column */}
         <div className="sm:col-span-2 flex flex-col">

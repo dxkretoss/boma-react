@@ -71,6 +71,7 @@ const SIDENAV_CONFIG = {
       { id: 'admin-dashboard', label: 'Dashboard', icon: 'home' },
       { id: 'admin-users', label: 'Users', icon: 'users' },
       { id: 'admin-matching', label: 'Matching Engine', icon: 'gauge' },
+      { id: 'admin-questions', label: 'Questions', icon: 'edit' },
       { id: 'admin-pod-review', label: 'Pod Review', icon: 'spark' },
       { id: 'admin-pod-management', label: 'Pods', icon: 'doc' },
       { id: 'admin-existing-pod-queue', label: 'Existing Pod Queue', icon: 'list' }
@@ -82,8 +83,6 @@ export default function Sidenav({
   activeScreen,
   setActiveScreen,
   userOnboarded,
-  activePodId,
-  podData,
   currentUser
 }) {
   // Determine which section we are in
@@ -101,16 +100,17 @@ export default function Sidenav({
 
   if (!cfg) return null;
 
-  const currentPod = podData[activePodId];
-
   return (
-    <aside className="w-full md:w-[236px] p-3 md:p-6 border-b md:border-b-0 md:border-r border-border  flex-shrink-0 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible whitespace-nowrap md:whitespace-normal gap-1.5 md:gap-0 select-none md:sticky md:top-24 h-fit">
+    <aside className="w-full md:w-[236px] p-3 md:p-6 border-b md:border-b-0 md:border-r border-border flex-shrink-0 flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto whitespace-nowrap md:whitespace-normal gap-1.5 md:gap-0 md:h-full pb-8">
       <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mb-4.5 font-semibold hidden md:block">
         {cfg.title}
       </div>
 
       <nav className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial">
-        {cfg.items.map(item => {
+        {(sectionKey === 'matching' && currentUser?.matching_status !== 'POD_ASSIGNED'
+          ? cfg.items.filter(item => item.id === 'matching-status')
+          : cfg.items
+        ).map(item => {
           const Icon = ICON_MAP[item.icon];
           const isActive = item.id === activeScreen;
           return (
@@ -118,8 +118,8 @@ export default function Sidenav({
               key={item.id}
               onClick={() => setActiveScreen(item.id)}
               className={`flex items-center gap-3 px-3.5 py-2 md:py-2.5 rounded-lg text-[13.5px] font-semibold transition-all duration-120 cursor-pointer text-left flex-shrink-0 ${isActive
-                  ? 'bg-teal-soft text-teal'
-                  : 'text-ink-dim hover:bg-panel-alt hover:text-ink'
+                ? 'bg-teal-soft text-teal'
+                : 'text-ink-dim hover:bg-panel-alt hover:text-ink'
                 }`}
             >
               {Icon && <Icon className="w-[16px] h-[16px] flex-shrink-0" />}
@@ -128,41 +128,6 @@ export default function Sidenav({
           );
         })}
       </nav>
-
-      {/* Pod Card shown in Commons sidebar if onboarded & active in a Pod */}
-      {sectionKey === 'commons' && userOnboarded && currentPod && (
-        <div className="border border-border rounded-custom p-4 bg-white mt-auto shadow-custom flex flex-col gap-3 hidden md:flex">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-ink-dim">
-            Your Pod
-          </div>
-
-          <div className="flex -space-x-2 overflow-hidden">
-            {currentPod.members.map((m, idx) => (
-              <img
-                key={idx}
-                src={`https://i.pravatar.cc/60?img=${m.img}`}
-                className="inline-block w-8 h-8 rounded-full ring-2 ring-white object-cover"
-                alt={m.name}
-              />
-            ))}
-            {currentUser?.avatar_url ? (
-              <img
-                src={currentUser.avatar_url}
-                className="inline-block w-8 h-8 rounded-full ring-2 ring-white object-cover"
-                alt={currentUser.name || 'User'}
-              />
-            ) : (
-              <div className="inline-block w-8 h-8 rounded-full ring-2 ring-white bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[10px] font-display flex-shrink-0">
-                {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div className="font-display font-bold text-sm text-ink leading-tight">
-            {currentPod.name}
-          </div>
-        </div>
-      )}
     </aside>
   );
 }

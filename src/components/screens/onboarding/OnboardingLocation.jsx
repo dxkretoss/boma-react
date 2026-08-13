@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingLocation({ locationCity, setLocationCity, locationRadius, setLocationRadius, settingPreference, setSettingPreference, setActiveScreen, stepProgressBar }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 4 of 9 — Location
           </div>
@@ -18,8 +18,37 @@ export default function OnboardingLocation({ locationCity, setLocationCity, loca
               value={locationCity}
               onChange={(e) => setLocationCity(e.target.value)}
               placeholder="e.g. Austin, TX" 
+              list="us-cities"
               className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
             />
+            <datalist id="us-cities">
+              <option value="Austin, TX" />
+              <option value="Atlanta, GA" />
+              <option value="Boston, MA" />
+              <option value="Charlotte, NC" />
+              <option value="Chicago, IL" />
+              <option value="Dallas, TX" />
+              <option value="Denver, CO" />
+              <option value="Detroit, MI" />
+              <option value="Houston, TX" />
+              <option value="Las Vegas, NV" />
+              <option value="Los Angeles, CA" />
+              <option value="Miami, FL" />
+              <option value="Minneapolis, MN" />
+              <option value="Nashville, TN" />
+              <option value="New York, NY" />
+              <option value="Orlando, FL" />
+              <option value="Philadelphia, PA" />
+              <option value="Phoenix, AZ" />
+              <option value="Portland, OR" />
+              <option value="Salt Lake City, UT" />
+              <option value="San Antonio, TX" />
+              <option value="San Diego, CA" />
+              <option value="San Francisco, CA" />
+              <option value="Seattle, WA" />
+              <option value="Tampa, FL" />
+              <option value="Washington, DC" />
+            </datalist>
           </div>
 
           <div className="mb-6 flex flex-col">
@@ -57,7 +86,7 @@ export default function OnboardingLocation({ locationCity, setLocationCity, loca
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="text-[13px] font-extrabold text-ink leading-tight select-none uppercase tracking-wide">
+                <div className="text-[13px] font-extrabold text-ink leading-tight  uppercase tracking-wide">
                   {opt.label}
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaymentTier, setDownPaymentTier, financingPreference, setFinancingPreference, setActiveScreen, stepProgressBar }) {
   return (
-    <div className="max-w-[660px] mx-auto select-none">
+    <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
             Step 5 of 9 — Budget &amp; Financing Readiness
           </div>
@@ -38,7 +38,7 @@ export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaym
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="text-[12.5px] font-extrabold text-ink leading-tight select-none">
+                <div className="text-[12.5px] font-extrabold text-ink leading-tight ">
                   {opt}
                 </div>
               </div>
@@ -66,7 +66,7 @@ export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaym
                     : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
                 }`}
               >
-                <div className="text-[11.5px] font-extrabold text-ink leading-tight select-none">
+                <div className="text-[11.5px] font-extrabold text-ink leading-tight ">
                   {opt.label}
                 </div>
               </div>

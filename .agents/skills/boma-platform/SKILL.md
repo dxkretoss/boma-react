@@ -461,6 +461,35 @@ Pre-flight findings:
 
 ---
 
+## Rule 11 — Native Browser Dialogs Prohibited (MANDATORY)
+
+**Never use native browser dialogs like `alert()`, `confirm()`, or `prompt()`.** All user alerts, success confirmations, and error notifications must use the platform's high-fidelity UI overlay components.
+
+### Why
+
+- Native browser popups block execution, cannot be styled, and look extremely unpolished, breaking the premium feel.
+- Global, animated, and styled components keep BOMA's design system consistent.
+
+### How
+
+1. **For confirmations (Yes/No actions)**: Pass the `showConfirm` function prop (configured at the root `App.jsx` level) to invoke the animated `<ConfirmModal>`.
+   ```js
+   showConfirm(
+     'Exit Pod Group',
+     'Are you sure you want to leave this Pod? You will be returned to the matching pool.',
+     leavePod,
+     'danger',
+     'Leave Pod'
+   );
+   ```
+2. **For notifications & errors**: Pass the `showToast` function prop to trigger the overlay `<Toast>` notification at the bottom-right of the viewport.
+   ```js
+   showToast('Pod dissolved successfully!', 'success');
+   showToast('Failed to delete pod: ' + err.message);
+   ```
+
+---
+
 ## Checklist — Run Before Every PR / Commit
 
 - [ ] No `import { supabase }` in any component/screen file.
@@ -473,3 +502,5 @@ Pre-flight findings:
 - [ ] Hover states on all interactive elements.
 - [ ] Lucide icons used (no random SVG libraries).
 - [ ] `navigateTo` used for screen changes, not raw `setActiveScreen`.
+- [ ] **No native `alert()`, `confirm()`, or `prompt()` calls anywhere in the codebase.**
+- [ ] **All user alerts and notifications use the `showToast` or `showConfirm` overlay systems.**

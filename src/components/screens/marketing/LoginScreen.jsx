@@ -3,7 +3,13 @@ import { Eye, EyeOff } from 'lucide-react';
 import { customLogin } from '../../../auth';
 import Toast from '../../Toast';
 
-export default function LoginScreen({ setActiveScreen, setUserOnboarded, setCurrentUser }) {
+export default function LoginScreen({ 
+  setActiveScreen, 
+  setUserOnboarded, 
+  setCurrentUser,
+  inviteToken,
+  isInvitationFlow
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +31,7 @@ export default function LoginScreen({ setActiveScreen, setUserOnboarded, setCurr
       }
       setToast({ show: true, message: `Welcome back, ${user.name}!`, type: 'success' });
       
+      localStorage.setItem('boma_current_user', JSON.stringify(user));
       if (setCurrentUser) {
         setCurrentUser(user);
       }
@@ -33,7 +40,11 @@ export default function LoginScreen({ setActiveScreen, setUserOnboarded, setCurr
       }
       
       setTimeout(() => {
-        setActiveScreen('profile');
+        if (inviteToken && isInvitationFlow) {
+          setActiveScreen('join-pod');
+        } else {
+          setActiveScreen('profile');
+        }
         setEmail('');
         setPassword('');
       }, 1500);
@@ -46,7 +57,7 @@ export default function LoginScreen({ setActiveScreen, setUserOnboarded, setCurr
 
   return (
     <div className="animate-fade py-16 px-4">
-      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left select-none">
+      <div className="max-w-[440px] mx-auto p-8 border border-border rounded-2xl bg-white shadow-custom flex flex-col text-left ">
         <div className="font-mono text-[10px] uppercase tracking-wider text-amber mb-1.5 font-bold">Welcome Back</div>
         <h3 className="font-display font-extrabold text-[22px] text-ink mb-5">
           Log in to BOMA

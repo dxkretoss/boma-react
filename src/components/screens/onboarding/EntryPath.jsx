@@ -1,7 +1,22 @@
 import React from 'react';
-import { ArrowLeft, Star } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { updateUser } from '../../../api/users';
 
-export default function EntryPath({ setActiveScreen }) {
+export default function EntryPath({ setActiveScreen, currentUser, setCurrentUser }) {
+  const handleSelectMatchingPool = async () => {
+    if (currentUser?.id) {
+      try {
+        const updatedUser = await updateUser(currentUser.id, { entry_path: 'MATCHING_POOL' });
+        if (setCurrentUser) {
+          setCurrentUser(updatedUser);
+        }
+      } catch (err) {
+        console.error('Error saving entry path:', err);
+      }
+    }
+    setActiveScreen('onboarding-welcome');
+  };
+
   return (
     <div className="w-full">
           <div className="flex justify-between items-start flex-wrap gap-4 mb-7 border-b border-border pb-6">
@@ -26,7 +41,7 @@ export default function EntryPath({ setActiveScreen }) {
                 </p>
               </div>
               <button 
-                onClick={() => setActiveScreen('onboarding-welcome')}
+                onClick={handleSelectMatchingPool}
                 className="bg-amber text-white font-bold text-sm px-5 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer w-fit"
               >
                 Join the Matching Pool

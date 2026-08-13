@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { customResendVerification, customVerifyEmail } from '../../../auth';
 import Toast from '../../Toast';
 
-export default function VerifyEmail({ setActiveScreen, registeredEmail, setCurrentUser }) {
+export default function VerifyEmail({ 
+  setActiveScreen, 
+  registeredEmail, 
+  setCurrentUser,
+  inviteToken,
+  isInvitationFlow
+}) {
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -39,11 +45,16 @@ export default function VerifyEmail({ setActiveScreen, registeredEmail, setCurre
     try {
       const user = await customVerifyEmail(registeredEmail, verificationCode);
       setToast({ show: true, message: 'Email verified successfully!', type: 'success' });
+      localStorage.setItem('boma_current_user', JSON.stringify(user));
       if (setCurrentUser) {
         setCurrentUser(user);
       }
       setTimeout(() => {
-        setActiveScreen('learning');
+        if (inviteToken && isInvitationFlow) {
+          setActiveScreen('join-pod');
+        } else {
+          setActiveScreen('learning');
+        }
       }, 1500);
     } catch (err) {
       setToast({ show: true, message: err.message || 'Verification failed.', type: 'error' });
@@ -53,7 +64,7 @@ export default function VerifyEmail({ setActiveScreen, registeredEmail, setCurre
   };
 
   return (
-    <div className="animate-fade py-16 px-6 max-w-[800px] mx-auto text-center select-none">
+    <div className="animate-fade py-16 px-6 max-w-[800px] mx-auto text-center ">
       <div className="w-full bg-white border border-border rounded-2xl p-12 shadow-custom flex flex-col items-center justify-center">
         <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-semibold">One More Step</div>
         <h1 className="font-display text-[28px] font-extrabold text-ink mb-3">Check your inbox</h1>
