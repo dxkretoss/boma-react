@@ -302,6 +302,7 @@ function App() {
             userOnboarded={userOnboarded}
             setUserOnboarded={setUserOnboarded}
             registeredEmail={registeredEmail}
+            setCurrentUser={setCurrentUser}
           />
 
           <OnboardingScreens
@@ -309,6 +310,8 @@ function App() {
             setActiveScreen={navigateTo}
             userOnboarded={userOnboarded}
             setUserOnboarded={setUserOnboarded}
+            currentUser={currentUser}
+            setCurrentUser={setCurrentUser}
           />
 
           <AppScreens

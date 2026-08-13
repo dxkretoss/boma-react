@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { updateOnboarding } from '../../auth';
 
 // Import split onboarding steps
 import EntryPath from './onboarding/EntryPath';
@@ -24,7 +25,9 @@ export default function OnboardingScreens({
   setActiveScreen,
   userOnboarded,
   setUserOnboarded,
-  updateOnboardUI
+  updateOnboardUI,
+  currentUser,
+  setCurrentUser
 }) {
   // Onboarding responses state
   const [ageGroup, setAgeGroup] = useState('31–60 years');
@@ -68,7 +71,32 @@ export default function OnboardingScreens({
     setActiveScreen('onboarding-lifestyle');
   };
 
-  const submitOnboarding = () => {
+  const submitOnboarding = async () => {
+    if (currentUser?.id) {
+      try {
+        const updatedUser = await updateOnboarding(currentUser.id, {
+          ageGroup,
+          selectedLifestyles,
+          decisionStyle,
+          podSize,
+          locationCity,
+          locationRadius: locationRadius + ' miles',
+          settingPreference,
+          budgetRange,
+          downPaymentTier,
+          financingPreference,
+          housingIntent,
+          commitmentTimeline,
+          readinessScore: 82
+        });
+        if (setCurrentUser) {
+          setCurrentUser(updatedUser);
+        }
+      } catch (err) {
+        console.error('Error saving onboarding data:', err);
+      }
+    }
+
     setUserOnboarded(true);
     if (updateOnboardUI) {
       updateOnboardUI(true);

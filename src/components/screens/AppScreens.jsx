@@ -16,6 +16,7 @@ import {
   Play
 } from 'lucide-react';
 import { GATED_SCREENS } from '../../constants/screens';
+import { updateUser } from '../../api/users';
 
 function SearchIcon(props) {
   return (
@@ -145,6 +146,21 @@ export default function AppScreens({
   const [editCity, setEditCity] = useState('Austin, TX');
   const [editSetting, setEditSetting] = useState('Suburban');
   const [editIntent, setEditIntent] = useState('Purchase primary residence');
+
+  useEffect(() => {
+    if (currentUser) {
+      setEditCity(currentUser.location_city || 'Austin, TX');
+      setEditSetting(currentUser.setting_preference ? (currentUser.setting_preference.charAt(0).toUpperCase() + currentUser.setting_preference.slice(1)) : 'Suburban');
+      
+      let intentLabel = 'Purchase primary residence';
+      if (currentUser.housing_intent === 'co-develop') {
+        intentLabel = 'Co-develop property';
+      } else if (currentUser.housing_intent === 'investment') {
+        intentLabel = 'Investment hold';
+      }
+      setEditIntent(intentLabel);
+    }
+  }, [currentUser]);
 
   // Local chat message state
   const [chatInput, setChatInput] = useState('');
@@ -549,15 +565,15 @@ export default function AppScreens({
                     <ul className="list-none p-0 m-0 mt-2.5">
                       <li className="flex items-start gap-2.5 py-[11px] border-b border-border text-[13.5px] text-ink font-medium">
                         <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                        <span>Austin, TX · Suburban setting</span>
+                        <span>{currentUser?.location_city || 'Austin, TX'} · {currentUser?.setting_preference ? (currentUser.setting_preference.charAt(0).toUpperCase() + currentUser.setting_preference.slice(1)) : 'Suburban'} setting</span>
                       </li>
                       <li className="flex items-start gap-2.5 py-[11px] border-b border-border text-[13.5px] text-ink font-medium">
                         <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                        <span>Purchase primary residence</span>
+                        <span>{currentUser?.housing_intent === 'purchase' || currentUser?.housing_intent === 'purchase-primary' ? 'Purchase primary residence' : currentUser?.housing_intent === 'co-develop' ? 'Co-develop property' : currentUser?.housing_intent === 'investment' ? 'Investment hold' : 'Lifestyle-based co-living'}</span>
                       </li>
                       <li className="flex items-start gap-2.5 py-[11px] text-[13.5px] text-ink font-medium">
                         <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                        <span>5+ years commitment</span>
+                        <span>{currentUser?.commitment_timeline || '5+ years'} commitment</span>
                       </li>
                     </ul>
                   </div>
@@ -701,11 +717,22 @@ export default function AppScreens({
               >
                 Cancel
               </button>
-              <button
-                onClick={() => {
-                  setLocationCity(editCity);
-                  setSettingPreference(editSetting.toLowerCase());
-                  setHousingIntent(editIntent === 'Purchase primary residence' ? 'purchase' : editIntent === 'Co-develop property' ? 'co-develop' : 'investment');
+               <button
+                onClick={async () => {
+                  if (currentUser?.id) {
+                    try {
+                      const updatedUser = await updateUser(currentUser.id, {
+                        location_city: editCity,
+                        setting_preference: editSetting.toLowerCase(),
+                        housing_intent: editIntent === 'Purchase primary residence' ? 'purchase' : editIntent === 'Co-develop property' ? 'co-develop' : 'investment'
+                      });
+                      if (setCurrentUser) {
+                        setCurrentUser(updatedUser);
+                      }
+                    } catch (err) {
+                      console.error('Error updating profile preferences:', err);
+                    }
+                  }
                   setActiveScreen('profile');
                 }}
                 className="bg-ink text-white rounded-lg py-2 px-5 text-sm font-bold hover:bg-[#2450C4] transition-all cursor-pointer shadow-md"
