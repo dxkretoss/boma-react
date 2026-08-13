@@ -290,7 +290,7 @@ export default function Header({
                       onClick={handleAcctTriggerClick}
                       className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                     >
-                      {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                      {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                         <img
                           src={currentUser.avatar_url}
                           className="w-8 h-8 rounded-full border border-border object-cover"
@@ -425,7 +425,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                  {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                     <img
                       src={currentUser.avatar_url}
                       className="w-8 h-8 rounded-full border border-border object-cover"
@@ -488,7 +488,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {adminUser?.avatar_url && (adminUser.avatar_url.startsWith('http') || adminUser.avatar_url.startsWith('/') || adminUser.avatar_url.startsWith('assets/')) ? (
+                  {adminUser?.avatar_url && (adminUser.avatar_url.startsWith('http') || adminUser.avatar_url.startsWith('/') || adminUser.avatar_url.startsWith('assets/') || adminUser.avatar_url.startsWith('data:image/')) ? (
                     <img
                       src={adminUser.avatar_url}
                       className="w-8 h-8 rounded-full border border-border object-cover"
@@ -553,7 +553,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                  {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                     <img
                       src={currentUser.avatar_url}
                       className="w-8 h-8 rounded-full border border-border object-cover"
@@ -655,7 +655,7 @@ export default function Header({
               )}
               <button onClick={() => handleNav('commons-dashboard')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">The Commons</button>
               <div className="flex items-center gap-2 border-t border-border pt-4 mt-2">
-                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                   <img
                     src={currentUser.avatar_url}
                     className="w-8 h-8 rounded-full border border-border object-cover"

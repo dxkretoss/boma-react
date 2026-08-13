@@ -189,7 +189,7 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                 users.map((user) => (
                   <tr key={user.id} className="hover:bg-panel-alt/30 transition-colors">
                     <td className="p-4 px-6 font-semibold text-ink flex items-center gap-3">
-                      {user.avatar_url && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/') || user.avatar_url.startsWith('assets/')) ? (
+                      {user.avatar_url && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/') || user.avatar_url.startsWith('assets/') || user.avatar_url.startsWith('data:image/')) ? (
                         <img
                           src={user.avatar_url}
                           className="w-8.5 h-8.5 rounded-full border border-border object-cover"
@@ -301,7 +301,7 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
               <div className="w-full md:w-64 bg-slate-50/70 p-6 flex flex-col gap-5 overflow-y-auto">
                 {/* User Badge */}
                 <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-border shrink-0">
-                  {selectedUser.avatar_url && (selectedUser.avatar_url.startsWith('http') || selectedUser.avatar_url.startsWith('/') || selectedUser.avatar_url.startsWith('assets/')) ? (
+                  {selectedUser.avatar_url && (selectedUser.avatar_url.startsWith('http') || selectedUser.avatar_url.startsWith('/') || selectedUser.avatar_url.startsWith('assets/') || selectedUser.avatar_url.startsWith('data:image/')) ? (
                     <img src={selectedUser.avatar_url} className="w-10 h-10 rounded-full object-cover border border-border" alt="" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[15px] font-display">

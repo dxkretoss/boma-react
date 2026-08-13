@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Play,
   Activity,
-  Clock
+  Clock,
+  Loader2,
+  Upload
 } from 'lucide-react';
 import { GATED_SCREENS } from '../../constants/screens';
 import { updateUser, fetchUserProfile, updateUserPreferencesAndScore } from '../../api/users';
@@ -355,6 +357,50 @@ export default function AppScreens({
   const [editCity, setEditCity] = useState('Austin, TX');
   const [editSetting, setEditSetting] = useState('Suburban');
   const [editIntent, setEditIntent] = useState('Purchase primary residence');
+
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image size must be less than 5MB.", "error");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      try {
+        const base64String = reader.result;
+        await updateUser(currentUser.id, { avatar_url: base64String });
+        
+        if (setCurrentUser) {
+          setCurrentUser({
+            ...currentUser,
+            avatar_url: base64String
+          });
+        }
+        
+        showToast("Profile image updated successfully!", "success");
+      } catch (err) {
+        console.error("Failed to update profile image:", err);
+        showToast("Failed to update profile image: " + err.message, "error");
+      } finally {
+        setUploadingAvatar(false);
+      }
+    };
+
+    reader.onerror = () => {
+      showToast("Failed to read image file.", "error");
+      setUploadingAvatar(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   // Path B Pod States
   const [userPod, setUserPod] = useState(null);
@@ -1175,17 +1221,42 @@ export default function AppScreens({
             className="rounded-[20px] p-[30px] border border-border flex items-center gap-5 mb-[26px]"
             style={{ background: 'linear-gradient(120deg, var(--color-teal-soft) 0%, var(--color-panel) 70%)' }}
           >
-            {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
-              <img
-                src={currentUser.avatar_url}
-                className="rounded-full object-cover shrink-0 w-[72px] h-[72px] border border-border"
-                alt=""
-              />
-            ) : (
-              <div className="w-[72px] h-[72px] rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display flex-shrink-0">
-                {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group cursor-pointer w-[72px] h-[72px] rounded-full border border-border bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm"
+              title="Change Profile Image"
+            >
+              {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
+                <img
+                  src={currentUser.avatar_url}
+                  className="w-full h-full object-cover rounded-full"
+                  alt="Profile"
+                />
+              ) : (
+                <div className="w-full h-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display">
+                  {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
+                </div>
+              )}
+              
+              <div className="absolute inset-0 bg-black/45 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {uploadingAvatar ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-white" />
+                ) : (
+                  <>
+                    <Upload className="w-4.5 h-4.5 text-white mb-1" />
+                    <span className="text-[8.5px] font-mono font-bold uppercase tracking-wider">Edit</span>
+                  </>
+                )}
               </div>
-            )}
+            </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleAvatarChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
             <div className="text-left">
               <h3 className="font-display font-extrabold text-[22px] text-ink leading-tight">{currentUser?.name || 'User'}</h3>
               {isProfileApproved ? (
@@ -2042,7 +2113,7 @@ export default function AppScreens({
             {/* Jordan Lee (Me) */}
             <div className="flex justify-between items-center gap-3 pt-3.5 border-t border-border/70">
               <div className="flex items-center gap-3">
-                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                   <img src={currentUser.avatar_url} className="w-10 h-10 rounded-full object-cover border border-border" alt="" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
@@ -2180,7 +2251,7 @@ export default function AppScreens({
                     {(m.name || 'U').substring(0, 1).toUpperCase()}
                   </div>
                 ))}
-                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/')) ? (
+                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
                   <img src={currentUser.avatar_url} className="w-7 h-7 rounded-full object-cover border border-white" alt="" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-amber flex items-center justify-center text-white font-extrabold text-[9px] font-display border border-white flex-shrink-0">
