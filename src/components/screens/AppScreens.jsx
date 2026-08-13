@@ -1553,7 +1553,57 @@ export default function AppScreens({
       {activeScreen === 'matching-status' && (
         <div className="max-w-[500px] mx-auto text-center  py-16">
           <div className="w-full bg-white border border-border rounded-2xl p-10 shadow-custom flex flex-col items-center animate-fade">
-            {userPod?.status === 'UNDER_REVIEW' ? (
+            {userPod?.status === 'ACTIVE' ? (
+              <>
+                <div className="w-12 h-12 rounded-xl bg-sage/10 text-sage flex items-center justify-center mb-4">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+
+                <div className="font-mono text-[11px] uppercase tracking-wider text-sage mb-3 font-bold">Status: Active &amp; Approved</div>
+
+                <h1 className="font-display text-[24px] font-extrabold text-ink mb-2 leading-none">You are in a Pod!</h1>
+
+                <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2">
+                  You are already an active member of the Pod <strong>{userPod.name}</strong>. You can collaborate, chat, and draft governance rules in your Pod Commons workspace.
+                </p>
+
+                <div className="flex flex-col gap-2 w-full max-w-[280px]">
+                  <button
+                    onClick={() => setActiveScreen('commons-dashboard')}
+                    className="w-full bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer"
+                  >
+                    Go to Pod Commons &rarr;
+                  </button>
+                  <button
+                    onClick={() => setActiveScreen('pod-history')}
+                    className="w-full bg-transparent border border-border text-ink hover:bg-panel-alt text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer"
+                  >
+                    View My Pods
+                  </button>
+                </div>
+              </>
+            ) : userPod?.status === 'CREATING' ? (
+              <>
+                <div className="w-12 h-12 rounded-xl bg-amber-soft text-amber flex items-center justify-center mb-4">
+                  <Users className="w-5 h-5" />
+                </div>
+
+                <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-bold">Status: Pod is Forming</div>
+
+                <h1 className="font-display text-[24px] font-extrabold text-ink mb-2 leading-none">Pod is Forming</h1>
+
+                <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2">
+                  Your self-registered pod <strong>{userPod.name}</strong> is currently being formed. Once all invited neighbors accept their invitations, the pod will be submitted to the Board.
+                </p>
+
+                <button
+                  onClick={() => setActiveScreen(userPod.memberRole === 'CREATOR' ? 'pod-invite' : 'commons-dashboard')}
+                  className="w-full max-w-[280px] bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer"
+                >
+                  {userPod.memberRole === 'CREATOR' ? 'Manage Invitations \u2192' : 'View Group Status'}
+                </button>
+              </>
+            ) : userPod?.status === 'UNDER_REVIEW' ? (
               <>
                 <div className="w-12 h-12 rounded-xl bg-amber-soft text-amber flex items-center justify-center mb-4 animate-pulse">
                   <Clock className="w-6 h-6" />
