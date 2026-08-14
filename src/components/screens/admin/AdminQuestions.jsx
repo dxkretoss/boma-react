@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { HelpCircle, Plus, Edit2, Archive, Check, ArrowLeft, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
-import { 
-  fetchAdminQuestionsList, 
-  saveAdminQuestion, 
-  saveAdminQuestionOption, 
-  archiveAdminQuestionOption, 
+import {
+  fetchAdminQuestionsList,
+  saveAdminQuestion,
+  saveAdminQuestionOption,
+  archiveAdminQuestionOption,
   publishQuestionnaireVersion,
   deleteAdminQuestion
 } from '../../../api/admin';
@@ -29,11 +29,10 @@ export function QuestionRenderer({ question, answer, onChange }) {
               <div
                 key={opt.id}
                 onClick={() => onChange(opt.value || opt.option_key)}
-                className={`flex justify-between items-center border rounded-xl p-4 bg-white cursor-pointer transition-all ${
-                  answer === (opt.value || opt.option_key)
-                    ? 'ring-2 ring-amber/20 border-amber bg-amber-soft/10'
-                    : 'border-border hover:border-amber hover:bg-slate-50'
-                }`}
+                className={`flex justify-between items-center border rounded-xl p-4 bg-white cursor-pointer transition-all ${answer === (opt.value || opt.option_key)
+                  ? 'ring-2 ring-amber/20 border-amber bg-amber-soft/10'
+                  : 'border-border hover:border-amber hover:bg-slate-50'
+                  }`}
               >
                 <div className="flex flex-col text-left">
                   <span className="text-xs font-bold text-ink">{opt.label}</span>
@@ -68,11 +67,10 @@ export function QuestionRenderer({ question, answer, onChange }) {
                 <div
                   key={opt.id}
                   onClick={() => handleToggle(opt.label)}
-                  className={`flex flex-col items-center text-center p-4 rounded-xl border cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-amber bg-amber-soft/30'
-                      : 'border-border bg-white hover:border-amber hover:bg-slate-50'
-                  }`}
+                  className={`flex flex-col items-center text-center p-4 rounded-xl border cursor-pointer transition-all ${isSelected
+                    ? 'border-amber bg-amber-soft/30'
+                    : 'border-border bg-white hover:border-amber hover:bg-slate-50'
+                    }`}
                 >
                   <span className="text-xs font-bold text-ink leading-tight ">
                     {opt.label}
@@ -123,7 +121,7 @@ export function QuestionRenderer({ question, answer, onChange }) {
   }
 }
 
-export default function AdminQuestions({ setActiveScreen, adminUser, showToast }) {
+export default function AdminQuestions({ setActiveScreen, adminUser, showToast, showConfirm }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -162,7 +160,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
         .from('readiness_scoring_rules')
         .select('*')
         .eq('is_active', true);
-      
+
       const rulesMap = {};
       (scoringRules || []).forEach(r => {
         rulesMap[r.option_id] = r.score_value;
@@ -199,36 +197,37 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
   };
 
   const handleDeleteQuestion = async (qnId) => {
-    if (showConfirm) {
-      showConfirm(
-        'Delete Question',
-        'Are you sure you want to delete this question? This will permanently remove its choices and scoring rules.',
-        async () => {
-          try {
-            setErrorMsg('');
-            setSuccessMsg('');
-            await deleteAdminQuestion(qnId);
-            setSuccessMsg('Question deleted successfully!');
-            loadQuestions();
-          } catch (err) {
-            console.error(err);
-            setErrorMsg(err.message || 'Failed to delete question.');
-          }
-        },
-        'danger',
-        'Delete'
-      );
-    } else {
-      if (!confirm('Are you sure you want to delete this question? This will permanently remove its choices and scoring rules.')) return;
+    const targetQ = questions.find(q => q.id === qnId);
+    const questionTitle = targetQ ? `"${targetQ.title}"` : 'this question';
+
+    const confirmDelete = async () => {
       try {
         setErrorMsg('');
         setSuccessMsg('');
         await deleteAdminQuestion(qnId);
-        setSuccessMsg('Question deleted successfully!');
-        loadQuestions();
+        showToast(`Question ${questionTitle} deleted successfully!`, 'success');
+        if (editingQuestion?.id === qnId) {
+          setEditingQuestion(null);
+        }
+        await loadQuestions();
       } catch (err) {
-        console.error(err);
+        console.error('Failed to delete question:', err);
+        showToast(err.message || 'Failed to delete question.', 'error');
         setErrorMsg(err.message || 'Failed to delete question.');
+      }
+    };
+
+    if (showConfirm) {
+      showConfirm(
+        'Delete Question',
+        `Are you sure you want to delete ${questionTitle}? This will permanently remove its choices and scoring rules.`,
+        confirmDelete,
+        'danger',
+        'Delete Question'
+      );
+    } else {
+      if (window.confirm(`Are you sure you want to delete ${questionTitle}? This will permanently remove its choices and scoring rules.`)) {
+        confirmDelete();
       }
     }
   };
@@ -243,7 +242,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
       setErrorMsg('');
       const saved = await saveAdminQuestion(editingQuestion);
       setSuccessMsg('Question details saved successfully!');
-      
+
       // Update local state list
       await loadQuestions();
       setEditingQuestion(null);
@@ -273,7 +272,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
       };
 
       const savedOpt = await saveAdminQuestionOption(optPayload);
-      
+
       // Save scoring rules points if > 0
       if (parseInt(newOption.scoring_points) > 0) {
         await supabase
@@ -296,32 +295,30 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
   };
 
   const handleArchiveOption = async (optId) => {
-    if (showConfirm) {
-      showConfirm(
-        'Archive Option',
-        'Are you sure you want to archive this option?',
-        async () => {
-          try {
-            await archiveAdminQuestionOption(optId);
-            setEditingOptions(editingOptions.filter(o => o.id !== optId));
-            loadQuestions();
-          } catch (err) {
-            console.error(err);
-            showToast('Failed to archive option.');
-          }
-        },
-        'danger',
-        'Archive'
-      );
-    } else {
-      if (!confirm('Are you sure you want to archive this option?')) return;
+    console.log('handleArchiveOption', optId);
+    const confirmAction = async () => {
       try {
         await archiveAdminQuestionOption(optId);
-        setEditingOptions(editingOptions.filter(o => o.id !== optId));
+        setEditingOptions(prev => prev.filter(o => o.id !== optId));
+        showToast('Choice option deleted successfully!', 'success');
         loadQuestions();
       } catch (err) {
-        console.error(err);
-        showToast('Failed to archive option.');
+        console.error('Error deleting option:', err);
+        showToast('Failed to delete option: ' + (err.message || 'Unknown error'), 'error');
+      }
+    };
+
+    if (showConfirm) {
+      showConfirm(
+        'Delete Choice Option',
+        'Are you sure you want to delete this choice option? This will remove it permanently from the survey.',
+        confirmAction,
+        'danger',
+        'Delete Choice'
+      );
+    } else {
+      if (window.confirm('Are you sure you want to delete this choice option?')) {
+        confirmAction();
       }
     }
   };
@@ -332,6 +329,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
     { step: 3, label: 'Step 3: Community Preferences' },
     { step: 4, label: 'Step 4: Location Bounds' },
     { step: 5, label: 'Step 5: Budget & Financing' },
+    { step: 6, label: 'Step 6: Housing Intent' },
+    { step: 7, label: 'Step 7: Commitment Timeline' },
     { step: 'all', label: 'All Steps' }
   ];
 
@@ -345,7 +344,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-display font-extrabold text-2xl text-ink">Onboarding Questionnaire Editor</h3>
         {!editingQuestion && (
-          <button 
+          <button
             onClick={handleCreateNewQuestion}
             className="bg-teal hover:bg-teal-700 text-white font-bold text-xs rounded-xl px-4.5 py-2.5 flex items-center gap-1.5 transition-all shadow cursor-pointer"
           >
@@ -367,11 +366,10 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
               setEditingQuestion(null);
               setPreviewQuestion(null);
             }}
-            className={`px-4.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeStepTab === tab.step
-                ? 'bg-teal text-white shadow-sm'
-                : 'bg-white border border-border text-ink-dim hover:bg-slate-50 hover:text-ink'
-            }`}
+            className={`px-4.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeStepTab === tab.step
+              ? 'bg-teal text-white shadow-sm'
+              : 'bg-white border border-border text-ink-dim hover:bg-slate-50 hover:text-ink'
+              }`}
           >
             {tab.label}
           </button>
@@ -397,7 +395,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
             <div className="border border-border rounded-2xl p-6 bg-white shadow-sm space-y-5">
               <div className="flex justify-between items-center border-b border-border pb-3">
                 <h4 className="font-display font-extrabold text-base text-ink">Edit Question Details</h4>
-                <button 
+                <button
                   onClick={() => setEditingQuestion(null)}
                   className="text-xs text-ink-dim hover:text-ink font-bold"
                 >
@@ -409,8 +407,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Question Key</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={editingQuestion.question_key}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, question_key: e.target.value })}
                     className="border border-border rounded-lg text-xs font-medium px-3.5 py-2"
@@ -418,8 +416,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 </div>
                 <div className="flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Step Number (1–7)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={editingQuestion.step_number}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, step_number: parseInt(e.target.value) })}
                     className="border border-border rounded-lg text-xs font-medium px-3.5 py-2"
@@ -427,7 +425,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 </div>
                 <div className="flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Question Type</label>
-                  <select 
+                  <select
                     value={editingQuestion.question_type}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, question_type: e.target.value })}
                     className="border border-border rounded-lg text-xs font-semibold px-3 py-2 bg-white"
@@ -440,8 +438,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 </div>
                 <div className="flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Display Order</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={editingQuestion.display_order || 1}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, display_order: parseInt(e.target.value) })}
                     className="border border-border rounded-lg text-xs font-medium px-3.5 py-2"
@@ -449,8 +447,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 </div>
                 <div className="col-span-2 flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Question Title</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={editingQuestion.title}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, title: e.target.value })}
                     className="border border-border rounded-lg text-xs font-semibold px-3.5 py-2"
@@ -458,7 +456,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 </div>
                 <div className="col-span-2 flex flex-col">
                   <label className="text-[10.5px] font-mono uppercase text-ink-dim mb-1 font-bold">Description / Helper Text</label>
-                  <textarea 
+                  <textarea
                     value={editingQuestion.description || ''}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, description: e.target.value })}
                     className="border border-border rounded-lg text-xs font-medium p-3"
@@ -466,8 +464,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="required_chk"
                     checked={editingQuestion.is_required}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, is_required: e.target.checked })}
@@ -476,8 +474,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                   <label htmlFor="required_chk" className="text-xs font-bold text-ink">Required Question</label>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="active_chk"
                     checked={editingQuestion.is_active}
                     onChange={(e) => setEditingQuestion({ ...editingQuestion, is_active: e.target.checked })}
@@ -488,7 +486,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
               </div>
 
               <div className="pt-4 border-t border-border flex justify-end">
-                <button 
+                <button
                   onClick={handleSaveQuestionDetails}
                   className="bg-amber text-white font-bold text-xs rounded-lg px-4.5 py-2.5 shadow hover:bg-[#2450C4] transition-colors"
                 >
@@ -501,7 +499,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                 <div className="pt-5 border-t border-border space-y-4 text-left">
                   <div className="flex justify-between items-center">
                     <h5 className="font-display font-extrabold text-[13.5px] text-ink uppercase tracking-wide">Options &amp; Scoring Points</h5>
-                    <button 
+                    <button
                       onClick={() => setShowAddOption(true)}
                       className="bg-teal text-white font-bold text-xs rounded-lg px-3 py-1.5 flex items-center gap-1 hover:bg-teal-700 transition-colors"
                     >
@@ -509,48 +507,98 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                     </button>
                   </div>
 
-                  {showAddOption && (
-                    <div className="bg-panel-alt/30 border border-border p-4 rounded-xl space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col">
-                          <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Choice Label</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. 18-30 years"
-                            value={newOption.label}
-                            onChange={(e) => setNewOption({ ...newOption, label: e.target.value })}
-                            className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
-                          />
+                  {showAddOption && (() => {
+                    const getOptionPlaceholders = () => {
+                      const step = editingQuestion?.step_number || 1;
+                      switch (step) {
+                        case 1:
+                          return {
+                            label: "e.g. 18–30 years",
+                            description: "e.g. Gen Z / Millennials • Nomads, Professionals & Creators"
+                          };
+                        case 2:
+                          return {
+                            label: "e.g. Pet-friendly",
+                            description: "e.g. Welcoming all dogs, cats and furry companions"
+                          };
+                        case 3:
+                          return {
+                            label: "e.g. Consensus",
+                            description: "e.g. Everyone weighs in and decides together"
+                          };
+                        case 4:
+                          return {
+                            label: "e.g. Urban center",
+                            description: "e.g. Within walking distance of public transit and markets"
+                          };
+                        case 5:
+                          return {
+                            label: "e.g. Traditional mortgage",
+                            description: "e.g. Conventional bank loans with standard terms"
+                          };
+                        case 6:
+                          return {
+                            label: "e.g. Purchase primary residence",
+                            description: "e.g. Where you plan to live as your primary home"
+                          };
+                        case 7:
+                          return {
+                            label: "e.g. 5+ years",
+                            description: "e.g. Intention to stay for a longer term co-housing arrangement"
+                          };
+                        default:
+                          return {
+                            label: "e.g. Option Label",
+                            description: "e.g. Helper Subtext"
+                          };
+                      }
+                    };
+                    const placeholders = getOptionPlaceholders();
+                    const hasSubtext = ![2, 4, 5, 7].includes(editingQuestion?.step_number) && editingQuestion?.question_key !== 'pod_size';
+                    return (
+                      <div className="bg-panel-alt/30 border border-border p-4 rounded-xl space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Choice Label</label>
+                            <input
+                              type="text"
+                              placeholder={placeholders.label}
+                              value={newOption.label}
+                              onChange={(e) => setNewOption({ ...newOption, label: e.target.value })}
+                              className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Readiness Score Points (0–100)</label>
+                            <input
+                              type="number"
+                              placeholder="e.g. 85"
+                              value={newOption.scoring_points}
+                              onChange={(e) => setNewOption({ ...newOption, scoring_points: parseInt(e.target.value) })}
+                              className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
+                            />
+                          </div>
+                          {hasSubtext && (
+                            <div className="col-span-2 flex flex-col">
+                              <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Helper Subtext</label>
+                              <input
+                                type="text"
+                                placeholder={placeholders.description}
+                                value={newOption.description}
+                                onChange={(e) => setNewOption({ ...newOption, description: e.target.value })}
+                                className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
+                              />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex flex-col">
-                          <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Readiness Score Points (0–100)</label>
-                          <input 
-                            type="number" 
-                            placeholder="e.g. 85"
-                            value={newOption.scoring_points}
-                            onChange={(e) => setNewOption({ ...newOption, scoring_points: parseInt(e.target.value) })}
-                            className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
-                          />
-                        </div>
-                        <div className="col-span-2 flex flex-col">
-                          <label className="text-[10px] font-mono uppercase text-ink-dim mb-1 font-bold">Helper Subtext</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Nomads, Professionals & Creators"
-                            value={newOption.description}
-                            onChange={(e) => setNewOption({ ...newOption, description: e.target.value })}
-                            className="bg-white border border-border rounded-lg text-xs font-medium px-3 py-1.5"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-2 pt-1">
-                        <button 
-                          onClick={() => setShowAddOption(false)}
-                          className="bg-transparent border border-border text-ink rounded-lg py-1 px-3 text-xs font-bold hover:bg-white"
-                        >
-                          Cancel
-                        </button>
-                        <button 
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button
+                            onClick={() => setShowAddOption(false)}
+                            className="bg-transparent border border-border text-ink rounded-lg py-1 px-3 text-xs font-bold hover:bg-white"
+                          >
+                            Cancel
+                          </button>
+                        <button
                           onClick={handleAddOption}
                           className="bg-teal text-white rounded-lg py-1 px-3.5 text-xs font-bold hover:bg-teal-700"
                         >
@@ -558,7 +606,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                         </button>
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   <div className="space-y-2">
                     {editingOptions.map(opt => (
@@ -572,7 +621,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                             <span className="text-[9px] font-mono text-ink-dim uppercase font-bold">Scoring Rule</span>
                             <span className="text-xs font-mono font-bold text-teal">{opt.scoring_points || 0} pts</span>
                           </div>
-                          <button 
+                          <button
                             onClick={() => handleArchiveOption(opt.id)}
                             className="text-rust hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50"
                           >
@@ -607,7 +656,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                   <div key={qn.id} className="border border-border rounded-2xl bg-white shadow-sm p-6 space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
                     {/* Left Accent Color Indicator */}
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal" />
-                    
+
                     {/* Card Header */}
                     <div className="flex justify-between items-start gap-4">
                       <div>
@@ -618,9 +667,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                           <span className="text-[10px] font-mono font-bold bg-amber-soft text-amber px-2 py-0.5 rounded-md capitalize">
                             {qn.question_type.replace('_', ' ')}
                           </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                            qn.is_active ? 'bg-emerald-50 text-teal border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${qn.is_active ? 'bg-emerald-50 text-teal border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-200'
+                            }`}>
                             {qn.is_active ? 'Active' : 'Inactive'}
                           </span>
                           {qn.is_required && (
@@ -639,21 +687,21 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
 
                       {/* Card Actions */}
                       <div className="flex items-center gap-1.5 flex-shrink-0 bg-[#F8FAFC] border border-border p-1 rounded-xl">
-                        <button 
+                        <button
                           onClick={() => setPreviewQuestion(qn)}
                           className="text-slate-500 hover:text-slate-800 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer"
                           title="Preview Question"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleSelectEdit(qn)}
                           className="text-teal hover:text-teal-700 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer"
                           title="Edit Details / Options"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteQuestion(qn.id)}
                           className="text-rust hover:text-red-700 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer"
                           title="Delete Question"
@@ -681,8 +729,8 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                         {qn.options && qn.options.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {qn.options.map(opt => (
-                              <div 
-                                key={opt.id} 
+                              <div
+                                key={opt.id}
                                 className="border border-border/80 rounded-xl p-3 bg-white hover:bg-slate-50 transition-colors flex justify-between items-center gap-3"
                               >
                                 <div className="text-left">
@@ -697,6 +745,13 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
                                   <span className="text-[10px] font-mono font-bold bg-[#E0F2FE] text-sky-700 px-2 py-0.5 rounded-md">
                                     {opt.scoring_points || 0} pts
                                   </span>
+                                  <button
+                                    onClick={() => handleArchiveOption(opt.id)}
+                                    className="text-rust hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
+                                    title="Delete Choice Option"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </div>
                             ))}
@@ -725,12 +780,12 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
 
             {previewQuestion ? (
               <div className="bg-white border border-border p-5 rounded-xl shadow-sm space-y-4">
-                <QuestionRenderer 
+                <QuestionRenderer
                   question={previewQuestion}
                   answer={previewAnswer}
                   onChange={(val) => setPreviewAnswer(val)}
                 />
-                <button 
+                <button
                   onClick={() => {
                     setPreviewQuestion(null);
                     setPreviewAnswer(null);
@@ -749,7 +804,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast }
         </div>
       </div>
 
-      <button 
+      <button
         onClick={() => setActiveScreen('admin-dashboard')}
         className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer mt-6"
       >

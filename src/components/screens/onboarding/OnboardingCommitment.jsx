@@ -1,7 +1,18 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-export default function OnboardingCommitment({ commitmentTimeline, setCommitmentTimeline, setActiveScreen, stepProgressBar }) {
+export default function OnboardingCommitment({ commitmentTimeline, setCommitmentTimeline, setActiveScreen, stepProgressBar, options }) {
+  const commitmentOptions = (options && options.length > 0)
+    ? options.map(opt => ({
+        id: opt.label.toLowerCase(),
+        label: opt.label
+      }))
+    : [
+        { id: '2+ years', label: '2+ years' },
+        { id: '5+ years', label: '5+ years' },
+        { id: 'flexible', label: 'Flexible' }
+      ];
+
   return (
     <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
@@ -15,11 +26,7 @@ export default function OnboardingCommitment({ commitmentTimeline, setCommitment
             </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">
-            {[
-              { id: '2+ years', label: '2+ years' },
-              { id: '5+ years', label: '5+ years' },
-              { id: 'flexible', label: 'Flexible' }
-            ].map(opt => (
+            {commitmentOptions.map(opt => (
               <div 
                 key={opt.id}
                 onClick={() => setCommitmentTimeline(opt.id)}

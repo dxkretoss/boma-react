@@ -46,7 +46,12 @@ export default function Modals({
   const [forgotEmail, setForgotEmail] = useState('');
 
   // Toast notification state
-  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error', key: 0 });
+
+  // Clear modal toast on modal open/close or mode switch
+  React.useEffect(() => {
+    setToast({ show: false, message: '', type: 'error', key: 0 });
+  }, [authOverlay.open, authOverlay.mode]);
 
   // Processing state
   const [loading, setLoading] = useState(false);
@@ -56,6 +61,7 @@ export default function Modals({
   }
 
   const closeAuth = () => {
+    setToast({ show: false, message: '', type: 'error', key: 0 });
     setAuthOverlay({ open: false, mode: 'login' });
   };
 
@@ -248,9 +254,11 @@ export default function Modals({
                   "We found three families who wanted exactly what we wanted, in six weeks."
                 </p>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[9px] font-display border border-white/10 flex-shrink-0">
-                    S
-                  </div>
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+                    alt="Sam Rivera"
+                    className="w-7 h-7 rounded-full object-cover border border-white/20 flex-shrink-0"
+                  />
                   <div>
                     <b className="block text-white text-[11.5px]">Sam Rivera</b>
                     <span className="text-[10.5px] text-[#7F92B0] font-medium">Cedar Grove Pod</span>
@@ -537,9 +545,10 @@ export default function Modals({
 
       {toast.show && (
         <Toast
+          key={toast.key || toast.message + Date.now()}
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
+          onClose={() => setToast(prev => ({ ...prev, show: false }))}
         />
       )}
     </>

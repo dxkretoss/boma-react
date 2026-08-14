@@ -13,6 +13,9 @@ export async function fetchAdminUsers(filters = {}) {
   if (filters.profileStatus && filters.profileStatus !== 'ALL') {
     query = query.eq('profile_status', filters.profileStatus);
   }
+  if (filters.onboardingStatus && filters.onboardingStatus !== 'ALL') {
+    query = query.eq('onboarding_status', filters.onboardingStatus);
+  }
   if (filters.entryPath && filters.entryPath !== 'ALL') {
     query = query.eq('entry_path', filters.entryPath);
   }
@@ -240,9 +243,24 @@ export async function fetchAdminQuestionsList() {
     throw new Error(`Failed to fetch administrative question list: ${error.message}`);
   }
 
+  // 3. Fetch all readiness scoring rules
+  const { data: scoringRules } = await supabase
+    .from('readiness_scoring_rules')
+    .select('*');
+
+  const rulesMap = {};
+  (scoringRules || []).forEach(r => {
+    rulesMap[r.option_id] = r.score_value;
+  });
+
   return (questions || []).map(q => {
     if (q.options) {
-      q.options = q.options.sort((a, b) => a.display_order - b.display_order);
+      q.options = q.options
+        .map(opt => ({
+          ...opt,
+          scoring_points: rulesMap[opt.id] || 0
+        }))
+        .sort((a, b) => a.display_order - b.display_order);
     }
     return q;
   });
@@ -358,12 +376,25 @@ export async function saveAdminQuestionOption(optionData) {
  * Deletes/archives an option.
  */
 export async function archiveAdminQuestionOption(optionId) {
+  // Delete scoring rules referencing this option
+  await supabase
+    .from('readiness_scoring_rules')
+    .delete()
+    .eq('option_id', optionId);
+
+  // Delete option from onboarding_question_options
   const { error } = await supabase
     .from('onboarding_question_options')
-    .update({ is_active: false })
+    .delete()
     .eq('id', optionId);
 
-  if (error) throw error;
+  if (error) {
+    const { error: updateError } = await supabase
+      .from('onboarding_question_options')
+      .update({ is_active: false })
+      .eq('id', optionId);
+    if (updateError) throw updateError;
+  }
   return true;
 }
 
@@ -371,25 +402,34 @@ export async function archiveAdminQuestionOption(optionId) {
  * Deletes a question and its options.
  */
 export async function deleteAdminQuestion(questionId) {
-  // Delete options
+  // 1. Delete user onboarding responses referencing this question
+  await supabase
+    .from('onboarding_responses')
+    .delete()
+    .eq('question_id', questionId);
+
+  // 2. Delete choices options
   await supabase
     .from('onboarding_question_options')
     .delete()
     .eq('question_id', questionId);
 
-  // Delete scoring rules
+  // 3. Delete readiness scoring rules
   await supabase
     .from('readiness_scoring_rules')
     .delete()
     .eq('question_id', questionId);
 
-  // Delete question
+  // 4. Delete question permanently
   const { error } = await supabase
     .from('onboarding_questions')
     .delete()
     .eq('id', questionId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Failed to hard delete question:', error);
+    throw error;
+  }
   return true;
 }
 

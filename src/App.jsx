@@ -202,10 +202,14 @@ function App() {
   };
 
   // Global Reusable Toast State
-  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error', key: 0 });
 
   const showToast = (message, type = 'error') => {
-    setToast({ show: true, message, type });
+    setToast({ show: true, message, type, key: Date.now() });
+  };
+
+  const clearToast = () => {
+    setToast({ show: false, message: '', type: 'error', key: 0 });
   };
 
   // Overlays / Modals States
@@ -355,6 +359,7 @@ function App() {
 
   // Modal actions helpers
   const openAuthModal = (mode) => {
+    clearToast();
     setAuthOverlay({ open: true, mode });
   };
 
@@ -365,6 +370,7 @@ function App() {
   };
 
   const handleLogout = async () => {
+    clearToast();
     try {
       await supabase.auth.signOut();
     } catch (e) {
@@ -521,6 +527,7 @@ function App() {
       {/* Global Toast Notifications */}
       {toast.show && (
         <Toast
+          key={toast.key || toast.message + Date.now()}
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(prev => ({ ...prev, show: false }))}

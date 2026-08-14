@@ -1,6 +1,14 @@
 import React from 'react';
 
-export default function HowItWorks({ openAuthModal }) {
+export default function HowItWorks({ openAuthModal, setActiveScreen, currentUser }) {
+  const handleGetStarted = () => {
+    if (currentUser && setActiveScreen) {
+      setActiveScreen('profile');
+    } else if (openAuthModal) {
+      openAuthModal('signup');
+    }
+  };
+
   return (
     <div className="animate-fade py-16 px-6 md:px-8 max-w-[900px] mx-auto text-left">
       <div className="font-mono text-[11.5px] uppercase tracking-wider text-amber mb-3.5 font-semibold">
@@ -38,7 +46,7 @@ export default function HowItWorks({ openAuthModal }) {
       </div>
 
       <button
-        onClick={() => openAuthModal('signup')}
+        onClick={handleGetStarted}
         className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
       >
         Get Started

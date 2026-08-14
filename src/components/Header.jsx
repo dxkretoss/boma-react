@@ -59,8 +59,17 @@ export default function Header({
       try {
         const notifs = [];
 
+        // Fetch fresh profile status to support real-time updates
+        const { data: freshUser } = await supabase
+          .from('users')
+          .select('profile_status')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+
+        const currentProfileStatus = freshUser?.profile_status || currentUser.profile_status;
+
         // 1. Profile Status
-        if (currentUser.profile_status === 'APPROVED') {
+        if (currentProfileStatus === 'APPROVED') {
           notifs.push({
             id: 'profile-approved',
             title: 'Profile Approved',
@@ -68,7 +77,7 @@ export default function Header({
             type: 'success',
             date: 'Today'
           });
-        } else if (currentUser.profile_status === 'REJECTED') {
+        } else if (currentProfileStatus === 'REJECTED') {
           notifs.push({
             id: 'profile-rejected',
             title: 'Profile Action Required',

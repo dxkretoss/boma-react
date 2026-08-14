@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-export default function Landing({ openAuthModal, setActiveScreen }) {
+export default function Landing({ openAuthModal, setActiveScreen, currentUser }) {
   const [openFaq, setOpenFaq] = useState(0);
 
   const toggleFaq = (idx) => {
     setOpenFaq(openFaq === idx ? null : idx);
+  };
+
+  const handleGetStarted = () => {
+    if (currentUser) {
+      setActiveScreen('profile');
+    } else {
+      openAuthModal('signup');
+    }
   };
 
   return (
@@ -24,7 +32,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
           </p>
           <div className="flex items-center gap-3.5 flex-wrap">
             <button
-              onClick={() => openAuthModal('signup')}
+              onClick={handleGetStarted}
               className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
             >
               Get Started
@@ -94,8 +102,8 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
 
       {/* Core Features */}
       <div className="py-16 px-6 md:px-8 max-w-[1180px] mx-auto text-left">
-        <div className="grid grid-cols-1 md:grid-cols-[380px_1fr] gap-12 items-start mb-10">
-          <div className="max-w-[340px]">
+        <div className="flex flex-col items-center ">
+          <div className="max-w-[600px] mb-10 text-center">
             <h2 className="font-display text-3xl font-extrabold text-ink mb-4">Why people choose BOMA</h2>
             <p className="text-ink-dim text-[15px] leading-relaxed">
               Most co-housing and intentional-community projects don't fail on construction or financing — they fail because the people were never truly aligned.
@@ -210,9 +218,11 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
-                S
-              </div>
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+                alt="Sam Rivera"
+                className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0"
+              />
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Sam Rivera</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">Cedar Grove Pod, Austin TX</span>
@@ -228,9 +238,11 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
-                M
-              </div>
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+                alt="Morgan Chen"
+                className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0"
+              />
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Morgan Chen</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">Cedar Grove Pod, Austin TX</span>
@@ -246,9 +258,11 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
               </p>
             </div>
             <div className="flex items-center gap-3 border-t border-border pt-4 mt-auto">
-              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border flex-shrink-0">
-                T
-              </div>
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+                alt="Taylor Kim"
+                className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0"
+              />
               <div className="flex flex-col leading-tight">
                 <b className="font-bold text-[13.5px] text-ink">Taylor Kim</b>
                 <span className="text-[11.5px] text-ink-dim font-medium">The Fourplex Founders</span>
@@ -324,7 +338,7 @@ export default function Landing({ openAuthModal, setActiveScreen }) {
         <h2 className="font-display text-3xl font-extrabold text-ink mb-8">Ready to find your people?</h2>
         <div className="flex items-center gap-3.5 justify-center flex-wrap">
           <button
-            onClick={() => openAuthModal('signup')}
+            onClick={handleGetStarted}
             className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
           >
             Get Started

@@ -10,6 +10,7 @@ import AdminPodReview from './admin/AdminPodReview';
 import AdminPodManagement from './admin/AdminPodManagement';
 import AdminPodDetail from './admin/AdminPodDetail';
 import AdminExistingPodQueue from './admin/AdminExistingPodQueue';
+import AdminReadinessLogic from './admin/AdminReadinessLogic';
 
 export default function AdminScreens({
   activeScreen,
@@ -29,7 +30,7 @@ export default function AdminScreens({
   const [commitmentWeight, setCommitmentWeight] = useState(20);
 
   if (![
-    'admin-login', 'admin-dashboard', 'admin-users', 'admin-matching', 'admin-pod-review',
+    'admin-login', 'admin-dashboard', 'admin-users', 'admin-readiness-logic', 'admin-matching', 'admin-pod-review',
     'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue', 'admin-questions'
   ].includes(activeScreen)) {
     return null;
@@ -69,6 +70,9 @@ export default function AdminScreens({
       )}
       {activeScreen === 'admin-users' && (
         <AdminUsers setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} />
+      )}
+      {activeScreen === 'admin-readiness-logic' && (
+        <AdminReadinessLogic setActiveScreen={setActiveScreen} isAdminView={true} />
       )}
       {activeScreen === 'admin-matching' && (
         <AdminMatching

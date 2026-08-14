@@ -43,11 +43,11 @@ export default function MarketingScreens({
   return (
     <div className="w-full">
       {activeScreen === 'landing' && (
-        <Landing openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} />
+        <Landing openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} currentUser={currentUser} />
       )}
       
       {activeScreen === 'how-it-works' && (
-        <HowItWorks openAuthModal={openAuthModal} />
+        <HowItWorks openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} currentUser={currentUser} />
       )}
 
       {activeScreen === 'about' && (

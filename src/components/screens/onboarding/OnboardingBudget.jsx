@@ -1,7 +1,34 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaymentTier, setDownPaymentTier, financingPreference, setFinancingPreference, setActiveScreen, stepProgressBar }) {
+export default function OnboardingBudget({ 
+  budgetRange, 
+  setBudgetRange, 
+  downPaymentTier, 
+  setDownPaymentTier, 
+  financingPreference, 
+  setFinancingPreference, 
+  setActiveScreen, 
+  stepProgressBar,
+  downPaymentOptions,
+  financingOptions
+}) {
+  const finalDownPaymentOptions = (downPaymentOptions && downPaymentOptions.length > 0)
+    ? downPaymentOptions.map(opt => opt.label)
+    : ['0–5%', '5–10%', '10–20%', '20%+'];
+
+  const finalFinancingOptions = (financingOptions && financingOptions.length > 0)
+    ? financingOptions.map(opt => ({
+        id: opt.label.toLowerCase(),
+        label: opt.label
+      }))
+    : [
+        { id: 'traditional', label: 'Traditional mortgage' },
+        { id: 'shared', label: 'Shared equity' },
+        { id: 'co-dev', label: 'Co-development' },
+        { id: 'undecided', label: 'Undecided' }
+      ];
+
   return (
     <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
@@ -28,7 +55,7 @@ export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaym
             </label>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {['0–5%', '5–10%', '10–20%', '20%+'].map(opt => (
+            {finalDownPaymentOptions.map(opt => (
               <div 
                 key={opt}
                 onClick={() => setDownPaymentTier(opt)}
@@ -51,12 +78,7 @@ export default function OnboardingBudget({ budgetRange, setBudgetRange, downPaym
             </label>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {[
-              { id: 'traditional', label: 'Traditional mortgage' },
-              { id: 'shared', label: 'Shared equity' },
-              { id: 'co-dev', label: 'Co-development' },
-              { id: 'undecided', label: 'Undecided' }
-            ].map(opt => (
+            {finalFinancingOptions.map(opt => (
               <div 
                 key={opt.id}
                 onClick={() => setFinancingPreference(opt.id)}

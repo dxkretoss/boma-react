@@ -45,7 +45,7 @@ const SIDENAV_CONFIG = {
       { id: 'readiness-detail', label: 'Readiness Breakdown', icon: 'gauge' },
       { id: 'status-tracking', label: 'Status Tracker', icon: 'list' },
       { id: 'pod-history', label: 'My Pods', icon: 'home' },
-      { id: 'profile-update', label: 'Profile', icon: 'settings' },
+      { id: 'profile-update', label: 'Profile', icon: 'settings' }
     ]
   },
   matching: {
@@ -73,10 +73,12 @@ const SIDENAV_CONFIG = {
       { id: 'admin-dashboard', label: 'Dashboard', icon: 'home' },
       { id: 'admin-users', label: 'Users', icon: 'users' },
       { id: 'admin-matching', label: 'Matching Engine', icon: 'gauge' },
-      { id: 'admin-questions', label: 'Questions', icon: 'edit' },
       { id: 'admin-pod-review', label: 'Pod Review', icon: 'spark' },
+      { id: 'admin-existing-pod-queue', label: 'Existing Pod Queue', icon: 'list' },
       { id: 'admin-pod-management', label: 'Pods', icon: 'doc' },
-      { id: 'admin-existing-pod-queue', label: 'Existing Pod Queue', icon: 'list' }
+      { id: 'admin-questions', label: 'Questions', icon: 'edit' },
+      { id: 'admin-readiness-logic', label: 'Readiness Score Logic', icon: 'gauge' },
+
     ]
   }
 };

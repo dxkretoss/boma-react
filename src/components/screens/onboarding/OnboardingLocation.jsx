@@ -10,7 +10,17 @@ const US_CITIES = [
   'San Francisco, CA', 'Seattle, WA', 'Tampa, FL', 'Washington, DC'
 ];
 
-export default function OnboardingLocation({ locationCity, setLocationCity, locationRadius, setLocationRadius, settingPreference, setSettingPreference, setActiveScreen, stepProgressBar }) {
+export default function OnboardingLocation({ 
+  locationCity, 
+  setLocationCity, 
+  locationRadius, 
+  setLocationRadius, 
+  settingPreference, 
+  setSettingPreference, 
+  setActiveScreen, 
+  stepProgressBar,
+  settingOptions
+}) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchText, setSearchText] = useState(locationCity || '');
   const containerRef = useRef(null);
@@ -40,15 +50,30 @@ export default function OnboardingLocation({ locationCity, setLocationCity, loca
     setDropdownOpen(false);
   };
 
+  const finalSettingOptions = (settingOptions && settingOptions.length > 0)
+    ? settingOptions.map(opt => ({
+        id: opt.label.toLowerCase(),
+        label: opt.label
+      }))
+    : [
+        { id: 'urban', label: 'Urban' },
+        { id: 'suburban', label: 'Suburban' },
+        { id: 'rural', label: 'Rural' }
+      ];
+
   return (
-    <div className="max-w-[660px] mx-auto ">
+    <div className="max-w-[660px] mx-auto " ref={containerRef}>
       <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
-        Step 4 of 9 — Location
+        Step 4 of 9 — Location &amp; Search Radius
       </div>
       {stepProgressBar(4)}
 
-      <div className="mb-5" ref={containerRef}>
-        <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">
+      <h1 className="font-display text-[26px] font-extrabold text-ink mb-6">
+        Where are you looking to buy or live?
+      </h1>
+
+      <div className="mb-5 text-left relative">
+        <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-bold">
           Preferred city or metro area
         </label>
         <div className="relative">
@@ -61,41 +86,23 @@ export default function OnboardingLocation({ locationCity, setLocationCity, loca
               setDropdownOpen(true);
             }}
             onFocus={() => setDropdownOpen(true)}
-            placeholder="e.g. Austin, TX"
-            className="w-full bg-panel border border-border rounded-lg px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium pr-9"
+            placeholder="Search city (e.g. Austin, New York...)"
+            className="w-full bg-panel border border-border rounded-lg pl-9.5 pr-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
           />
-          <button
-            type="button"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-dim hover:text-ink cursor-pointer"
-          >
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+          <MapPin className="w-4 h-4 text-ink-dim absolute left-3 top-2.5" />
+          <ChevronDown className="w-4 h-4 text-ink-dim absolute right-3.5 top-2.5 cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)} />
 
-          {dropdownOpen && (
-            <div className="absolute z-50 left-0 right-0 top-[calc(100%+4px)] bg-white border border-border rounded-xl shadow-lg overflow-hidden animate-fade">
-              <div className="max-h-[200px] overflow-y-auto">
-                {filteredCities.length > 0 ? (
-                  filteredCities.map((city) => (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => handleSelect(city)}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-2.5 transition-colors cursor-pointer ${locationCity === city
-                          ? 'bg-amber-soft text-ink font-bold'
-                          : 'text-ink hover:bg-panel-alt'
-                        }`}
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-ink-dim shrink-0" />
-                      {city}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-xs text-ink-dim font-medium">
-                    No cities match "{searchText}"
-                  </div>
-                )}
-              </div>
+          {dropdownOpen && filteredCities.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto z-50">
+              {filteredCities.map(city => (
+                <div
+                  key={city}
+                  onClick={() => handleSelect(city)}
+                  className="px-4 py-2.5 text-xs text-ink font-semibold hover:bg-slate-50 cursor-pointer text-left border-b border-border/40 last:border-0"
+                >
+                  {city}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -122,11 +129,7 @@ export default function OnboardingLocation({ locationCity, setLocationCity, loca
         </label>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
-        {[
-          { id: 'urban', label: 'Urban' },
-          { id: 'suburban', label: 'Suburban' },
-          { id: 'rural', label: 'Rural' }
-        ].map(opt => (
+        {finalSettingOptions.map(opt => (
           <div
             key={opt.id}
             onClick={() => setSettingPreference(opt.id)}

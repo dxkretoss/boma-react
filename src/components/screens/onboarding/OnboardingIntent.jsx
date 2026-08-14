@@ -1,7 +1,20 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-export default function OnboardingIntent({ housingIntent, setHousingIntent, setActiveScreen, stepProgressBar }) {
+export default function OnboardingIntent({ housingIntent, setHousingIntent, setActiveScreen, stepProgressBar, options }) {
+  const intentOptions = (options && options.length > 0)
+    ? options.map(opt => ({
+        id: opt.label.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        label: opt.label,
+        sub: opt.desc || ''
+      }))
+    : [
+        { id: 'purchase', label: 'Purchase primary residence', sub: "Where you'll live day to day" },
+        { id: 'co-develop', label: 'Co-develop property', sub: 'Build alongside your Pod' },
+        { id: 'investment', label: 'Investment hold', sub: 'Not your primary home' },
+        { id: 'co-living', label: 'Lifestyle-based co-living', sub: 'Shared spaces, shared living' }
+      ];
+
   return (
     <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
@@ -12,14 +25,9 @@ export default function OnboardingIntent({ housingIntent, setHousingIntent, setA
           <h3 className="font-display font-bold text-[18px] text-ink mb-5">
             What are your goals for this community housing?
           </h3>
-
+ 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-8">
-            {[
-              { id: 'purchase', label: 'Purchase primary residence', sub: "Where you'll live day to day" },
-              { id: 'co-develop', label: 'Co-develop property', sub: 'Build alongside your Pod' },
-              { id: 'investment', label: 'Investment hold', sub: 'Not your primary home' },
-              { id: 'co-living', label: 'Lifestyle-based co-living', sub: 'Shared spaces, shared living' }
-            ].map(opt => (
+            {intentOptions.map(opt => (
               <div 
                 key={opt.id}
                 onClick={() => setHousingIntent(opt.id)}
@@ -31,7 +39,7 @@ export default function OnboardingIntent({ housingIntent, setHousingIntent, setA
               >
                 <div className="flex flex-col leading-tight ">
                   <span className="text-[13.5px] font-extrabold text-ink mb-1">{opt.label}</span>
-                  <span className="text-[11px] text-ink-dim font-medium">{opt.sub}</span>
+                  {opt.sub && <span className="text-[11px] text-ink-dim font-medium">{opt.sub}</span>}
                 </div>
               </div>
             ))}

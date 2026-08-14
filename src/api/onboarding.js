@@ -295,3 +295,106 @@ export async function submitOnboardingProfile(userId) {
 
   return user;
 }
+
+/**
+ * Fetches all active readiness scoring rules joined with question and option info.
+ */
+export async function fetchReadinessRules() {
+  const { data: rules, error } = await supabase
+    .from('readiness_scoring_rules')
+    .select(`
+      *,
+      option:onboarding_question_options(*),
+      question:onboarding_questions(*)
+    `)
+    .eq('is_active', true);
+
+  if (error) {
+    console.warn('Could not fetch readiness rules with joins, falling back:', error.message);
+    const { data: rawRules } = await supabase.from('readiness_scoring_rules').select('*').eq('is_active', true);
+    return rawRules || [];
+  }
+
+  return rules || [];
+}
+
+/**
+ * Returns a comprehensive score breakdown for a specific user.
+ */
+export async function getReadinessScoreBreakdown(userId) {
+  const { data: responses, error: respError } = await supabase
+    .from('onboarding_responses')
+    .select(`
+      *,
+      question:onboarding_questions(*)
+    `)
+    .eq('user_id', userId);
+
+  if (respError) {
+    throw new Error(`Failed to fetch saved responses: ${respError.message}`);
+  }
+
+  const rules = await fetchReadinessRules();
+
+  const rulesMap = {};
+  rules.forEach(r => {
+    if (r.option_id) rulesMap[r.option_id] = r;
+  });
+
+  const { data: options } = await supabase
+    .from('onboarding_question_options')
+    .select('*')
+    .eq('is_active', true);
+
+  const optionKeyToOptMap = {};
+  (options || []).forEach(opt => {
+    optionKeyToOptMap[opt.option_key] = opt;
+    if (opt.value) optionKeyToOptMap[opt.value] = opt;
+    if (opt.label) optionKeyToOptMap[opt.label] = opt;
+  });
+
+  let totalScore = 0;
+  let scoredCategoriesCount = 0;
+  const appliedSteps = [];
+  const unscoredSteps = [];
+
+  for (const resp of responses) {
+    const val = resp.answer_json?.value;
+    const optObj = optionKeyToOptMap[val];
+    const optionId = optObj?.id;
+    const rule = rulesMap[optionId];
+
+    if (rule && rule.score_value !== undefined) {
+      totalScore += rule.score_value;
+      scoredCategoriesCount++;
+      appliedSteps.push({
+        stepNumber: resp.question?.step_number || 0,
+        questionTitle: resp.question?.title || resp.question_key,
+        questionKey: resp.question_key,
+        selectedOption: optObj?.label || val,
+        optionValue: val,
+        points: rule.score_value,
+        reasoning: rule.reasoning || 'Score value mapped from active readiness rules.'
+      });
+    } else {
+      unscoredSteps.push({
+        stepNumber: resp.question?.step_number || 0,
+        questionTitle: resp.question?.title || resp.question_key,
+        questionKey: resp.question_key,
+        selectedOption: Array.isArray(resp.answer_json?.values) ? resp.answer_json.values.join(', ') : val
+      });
+    }
+  }
+
+  const finalScore = scoredCategoriesCount === 0 ? 82 : Math.round(totalScore / scoredCategoriesCount);
+
+  return {
+    totalScore: finalScore,
+    baselineUsed: scoredCategoriesCount === 0,
+    scoredCategoriesCount,
+    sumPoints: totalScore,
+    appliedSteps,
+    unscoredSteps
+  };
+}
+

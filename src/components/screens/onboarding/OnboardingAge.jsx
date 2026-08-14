@@ -1,7 +1,13 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-export default function OnboardingAge({ ageGroup, handleAgeSelect, setActiveScreen, stepProgressBar }) {
+export default function OnboardingAge({ ageGroup, handleAgeSelect, setActiveScreen, stepProgressBar, options }) {
+  const ageOptions = (options && options.length > 0) ? options : [
+    { label: '18–30 years', desc: 'Gen Z / Millennials • Nomads, Professionals & Creators' },
+    { label: '31–60 years', desc: 'Gen X / Millennials • Families, Builders & Professionals' },
+    { label: '61+ years', desc: 'Boomers / Seniors • Active Retirement & Community Elders' }
+  ];
+
   return (
     <div className="max-w-[660px] mx-auto">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
@@ -17,23 +23,19 @@ export default function OnboardingAge({ ageGroup, handleAgeSelect, setActiveScre
           </p>
           
           <div className="flex flex-col gap-3.5 ">
-            {[
-              { label: '18–30 years', desc: 'Gen Z / Millennials • Nomads, Professionals & Creators' },
-              { label: '31–60 years', desc: 'Gen X / Millennials • Families, Builders & Professionals' },
-              { label: '61+ years', desc: 'Boomers / Seniors • Active Retirement & Community Elders' }
-            ].map(age => (
+            {ageOptions.map((age, idx) => (
               <div 
-                key={age.label}
+                key={age.id || age.label || idx}
                 onClick={() => handleAgeSelect(age.label)}
                 className={`flex justify-between items-center border rounded-xl p-5 px-6 bg-white cursor-pointer shadow-sm transition-all duration-150 border-border hover:border-amber hover:-translate-y-[1px] ${
                   ageGroup === age.label ? 'ring-2 ring-amber/15 border-amber' : ''
                 }`}
               >
-                <div className="flex flex-col">
+                <div className="flex flex-col text-left">
                   <b className="text-[15.5px] text-ink mb-0.5">{age.label}</b>
-                  <span className="text-[12.5px] text-ink-dim font-medium">{age.desc}</span>
+                  {age.desc && <span className="text-[12.5px] text-ink-dim font-medium">{age.desc}</span>}
                 </div>
-                <ArrowRight className="w-4 h-4 text-ink-dim" />
+                <ArrowRight className="w-4 h-4 text-ink-dim flex-shrink-0" />
               </div>
             ))}
           </div>

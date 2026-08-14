@@ -1,7 +1,39 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
-export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, podSize, setPodSize, setActiveScreen, stepProgressBar }) {
+export default function OnboardingCommunity({ 
+  decisionStyle, 
+  setDecisionStyle, 
+  podSize, 
+  setPodSize, 
+  setActiveScreen, 
+  stepProgressBar,
+  decisionOptions,
+  podSizeOptions
+}) {
+  const finalDecisionOptions = (decisionOptions && decisionOptions.length > 0)
+    ? decisionOptions.map(opt => ({
+        id: opt.label.toLowerCase(),
+        label: opt.label,
+        sub: opt.desc || ''
+      }))
+    : [
+        { id: 'consensus', label: 'Consensus', sub: 'Everyone weighs in' },
+        { id: 'delegated', label: 'Delegated', sub: 'A few people lead' },
+        { id: 'flexible', label: 'Flexible', sub: 'Depends on the topic' }
+      ];
+
+  const finalPodSizeOptions = (podSizeOptions && podSizeOptions.length > 0)
+    ? podSizeOptions.map(opt => ({
+        id: opt.label.toLowerCase(),
+        label: opt.label
+      }))
+    : [
+        { id: '4–6', label: '4–6 households' },
+        { id: '7–10', label: '7–10 households' },
+        { id: '10+', label: '10+ households' }
+      ];
+
   return (
     <div className="max-w-[660px] mx-auto ">
           <div className="text-xs font-mono uppercase tracking-wider text-ink-dim font-bold mb-1.5">
@@ -14,11 +46,7 @@ export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, p
           </h1>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
-            {[
-              { id: 'consensus', label: 'Consensus', sub: 'Everyone weighs in' },
-              { id: 'delegated', label: 'Delegated', sub: 'A few people lead' },
-              { id: 'flexible', label: 'Flexible', sub: 'Depends on the topic' }
-            ].map(opt => (
+            {finalDecisionOptions.map(opt => (
               <div 
                 key={opt.id}
                 onClick={() => setDecisionStyle(opt.id)}
@@ -31,9 +59,11 @@ export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, p
                 <div className="font-display text-sm font-extrabold text-ink mb-1 ">
                   {opt.label}
                 </div>
-                <div className="text-[11px] text-ink-dim font-medium ">
-                  {opt.sub}
-                </div>
+                {opt.sub && (
+                  <div className="text-[11px] text-ink-dim font-medium ">
+                    {opt.sub}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -44,11 +74,7 @@ export default function OnboardingCommunity({ decisionStyle, setDecisionStyle, p
             </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
-            {[
-              { id: '4–6', label: '4–6 households' },
-              { id: '7–10', label: '7–10 households' },
-              { id: '10+', label: '10+ households' }
-            ].map(opt => (
+            {finalPodSizeOptions.map(opt => (
               <div 
                 key={opt.id}
                 onClick={() => setPodSize(opt.id)}

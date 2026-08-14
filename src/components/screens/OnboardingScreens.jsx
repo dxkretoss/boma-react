@@ -38,18 +38,18 @@ export default function OnboardingScreens({
   showToast
 }) {
   // Onboarding responses state
-  const [ageGroup, setAgeGroup] = useState('31–60 years');
-  const [selectedLifestyles, setSelectedLifestyles] = useState(['Quiet & low-key', 'Sustainability']);
-  const [decisionStyle, setDecisionStyle] = useState('consensus');
-  const [podSize, setPodSize] = useState('4–6');
-  const [locationCity, setLocationCity] = useState('Austin, TX');
+  const [ageGroup, setAgeGroup] = useState('');
+  const [selectedLifestyles, setSelectedLifestyles] = useState([]);
+  const [decisionStyle, setDecisionStyle] = useState('');
+  const [podSize, setPodSize] = useState('');
+  const [locationCity, setLocationCity] = useState('');
   const [locationRadius, setLocationRadius] = useState(45);
-  const [settingPreference, setSettingPreference] = useState('suburban');
-  const [budgetRange, setBudgetRange] = useState('$350,000 – $450,000');
-  const [downPaymentTier, setDownPaymentTier] = useState('5–10%');
-  const [financingPreference, setFinancingPreference] = useState('traditional');
-  const [housingIntent, setHousingIntent] = useState('purchase');
-  const [commitmentTimeline, setCommitmentTimeline] = useState('5+ years');
+  const [settingPreference, setSettingPreference] = useState('');
+  const [budgetRange, setBudgetRange] = useState('');
+  const [downPaymentTier, setDownPaymentTier] = useState('');
+  const [financingPreference, setFinancingPreference] = useState('');
+  const [housingIntent, setHousingIntent] = useState('');
+  const [commitmentTimeline, setCommitmentTimeline] = useState('');
 
   // Database-driven questionnaire state
   const [questionnaire, setQuestionnaire] = useState(null);
@@ -63,60 +63,90 @@ export default function OnboardingScreens({
   const [podRegType, setPodRegType] = useState('Friends');
   const [podInvites, setPodInvites] = useState('');
 
+  const resetOnboardingStates = () => {
+    setAgeGroup('');
+    setSelectedLifestyles([]);
+    setDecisionStyle('');
+    setPodSize('');
+    setLocationCity('');
+    setLocationRadius(45);
+    setSettingPreference('');
+    setBudgetRange('');
+    setDownPaymentTier('');
+    setFinancingPreference('');
+    setHousingIntent('');
+    setCommitmentTimeline('');
+  };
+
   // 1. Fetch active questionnaire, progress and saved responses
   useEffect(() => {
     async function loadOnboardingData() {
-      if (!currentUser?.id) return;
+      resetOnboardingStates();
       try {
         setLoading(true);
         const activeQ = await fetchActiveQuestionnaire();
         setQuestionnaire(activeQ);
 
-        const progress = await fetchOnboardingProgress(currentUser.id);
-        const savedResponses = await fetchSavedResponses(currentUser.id);
+        if (currentUser?.id) {
+          const progress = await fetchOnboardingProgress(currentUser.id);
+          const savedResponses = await fetchSavedResponses(currentUser.id);
 
-        savedResponses.forEach(resp => {
-          const val = resp.answer_json?.value || resp.answer_json?.values;
-          if (resp.question_key === 'age_group') setAgeGroup(val);
-          else if (resp.question_key === 'lifestyles') setSelectedLifestyles(val || []);
-          else if (resp.question_key === 'decision_style') setDecisionStyle(val);
-          else if (resp.question_key === 'pod_size') setPodSize(val);
-          else if (resp.question_key === 'location_city') setLocationCity(val);
-          else if (resp.question_key === 'location_radius') setLocationRadius(parseInt(val) || 45);
-          else if (resp.question_key === 'setting_preference') setSettingPreference(val);
-          else if (resp.question_key === 'budget_range') setBudgetRange(val);
-          else if (resp.question_key === 'down_payment_tier') setDownPaymentTier(val);
-          else if (resp.question_key === 'financing_preference') setFinancingPreference(val);
-          else if (resp.question_key === 'housing_intent') setHousingIntent(val);
-          else if (resp.question_key === 'commitment_timeline') setCommitmentTimeline(val);
-        });
+          if (savedResponses && savedResponses.length > 0) {
+            savedResponses.forEach(resp => {
+              const val = resp.answer_json?.value || resp.answer_json?.values;
+              if (resp.question_key === 'age_group') setAgeGroup(val || '');
+              else if (resp.question_key === 'lifestyles') setSelectedLifestyles(val || []);
+              else if (resp.question_key === 'decision_style') setDecisionStyle(val || '');
+              else if (resp.question_key === 'pod_size') setPodSize(val || '');
+              else if (resp.question_key === 'location_city') setLocationCity(val || '');
+              else if (resp.question_key === 'location_radius') setLocationRadius(parseInt(val) || 45);
+              else if (resp.question_key === 'setting_preference') setSettingPreference(val || '');
+              else if (resp.question_key === 'budget_range') setBudgetRange(val || '');
+              else if (resp.question_key === 'down_payment_tier') setDownPaymentTier(val || '');
+              else if (resp.question_key === 'financing_preference') setFinancingPreference(val || '');
+              else if (resp.question_key === 'housing_intent') setHousingIntent(val || '');
+              else if (resp.question_key === 'commitment_timeline') setCommitmentTimeline(val || '');
+            });
+          }
 
-        // Resume progress if user is starting from entry path
-        if (progress && progress.status === 'IN_PROGRESS' && activeScreen === 'entry-path') {
-          const stepScreens = {
-            1: 'onboarding-age',
-            2: 'onboarding-lifestyle',
-            3: 'onboarding-community',
-            4: 'onboarding-location',
-            5: 'onboarding-budget',
-            6: 'onboarding-intent',
-            7: 'onboarding-commitment',
-            8: 'onboarding-review',
-            9: 'onboarding-score'
-          };
-          const targetScreen = stepScreens[progress.current_step];
-          if (targetScreen) {
-            setActiveScreen(targetScreen);
+          // Resume progress if user is starting from entry path
+          if (progress && progress.status === 'IN_PROGRESS' && activeScreen === 'entry-path') {
+            const stepScreens = {
+              1: 'onboarding-age',
+              2: 'onboarding-lifestyle',
+              3: 'onboarding-community',
+              4: 'onboarding-location',
+              5: 'onboarding-budget',
+              6: 'onboarding-intent',
+              7: 'onboarding-commitment',
+              8: 'onboarding-review'
+            };
+            if (stepScreens[progress.current_step_number]) {
+              setActiveScreen(stepScreens[progress.current_step_number]);
+            }
           }
         }
       } catch (err) {
-        console.error('Error loading onboarding:', err);
+        console.error('Failed to load onboarding data:', err);
       } finally {
         setLoading(false);
       }
     }
     loadOnboardingData();
-  }, [currentUser]);
+  }, [currentUser?.id]);
+
+  const getQuestionOptions = (questionKey, fallbackOptions = []) => {
+    if (!questionnaire?.questions) return fallbackOptions;
+    const q = questionnaire.questions.find(item => item.question_key === questionKey);
+    if (q && q.options && q.options.length > 0) {
+      return q.options.map(opt => ({
+        label: opt.label || opt.option_label || opt.value || '',
+        desc: opt.description || opt.option_description || '',
+        id: opt.id
+      }));
+    }
+    return fallbackOptions;
+  };
 
   if (![
     'entry-path', 'onboarding-welcome', 'onboarding-age', 'onboarding-lifestyle',
@@ -169,17 +199,79 @@ export default function OnboardingScreens({
 
   // Navigation interceptor to enable auto-save & validation
   const handleOnboardingNavigation = async (nextScreen) => {
+    const screensOrder = [
+      'onboarding-welcome',
+      'onboarding-age',
+      'onboarding-lifestyle',
+      'onboarding-community',
+      'onboarding-location',
+      'onboarding-budget',
+      'onboarding-intent',
+      'onboarding-commitment',
+      'onboarding-review'
+    ];
+
+    const isGoingForward = screensOrder.indexOf(nextScreen) > screensOrder.indexOf(activeScreen);
+
     // 1. Validation checks going forward
-    if (activeScreen === 'onboarding-location' && nextScreen !== 'onboarding-community') {
-      if (!locationCity.trim()) {
-        showToast('Preferred city or metro area is required.');
-        return;
+    if (isGoingForward) {
+      if (activeScreen === 'onboarding-age') {
+        if (!ageGroup) {
+          showToast('Please select your age group to continue.');
+          return;
+        }
       }
-    }
-    if (activeScreen === 'onboarding-budget' && nextScreen !== 'onboarding-location') {
-      if (!budgetRange.trim()) {
-        showToast('Estimated purchase budget range is required.');
-        return;
+      if (activeScreen === 'onboarding-lifestyle') {
+        if (!selectedLifestyles || selectedLifestyles.length === 0) {
+          showToast('Please select at least one lifestyle or value to continue.');
+          return;
+        }
+      }
+      if (activeScreen === 'onboarding-community') {
+        if (!decisionStyle) {
+          showToast('Please select your decision-making style.');
+          return;
+        }
+        if (!podSize) {
+          showToast('Please select your preferred Pod size.');
+          return;
+        }
+      }
+      if (activeScreen === 'onboarding-location') {
+        if (!locationCity || !locationCity.trim()) {
+          showToast('Preferred city or metro area is required.');
+          return;
+        }
+        if (!settingPreference) {
+          showToast('Please select your setting preference.');
+          return;
+        }
+      }
+      if (activeScreen === 'onboarding-budget') {
+        if (!budgetRange || !budgetRange.trim()) {
+          showToast('Estimated purchase budget range is required.');
+          return;
+        }
+        if (!downPaymentTier) {
+          showToast('Please select your down payment readiness tier.');
+          return;
+        }
+        if (!financingPreference) {
+          showToast('Please select your financing preference.');
+          return;
+        }
+      }
+      if (activeScreen === 'onboarding-intent') {
+        if (!housingIntent) {
+          showToast('Please select your primary housing intent.');
+          return;
+        }
+      }
+      if (activeScreen === 'onboarding-commitment') {
+        if (!commitmentTimeline) {
+          showToast('Please select your minimum commitment timeline.');
+          return;
+        }
       }
     }
 
@@ -327,6 +419,7 @@ export default function OnboardingScreens({
           handleAgeSelect={handleAgeSelect}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          options={getQuestionOptions('age_group')}
         />
       )}
       {activeScreen === 'onboarding-lifestyle' && (
@@ -335,6 +428,7 @@ export default function OnboardingScreens({
           toggleLifestyle={toggleLifestyle}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          options={getQuestionOptions('lifestyles')}
         />
       )}
       {activeScreen === 'onboarding-community' && (
@@ -345,6 +439,8 @@ export default function OnboardingScreens({
           setPodSize={setPodSize}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          decisionOptions={getQuestionOptions('decision_style')}
+          podSizeOptions={getQuestionOptions('pod_size')}
         />
       )}
       {activeScreen === 'onboarding-location' && (
@@ -357,6 +453,7 @@ export default function OnboardingScreens({
           setSettingPreference={setSettingPreference}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          settingOptions={getQuestionOptions('setting_preference')}
         />
       )}
       {activeScreen === 'onboarding-budget' && (
@@ -369,6 +466,8 @@ export default function OnboardingScreens({
           setFinancingPreference={setFinancingPreference}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          downPaymentOptions={getQuestionOptions('down_payment_tier')}
+          financingOptions={getQuestionOptions('financing_preference')}
         />
       )}
       {activeScreen === 'onboarding-intent' && (
@@ -377,6 +476,7 @@ export default function OnboardingScreens({
           setHousingIntent={setHousingIntent}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          options={getQuestionOptions('housing_intent')}
         />
       )}
       {activeScreen === 'onboarding-commitment' && (
@@ -385,10 +485,12 @@ export default function OnboardingScreens({
           setCommitmentTimeline={setCommitmentTimeline}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
+          options={getQuestionOptions('commitment_timeline')}
         />
       )}
       {activeScreen === 'onboarding-review' && (
         <OnboardingReview
+          ageGroup={ageGroup}
           selectedLifestyles={selectedLifestyles}
           decisionStyle={decisionStyle}
           locationCity={locationCity}

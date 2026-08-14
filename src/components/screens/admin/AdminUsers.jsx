@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, ShieldAlert, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, Search, ShieldAlert, CheckCircle2, AlertTriangle, ShieldCheck, Info } from 'lucide-react';
 import { fetchAdminUsers, fetchUserOnboardingAnswers, submitProfileReview } from '../../../api/admin';
+import { getReadinessScoreBreakdown } from '../../../api/onboarding';
 
 export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
   const [users, setUsers] = useState([]);
@@ -12,16 +13,18 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [breakdown, setBreakdown] = useState(null);
 
   // Filters state
   const [profileStatus, setProfileStatus] = useState('ALL');
+  const [onboardingStatus, setOnboardingStatus] = useState('ALL');
   const [entryPath, setEntryPath] = useState('ALL');
   const [search, setSearch] = useState('');
 
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const data = await fetchAdminUsers({ profileStatus, entryPath, search });
+      const data = await fetchAdminUsers({ profileStatus, onboardingStatus, entryPath, search });
       setUsers(data);
     } catch (err) {
       console.error('Failed to load admin users:', err);
@@ -32,16 +35,21 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
 
   useEffect(() => {
     loadUsers();
-  }, [profileStatus, entryPath, search]);
+  }, [profileStatus, onboardingStatus, entryPath, search]);
 
   const handleViewDetails = async (user) => {
     setSelectedUser(user);
     setRejectionReason('');
     setShowRejectForm(false);
+    setBreakdown(null);
     try {
       setLoadingAnswers(true);
       const answers = await fetchUserOnboardingAnswers(user.id);
       setSelectedAnswers(answers);
+      if (user.onboarding_status === 'COMPLETED') {
+        const breakdownData = await getReadinessScoreBreakdown(user.id);
+        setBreakdown(breakdownData);
+      }
     } catch (err) {
       console.error('Error fetching onboarding responses:', err);
     } finally {
@@ -131,6 +139,19 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
           </div>
 
           <div className="flex flex-col">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Onboarding Steps</span>
+            <select
+              value={onboardingStatus}
+              onChange={(e) => setOnboardingStatus(e.target.value)}
+              className="bg-white border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:border-amber"
+            >
+              <option value="ALL">All Steps Status</option>
+              <option value="COMPLETED">Completed (9/9)</option>
+              <option value="INCOMPLETE">Incomplete</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col">
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Entry Path</span>
             <select
               value={entryPath}
@@ -162,33 +183,34 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
       {/* Users Table */}
       <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-sm text-left border-collapse">
+          <table className="w-full min-w-[920px] text-sm text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold  text-xs uppercase tracking-wider">
-                <th className="p-4 px-6">User Details</th>
-                <th className="p-4 px-6">Entry Path</th>
-                <th className="p-4 px-6">Readiness</th>
-                <th className="p-4 px-6">Profile Status</th>
-                <th className="p-4 px-6 text-right">Actions</th>
+              <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider">
+                <th className="p-4 px-6 whitespace-nowrap">User Details</th>
+                <th className="p-4 px-6 whitespace-nowrap">Entry Path</th>
+                <th className="p-4 px-6 whitespace-nowrap">Readiness</th>
+                <th className="p-4 px-6 whitespace-nowrap">Onboarding Steps</th>
+                <th className="p-4 px-6 whitespace-nowrap">Profile Status</th>
+                <th className="p-4 px-6 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-ink-dim font-medium">
+                  <td colSpan={6} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     <span className="inline-block animate-pulse">Loading database users...</span>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center text-ink-dim font-medium">
+                  <td colSpan={6} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     No users match current search criteria.
                   </td>
                 </tr>
               ) : (
                 users.map((user) => (
                   <tr key={user.id} className="hover:bg-panel-alt/30 transition-colors">
-                    <td className="p-4 px-6 font-semibold text-ink flex items-center gap-3">
+                    <td className="p-4 px-6 font-semibold text-ink flex items-center gap-3 whitespace-nowrap">
                       {user.avatar_url && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/') || user.avatar_url.startsWith('assets/') || user.avatar_url.startsWith('data:image/')) ? (
                         <img
                           src={user.avatar_url}
@@ -205,21 +227,42 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                         <span className="text-[11px] text-ink-dim font-medium mt-0.5">{user.email}</span>
                       </div>
                     </td>
-                    <td className="p-4 px-6">
+                    <td className="p-4 px-6 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full ${user.entry_path === 'MATCHING_POOL' ? 'bg-sky-50 text-sky-700' : 'bg-indigo-50 text-indigo-700'
                         }`}>
                         {user.entry_path === 'MATCHING_POOL' ? 'Matching Pool' : user.entry_path === 'EXISTING_POD' ? 'Existing Pod' : 'Not Decided'}
                       </span>
                     </td>
-                    <td className="p-4 px-6 font-mono font-bold text-ink text-sm">
+                    <td className="p-4 px-6 font-mono font-bold text-ink text-sm whitespace-nowrap">
                       {user.onboarding_status === 'COMPLETED' ? `${user.readiness_score}/100` : '—'}
                     </td>
-                    <td className="p-4 px-6">
-                      <span className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded border uppercase ${getStatusBadge(user.profile_status)}`}>
-                        {user.profile_status ? user.profile_status.replace('_', ' ') : 'INCOMPLETE'}
+                    <td className="p-4 px-6 whitespace-nowrap">
+                      <span className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded border uppercase ${
+                        user.onboarding_status === 'COMPLETED'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {user.onboarding_status === 'COMPLETED' ? 'COMPLETED' : 'INCOMPLETE'}
                       </span>
                     </td>
-                    <td className="p-4 px-6 text-right">
+                    <td className="p-4 px-6 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded border uppercase ${getStatusBadge(user.profile_status)}`}>
+                          {user.profile_status ? user.profile_status.replace('_', ' ') : 'INCOMPLETE'}
+                        </span>
+                        {user.profile_status === 'REJECTED' && (
+                          <div className="relative group/tooltip inline-flex items-center">
+                            <Info className="w-4 h-4 text-rust hover:text-red-700 cursor-pointer transition-colors" />
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:flex flex-col w-60 bg-slate-900 text-white text-[11.5px] p-2.5 rounded-lg shadow-xl z-50 pointer-events-none animate-fade leading-snug font-medium text-left">
+                              <span className="font-mono text-[9px] uppercase tracking-wider text-amber font-bold mb-1">Rejection Reason</span>
+                              <p className="text-slate-200 whitespace-normal">{user.rejection_reason || 'No specific rejection reason provided.'}</p>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 px-6 text-right whitespace-nowrap">
                       <button
                         onClick={() => handleViewDetails(user)}
                         className="bg-teal text-white rounded-lg py-1 px-3 text-xs font-bold hover:bg-teal-700 hover:-translate-y-[0.5px] transition-all cursor-pointer"
@@ -273,6 +316,16 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                   <div className="py-12 text-center text-ink-dim text-xs font-semibold animate-pulse">
                     Loading answers from Supabase...
                   </div>
+                ) : selectedUser.onboarding_status !== 'COMPLETED' ? (
+                  <div className="bg-amber-50/90 border border-amber-200/90 rounded-xl p-5 text-left">
+                    <div className="flex items-center gap-2 text-amber-900 font-bold text-xs mb-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span>Onboarding Questionnaire Incomplete</span>
+                    </div>
+                    <p className="text-amber-800 text-[12.5px] leading-relaxed font-medium">
+                      This user has not submitted all 9 onboarding questions yet. Questionnaire answers and score metrics will be available once the user completes their onboarding survey.
+                    </p>
+                  </div>
                 ) : selectedAnswers.length === 0 ? (
                   <div className="py-12 text-center text-ink-dim text-xs font-semibold">
                     No onboarding answers found for this user.
@@ -322,14 +375,49 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                     completed={selectedUser.onboarding_status === 'COMPLETED'}
                   />
                   <span className="text-[10.5px] font-bold text-ink">Score Metrics Synced</span>
+                  <button
+                    onClick={() => {
+                      setSelectedUser(null);
+                      setActiveScreen('admin-readiness-logic');
+                    }}
+                    className="mt-2 text-[11px] font-bold text-amber hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    View Score Logic Rules →
+                  </button>
                 </div>
+
+                {/* Score breakdown reference for admin */}
+                {breakdown && breakdown.appliedSteps && breakdown.appliedSteps.length > 0 && (
+                  <div className="bg-white p-3.5 rounded-xl border border-border text-left shrink-0 space-y-2">
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim font-bold block border-b border-border/60 pb-1 mb-1 text-center">Step Points Breakdown</span>
+                    <div className="space-y-2">
+                      {[3, 5, 7].map(stepNum => {
+                        const steps = breakdown.appliedSteps.filter(s => s.stepNumber === stepNum);
+                        const stepLabel = stepNum === 3 ? "Step 3 (Community)" : stepNum === 5 ? "Step 5 (Budget)" : "Step 7 (Commitment)";
+                        const points = steps.length > 0 ? Math.round(steps.reduce((sum, s) => sum + s.points, 0) / steps.length) : 0;
+                        return (
+                          <div key={stepNum} className="flex justify-between items-center text-[11px] font-bold">
+                            <span className="text-ink-dim font-semibold">{stepLabel}:</span>
+                            <span className="font-mono text-teal">{points} pts</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Info Details */}
                 <div className="text-[11.5px] space-y-2 text-ink text-left bg-white p-3.5 rounded-xl border border-border shrink-0">
                   <div>
-                    <span className="text-ink-dim font-medium">Profile Status:</span>
+                    <span className="text-ink-dim font-medium">Onboarding Steps:</span>
                     <span className="font-bold ml-1.5 text-xs text-ink capitalize">
-                      {selectedUser.profile_status ? selectedUser.profile_status.toLowerCase() : 'incomplete'}
+                      {selectedUser.onboarding_status === 'COMPLETED' ? 'Completed (9/9)' : 'Incomplete'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-ink-dim font-medium">Profile Review Status:</span>
+                    <span className="font-bold ml-1.5 text-xs text-ink capitalize">
+                      {selectedUser.profile_status ? selectedUser.profile_status.replace('_', ' ').toLowerCase() : 'incomplete'}
                     </span>
                   </div>
                   <div>
@@ -345,6 +433,14 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                     </span>
                   </div>
                 </div>
+
+                {/* Rejection Reason Notice Box */}
+                {selectedUser.profile_status === 'REJECTED' && (
+                  <div className="bg-red-50/90 border border-red-200 rounded-xl p-3 text-left shrink-0">
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-rust font-bold block mb-1">Rejection Reason / Feedback</span>
+                    <p className="text-[11.5px] text-rust font-medium leading-relaxed">{selectedUser.rejection_reason || 'No specific feedback provided.'}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -358,7 +454,12 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                 Close Review
               </button>
 
-              {!showRejectForm ? (
+              {selectedUser.onboarding_status !== 'COMPLETED' ? (
+                <div className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-3.5 py-2 rounded-xl flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>Onboarding Incomplete — Action Buttons Disabled</span>
+                </div>
+              ) : !showRejectForm ? (
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
                   <button
                     onClick={() => handleReviewAction('APPROVE')}
@@ -367,14 +468,6 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                   >
                     <CheckCircle2 className="w-4 h-4" /> Approve Profile
                   </button>
-
-                  {/* <button
-                    onClick={() => handleReviewAction('FLAG')}
-                    className="bg-amber hover:bg-[#2450C4] text-white rounded-xl py-2 px-4.5 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-                    disabled={submittingReview}
-                  >
-                    <ShieldAlert className="w-4 h-4" /> Flag Profile
-                  </button> */}
 
                   <button
                     onClick={() => setShowRejectForm(true)}
