@@ -516,3 +516,47 @@ export async function publishQuestionnaireVersion(questionnaireId, name, descrip
 
   return newQ;
 }
+
+/**
+ * Fetches all waitlist submissions for admin review.
+ */
+export async function fetchWaitlistEntries(search = '') {
+  let query = supabase
+    .from('waitlist')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (search && search.trim() !== '') {
+    const s = `%${search.trim()}%`;
+    query = query.or(`first_name.ilike.${s},last_name.ilike.${s},email.ilike.${s},city.ilike.${s},interest.ilike.${s}`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Failed to fetch waitlist entries: ${error.message}`);
+  }
+  return data || [];
+}
+
+/**
+ * Fetches all village test submissions for admin review.
+ */
+export async function fetchVillageTestSubmissions(search = '') {
+  let query = supabase
+    .from('village_test_submissions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (search && search.trim() !== '') {
+    const s = `%${search.trim()}%`;
+    query = query.or(`first_name.ilike.${s},last_name.ilike.${s},email.ilike.${s},company.ilike.${s}`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Failed to fetch village test submissions: ${error.message}`);
+  }
+  return data || [];
+}
+
+

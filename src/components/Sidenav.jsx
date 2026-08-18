@@ -78,7 +78,8 @@ const SIDENAV_CONFIG = {
       { id: 'admin-pod-management', label: 'Pods', icon: 'doc' },
       { id: 'admin-questions', label: 'Questions', icon: 'edit' },
       { id: 'admin-readiness-logic', label: 'Readiness Score Logic', icon: 'gauge' },
-
+      { id: 'admin-waitlist', label: 'Waitlist', icon: 'list' },
+      { id: 'admin-village-test', label: 'Village Test List', icon: 'doc' }
     ]
   }
 };

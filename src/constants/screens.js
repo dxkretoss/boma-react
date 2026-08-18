@@ -5,7 +5,7 @@ export const SCREENS_ORDER = [
   "pod-member-onboarding", "pod-review", "pod-pending", "profile", "profile-update", "profile-edit", "readiness-detail", "status-tracking", "pod-history",
   "matching-status", "pod-suggestion", "pod-preview", "confirm-join", "commons-dashboard", "commons-members", "commons-agreement",
   "commons-chat", "commons-settings", "admin-dashboard", "admin-users", "admin-readiness-logic", "admin-matching", "admin-questions", "admin-pod-review",
-  "admin-pod-management", "admin-pod-detail", "admin-existing-pod-queue"
+  "admin-pod-management", "admin-pod-detail", "admin-existing-pod-queue", "admin-waitlist", "admin-village-test"
 ];
 
 export const SCREENS_LABELS = {
@@ -23,7 +23,7 @@ export const SCREENS_LABELS = {
   "commons-dashboard": "Pod Dashboard", "commons-members": "Member Overview", "commons-agreement": "Agreement Scaffolding",
   "commons-chat": "Pod Chat", "commons-settings": "Pod Settings", "admin-dashboard": "Admin Dashboard", "admin-users": "User Management", "admin-readiness-logic": "Readiness Score Logic",
   "admin-matching": "Matching Engine Control", "admin-questions": "Question Management", "admin-pod-review": "Suggested Pod Review", "admin-pod-management": "Pod Management", "admin-pod-detail": "Pod Commons View (Admin)",
-  "admin-existing-pod-queue": "Existing Pod Queue"
+  "admin-existing-pod-queue": "Existing Pod Queue", "admin-waitlist": "Waitlist Submissions", "admin-village-test": "Village Test Submissions"
 };
 
 export const GATED_SCREENS = [
@@ -49,7 +49,7 @@ export const SHELL_MODES = {
   'matching-status': 'app', 'pod-suggestion': 'app', 'pod-preview': 'app', 'confirm-join': 'app',
   'commons-dashboard': 'app', 'commons-members': 'app', 'commons-agreement': 'app', 'commons-chat': 'app', 'commons-settings': 'app',
   'admin-dashboard': 'admin', 'admin-users': 'admin', 'admin-readiness-logic': 'admin', 'admin-matching': 'admin', 'admin-questions': 'admin', 'admin-pod-review': 'admin',
-  'admin-pod-management': 'admin', 'admin-pod-detail': 'admin', 'admin-existing-pod-queue': 'admin'
+  'admin-pod-management': 'admin', 'admin-pod-detail': 'admin', 'admin-existing-pod-queue': 'admin', 'admin-waitlist': 'admin', 'admin-village-test': 'admin'
 };
 
 export const SCREEN_URLS = {
@@ -77,5 +77,5 @@ export const SCREEN_URLS = {
   'admin-dashboard': 'boma.app/admin', 'admin-users': 'boma.app/admin/users', 'admin-readiness-logic': 'boma.app/admin/readiness-logic',
   'admin-matching': 'boma.app/admin/matching',
   'admin-questions': 'boma.app/admin/questions', 'admin-pod-review': 'boma.app/admin/pod-review', 'admin-pod-management': 'boma.app/admin/pods',
-  'admin-pod-detail': 'boma.app/admin/pods/detail', 'admin-existing-pod-queue': 'boma.app/admin/pods/existing-queue'
+  'admin-pod-detail': 'boma.app/admin/pods/detail', 'admin-existing-pod-queue': 'boma.app/admin/pods/existing-queue', 'admin-waitlist': 'boma.app/admin/waitlist', 'admin-village-test': 'boma.app/admin/village-test'
 };

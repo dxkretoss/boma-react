@@ -11,6 +11,8 @@ import AdminPodManagement from './admin/AdminPodManagement';
 import AdminPodDetail from './admin/AdminPodDetail';
 import AdminExistingPodQueue from './admin/AdminExistingPodQueue';
 import AdminReadinessLogic from './admin/AdminReadinessLogic';
+import AdminWaitlist from './admin/AdminWaitlist';
+import AdminVillageTest from './admin/AdminVillageTest';
 
 export default function AdminScreens({
   activeScreen,
@@ -31,7 +33,7 @@ export default function AdminScreens({
 
   if (![
     'admin-login', 'admin-dashboard', 'admin-users', 'admin-readiness-logic', 'admin-matching', 'admin-pod-review',
-    'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue', 'admin-questions'
+    'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue', 'admin-questions', 'admin-waitlist', 'admin-village-test'
   ].includes(activeScreen)) {
     return null;
   }
@@ -110,6 +112,12 @@ export default function AdminScreens({
       )}
       {activeScreen === 'admin-existing-pod-queue' && (
         <AdminExistingPodQueue setActiveScreen={setActiveScreen} />
+      )}
+      {activeScreen === 'admin-waitlist' && (
+        <AdminWaitlist setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} />
+      )}
+      {activeScreen === 'admin-village-test' && (
+        <AdminVillageTest setActiveScreen={setActiveScreen} adminUser={adminUser} showToast={showToast} />
       )}
     </div>
   );
