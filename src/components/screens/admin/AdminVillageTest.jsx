@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Mail, Phone, Building2, Calendar, RefreshCw, FileText, X, CheckCircle2, HelpCircle, Code } from 'lucide-react';
+import { Search, Mail, Phone, Calendar, RefreshCw, FileText, X, CheckCircle2, HelpCircle, Code } from 'lucide-react';
 import { fetchVillageTestSubmissions } from '../../../api/admin';
 
 const VILLAGE_TEST_QUESTIONS_MAP = {
@@ -93,7 +93,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
           {Object.entries(val).map(([k, v]) => (
             <div key={k} className="flex gap-2">
               <span className="text-ink-dim font-bold">{k}:</span>
-              <span>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+              <span className='text-black'>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
             </div>
           ))}
         </div>
@@ -159,29 +159,26 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
 
       {/* Submissions Table */}
       <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
-        <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-[980px] text-sm text-left border-collapse whitespace-nowrap">
+        <div className="w-full overflow-hidden">
+          <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider">
-                <th className="p-4 px-6 whitespace-nowrap">Member Name</th>
-                <th className="p-4 px-6 whitespace-nowrap">Email</th>
-                <th className="p-4 px-6 whitespace-nowrap">Phone</th>
-                <th className="p-4 px-6 whitespace-nowrap">Company</th>
-                <th className="p-4 px-6 whitespace-nowrap">Answers Recorded</th>
-                <th className="p-4 px-6 whitespace-nowrap">Submitted At</th>
-                <th className="p-4 px-6 text-right whitespace-nowrap">Actions</th>
+              <tr className="bg-[#F8FAFC] border-b border-border text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                <th className="py-3.5 px-4 sm:px-6">Member Details</th>
+                <th className="py-3.5 px-4 sm:px-6">Answers Recorded</th>
+                <th className="py-3.5 px-4 sm:px-6">Submitted At</th>
+                <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
+                  <td colSpan={4} className="p-12 text-center text-ink-dim font-medium">
                     <span className="inline-block animate-pulse">Loading village test submissions...</span>
                   </td>
                 </tr>
               ) : submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
+                  <td colSpan={4} className="p-12 text-center text-ink-dim font-medium">
                     No village test submissions match your search.
                   </td>
                 </tr>
@@ -190,62 +187,46 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
                   const ansCount = getAnswerCount(item.answers);
                   return (
                     <tr key={item.id} className="hover:bg-panel-alt/30 transition-colors">
-                      <td className="p-4 px-6 font-bold text-ink whitespace-nowrap">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-amber-soft text-amber font-display font-extrabold text-xs flex items-center justify-center flex-shrink-0">
+                      <td className="py-4 px-4 sm:px-6 font-bold text-ink">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-amber-soft text-amber font-display font-extrabold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                             {((item.first_name || item.last_name || 'V')[0]).toUpperCase()}
                           </div>
-                          <div>
-                            <span className="block leading-tight text-ink font-bold">
+                          <div className="flex flex-col text-left">
+                            <span className="block leading-tight text-ink font-bold text-sm">
                               {item.first_name} {item.last_name}
                             </span>
+                            <div className="flex items-center gap-1.5 text-xs text-ink-dim font-medium mt-1">
+                              <Mail className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
+                              <a href={`mailto:${item.email}`} className="text-teal hover:underline font-semibold break-all">
+                                {item.email}
+                              </a>
+                            </div>
+                            {item.phone && (
+                              <div className="flex items-center gap-1.5 text-xs text-ink-dim font-medium mt-0.5">
+                                <Phone className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
+                                <span className="font-mono text-ink-dim font-semibold">{item.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 px-6 font-medium text-ink whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <Mail className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
-                          <a href={`mailto:${item.email}`} className="text-teal hover:underline font-semibold">
-                            {item.email}
-                          </a>
-                        </div>
-                      </td>
-                      <td className="p-4 px-6 font-medium text-ink-dim whitespace-nowrap text-xs">
-                        {item.phone ? (
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
-                            <span className="font-mono text-ink font-semibold">{item.phone}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className="p-4 px-6 font-medium text-ink whitespace-nowrap text-xs">
-                        {item.company ? (
-                          <div className="flex items-center gap-1.5">
-                            <Building2 className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
-                            <span className="font-semibold text-ink">{item.company}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                      <td className="p-4 px-6 whitespace-nowrap">
+                      <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-soft/60 text-amber border border-amber/15">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           {ansCount} Answer{ansCount !== 1 ? 's' : ''}
                         </span>
                       </td>
-                      <td className="p-4 px-6 text-xs font-mono text-ink-dim whitespace-nowrap">
+                      <td className="py-4 px-4 sm:px-6 text-xs font-mono text-ink-dim whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                           <span>{formatDate(item.created_at)}</span>
                         </div>
                       </td>
-                      <td className="p-4 px-6 text-right whitespace-nowrap">
+                      <td className="py-4 px-4 sm:px-6 text-right whitespace-nowrap">
                         <button
                           onClick={() => setSelectedSubmission(item)}
-                          className="bg-teal text-white rounded-lg py-1 px-3 text-xs font-bold hover:bg-teal-700 hover:-translate-y-[0.5px] transition-all cursor-pointer"
+                          className="bg-teal text-white rounded-lg py-1.5 px-3 text-xs font-bold hover:bg-teal-700 hover:-translate-y-[0.5px] transition-all cursor-pointer"
                         >
                           View Answers
                         </button>
@@ -281,9 +262,9 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
                   {selectedSubmission.first_name} {selectedSubmission.last_name}
                 </h3>
                 <div className="flex flex-wrap gap-4 text-xs text-ink-dim font-medium mt-1">
-                  <span>Email: <strong className="text-ink">{selectedSubmission.email}</strong></span>
-                  {selectedSubmission.phone && <span>Phone: <strong className="text-ink font-mono">{selectedSubmission.phone}</strong></span>}
-                  {selectedSubmission.company && <span>Company: <strong className="text-ink">{selectedSubmission.company}</strong></span>}
+                  <span>Email: <strong className="text-black">{selectedSubmission.email}</strong></span>
+                  {selectedSubmission.phone && <span>Phone: <strong className="text-black font-mono">{selectedSubmission.phone}</strong></span>}
+                  {selectedSubmission.company && <span>Company: <strong className="text-black">{selectedSubmission.company}</strong></span>}
                 </div>
               </div>
               <button
@@ -322,7 +303,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
                           <span className="text-[10px] font-mono text-ink-dim">Key: {key}</span>
                         </div>
                         {qText && (
-                          <h5 className="text-[13px] font-bold text-ink leading-snug mb-2 font-display">
+                          <h5 className="text-[13px] font-extrabold text-black leading-snug mb-2 font-display">
                             {qText}
                           </h5>
                         )}

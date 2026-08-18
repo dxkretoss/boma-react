@@ -95,12 +95,10 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
       {/* Waitlist Table */}
       <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-[980px] text-sm text-left border-collapse whitespace-nowrap">
+          <table className="w-full min-w-[850px] text-sm text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider">
-                <th className="p-4 px-6 whitespace-nowrap">Name</th>
-                <th className="p-4 px-6 whitespace-nowrap">Email</th>
-                <th className="p-4 px-6 whitespace-nowrap">Phone</th>
+              <tr className="bg-[#F8FAFC] border-b border-border text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                <th className="p-4 px-6 whitespace-nowrap">User Details</th>
                 <th className="p-4 px-6 whitespace-nowrap">Location</th>
                 <th className="p-4 px-6 whitespace-nowrap">Interest</th>
                 <th className="p-4 px-6 whitespace-nowrap">Heard From</th>
@@ -110,13 +108,13 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
             <tbody className="divide-y divide-border/60">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
+                  <td colSpan={5} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     <span className="inline-block animate-pulse">Loading waitlist entries...</span>
                   </td>
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
+                  <td colSpan={5} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     No waitlist submissions found matching your search.
                   </td>
                 </tr>
@@ -124,39 +122,33 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
                 entries.map((item) => (
                   <tr key={item.id} className="hover:bg-panel-alt/30 transition-colors">
                     <td className="p-4 px-6 font-bold text-ink whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-teal-soft text-teal font-display font-extrabold text-xs flex items-center justify-center flex-shrink-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-teal-soft text-teal font-display font-extrabold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                           {((item.first_name || item.last_name || 'W')[0]).toUpperCase()}
                         </div>
-                        <div>
-                          <span className="block leading-tight text-ink font-bold">
+                        <div className="flex flex-col text-left">
+                          <span className="block leading-tight text-ink font-bold text-sm">
                             {item.first_name} {item.last_name}
                           </span>
+                          <div className="flex items-center gap-1.5 text-xs text-ink-dim font-medium mt-1">
+                            <Mail className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
+                            <a href={`mailto:${item.email}`} className="text-teal hover:underline font-semibold">
+                              {item.email}
+                            </a>
+                          </div>
+                          {item.phone && (
+                            <div className="flex items-center gap-1.5 text-xs text-ink-dim font-medium mt-0.5">
+                              <Phone className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
+                              <span className="font-mono text-ink-dim font-semibold">{item.phone}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </td>
-                    <td className="p-4 px-6 font-medium text-ink whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Mail className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
-                        <a href={`mailto:${item.email}`} className="text-teal hover:underline font-semibold">
-                          {item.email}
-                        </a>
-                      </div>
-                    </td>
-                    <td className="p-4 px-6 font-medium text-ink-dim whitespace-nowrap text-xs">
-                      {item.phone ? (
-                        <div className="flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-ink-dim flex-shrink-0" />
-                          <span className="font-mono text-ink font-semibold">{item.phone}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
                     </td>
                     <td className="p-4 px-6 font-medium text-ink whitespace-nowrap text-xs">
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-amber flex-shrink-0" />
-                        <span className="font-semibold text-ink">
+                        <span className="font-semibold text-ink-dim">
                           {item.city}{item.state ? `, ${item.state}` : ''}
                         </span>
                       </div>
