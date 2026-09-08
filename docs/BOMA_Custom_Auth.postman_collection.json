@@ -1,0 +1,239 @@
+{
+  "info": {
+    "_postman_id": "boma-custom-auth-collection-v1",
+    "name": "BOMA — Custom Auth API",
+    "description": "Unified authentication and account management API collection for BOMA Web & Mobile apps.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/custom-auth",
+      "type": "string"
+    },
+    {
+      "key": "anonKey",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhc2Rzd2tnb2RoY3psYnFraXJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1Mjc0MTMsImV4cCI6MjEwMjEwMzQxM30.ejdIeWoWHBg1En2PdGXj00rAm540P1iBpBz9-NykXGI",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{anonKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({key: 'apikey', value: pm.variables.get('anonKey')});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Register User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"register\",\n  \"name\": \"Alex Mercer\",\n  \"email\": \"alex@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Registers a new user, creates a record with email_verified: false, generates a 6-digit OTP, and sends a verification email."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Verify Email OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"verify-email\",\n  \"email\": \"alex@example.com\",\n  \"code\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Verifies the 6-digit email code and marks email_verified as true."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Resend Verification Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"resend-verification\",\n  \"email\": \"alex@example.com\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Generates a fresh 6-digit OTP code and resends the verification email."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"login\",\n  \"email\": \"alex@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Authenticates user credentials against the users table and returns user profile."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Request Password Reset",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"request-password-reset\",\n  \"email\": \"alex@example.com\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Generates a password reset OTP and sends a reset password email."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Reset Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"reset-password\",\n  \"email\": \"alex@example.com\",\n  \"token\": \"123456\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Validates the reset token/OTP and updates the user's password."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Update Onboarding",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"update-onboarding\",\n  \"userId\": \"PASTE_USER_UUID_HERE\",\n  \"onboardingData\": {\n    \"ageGroup\": \"25-34\",\n    \"selectedLifestyles\": [\n      \"remote-work\",\n      \"sustainability\"\n    ],\n    \"decisionStyle\": \"consensus\",\n    \"podSize\": \"3-5\",\n    \"locationCity\": \"Austin, TX\",\n    \"locationRadius\": \"25 miles\",\n    \"settingPreference\": \"suburban\",\n    \"budgetRange\": \"$200k-$400k\",\n    \"downPaymentTier\": \"10-20%\",\n    \"financingPreference\": \"traditional-mortgage\",\n    \"housingIntent\": \"purchase-primary\",\n    \"commitmentTimeline\": \"5+ years\",\n    \"readinessScore\": 82\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        },
+        "description": "Saves onboarding responses and marks user_onboarded as true."
+      },
+      "response": []
+    }
+  ]
+}
