@@ -4,8 +4,8 @@ export const SCREENS_ORDER = [
   "onboarding-intent", "onboarding-commitment", "onboarding-review", "onboarding-score", "onboarding-approval", "pod-create", "pod-invite",
   "pod-member-onboarding", "pod-review", "pod-pending", "profile", "profile-update", "profile-edit", "readiness-detail", "status-tracking", "pod-history",
   "matching-status", "pod-suggestion", "pod-preview", "confirm-join", "commons-dashboard", "commons-members", "commons-agreement",
-  "commons-chat", "commons-settings", "admin-dashboard", "admin-users", "admin-readiness-logic", "admin-matching", "admin-questions", "admin-pod-review",
-  "admin-pod-management", "admin-pod-detail", "admin-existing-pod-queue", "admin-waitlist", "admin-village-test"
+  "commons-chat", "commons-settings", "admin-dashboard", "admin-about-boma", "admin-users", "admin-readiness-logic", "admin-matching", "admin-questions", "admin-pod-review",
+  "admin-pod-management", "admin-pod-detail", "admin-existing-pod-queue", "admin-waitlist", "admin-village-test", "not-found", "landing2", "admin-login"
 ];
 
 export const SCREENS_LABELS = {
@@ -21,15 +21,18 @@ export const SCREENS_LABELS = {
   "profile": "My Profile", "profile-update": "Update Profile", "profile-edit": "Edit Preferences", "readiness-detail": "Readiness Detail", "status-tracking": "Status Tracking", "pod-history": "My Pods",
   "matching-status": "Matching Status", "pod-suggestion": "Pod Suggestion", "pod-preview": "Pod Preview", "confirm-join": "Confirm Join",
   "commons-dashboard": "Pod Dashboard", "commons-members": "Member Overview", "commons-agreement": "Agreement Scaffolding",
-  "commons-chat": "Pod Chat", "commons-settings": "Pod Settings", "admin-dashboard": "Admin Dashboard", "admin-users": "User Management", "admin-readiness-logic": "Readiness Score Logic",
+  "commons-chat": "Pod Chat", "commons-settings": "Pod Settings", "admin-dashboard": "Admin Dashboard", "admin-about-boma": "About BOMA", "admin-users": "User Management", "admin-readiness-logic": "Readiness Score Logic",
   "admin-matching": "Matching Engine Control", "admin-questions": "Question Management", "admin-pod-review": "Suggested Pod Review", "admin-pod-management": "Pod Management", "admin-pod-detail": "Pod Commons View (Admin)",
-  "admin-existing-pod-queue": "Existing Pod Queue", "admin-waitlist": "Waitlist Submissions", "admin-village-test": "Village Test Submissions"
+  "admin-existing-pod-queue": "Existing Pod Queue", "admin-waitlist": "Waitlist Submissions", "admin-village-test": "Village Test Submissions",
+  "not-found": "404 Not Found",
+  "landing2": "Landing Page 2",
+  "admin-login": "Admin Login"
 };
 
 export const GATED_SCREENS = [
   'profile-edit', 'matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join',
   'commons-dashboard', 'commons-members', 'commons-agreement', 'commons-chat', 'commons-settings',
-  'readiness-detail'
+  'readiness-detail', 'pod-history'
 ];
 
 export const SHELL_MODES = {
@@ -43,13 +46,16 @@ export const SHELL_MODES = {
   'onboarding-lifestyle': 'onboarding', 'onboarding-community': 'onboarding', 'onboarding-location': 'onboarding',
   'onboarding-budget': 'onboarding', 'onboarding-intent': 'onboarding', 'onboarding-commitment': 'onboarding',
   'onboarding-review': 'onboarding', 'onboarding-score': 'onboarding', 'onboarding-approval': 'onboarding',
-  'pod-create': 'onboarding', 'pod-invite': 'onboarding', 'pod-member-onboarding': 'onboarding',
-  'pod-review': 'onboarding', 'pod-pending': 'onboarding',
+  'pod-create': 'onboarding', 'pod-invite': 'app', 'pod-member-onboarding': 'onboarding',
+  'pod-review': 'app', 'pod-pending': 'app',
   profile: 'app', 'profile-update': 'app', 'profile-edit': 'app', 'readiness-detail': 'app', 'status-tracking': 'app', 'pod-history': 'app',
   'matching-status': 'app', 'pod-suggestion': 'app', 'pod-preview': 'app', 'confirm-join': 'app',
   'commons-dashboard': 'app', 'commons-members': 'app', 'commons-agreement': 'app', 'commons-chat': 'app', 'commons-settings': 'app',
-  'admin-dashboard': 'admin', 'admin-users': 'admin', 'admin-readiness-logic': 'admin', 'admin-matching': 'admin', 'admin-questions': 'admin', 'admin-pod-review': 'admin',
-  'admin-pod-management': 'admin', 'admin-pod-detail': 'admin', 'admin-existing-pod-queue': 'admin', 'admin-waitlist': 'admin', 'admin-village-test': 'admin'
+  'admin-dashboard': 'admin', 'admin-about-boma': 'admin', 'admin-users': 'admin', 'admin-readiness-logic': 'admin', 'admin-matching': 'admin', 'admin-questions': 'admin', 'admin-pod-review': 'admin',
+  'admin-pod-management': 'admin', 'admin-pod-detail': 'admin', 'admin-existing-pod-queue': 'admin', 'admin-waitlist': 'admin', 'admin-village-test': 'admin',
+  'admin-login': 'auth',
+  'not-found': 'marketing',
+  'landing2': 'marketing'
 };
 
 export const SCREEN_URLS = {
@@ -74,8 +80,11 @@ export const SCREEN_URLS = {
   'commons-dashboard': 'boma.app/commons', 'commons-members': 'boma.app/commons/members',
   'commons-agreement': 'boma.app/commons/agreement', 'commons-chat': 'boma.app/commons/chat',
   'commons-settings': 'boma.app/commons/settings',
-  'admin-dashboard': 'boma.app/admin', 'admin-users': 'boma.app/admin/users', 'admin-readiness-logic': 'boma.app/admin/readiness-logic',
+  'admin-dashboard': 'boma.app/admin', 'admin-about-boma': 'boma.app/admin/about-boma', 'admin-users': 'boma.app/admin/users', 'admin-readiness-logic': 'boma.app/admin/readiness-logic',
   'admin-matching': 'boma.app/admin/matching',
   'admin-questions': 'boma.app/admin/questions', 'admin-pod-review': 'boma.app/admin/pod-review', 'admin-pod-management': 'boma.app/admin/pods',
-  'admin-pod-detail': 'boma.app/admin/pods/detail', 'admin-existing-pod-queue': 'boma.app/admin/pods/existing-queue', 'admin-waitlist': 'boma.app/admin/waitlist', 'admin-village-test': 'boma.app/admin/village-test'
+  'admin-pod-detail': 'boma.app/admin/pods/detail', 'admin-existing-pod-queue': 'boma.app/admin/pods/existing-queue', 'admin-waitlist': 'boma.app/admin/waitlist', 'admin-village-test': 'boma.app/admin/village-test',
+  'admin-login': 'boma.app/admin',
+  'not-found': 'boma.app/404',
+  'landing2': 'boma.app/landing2'
 };

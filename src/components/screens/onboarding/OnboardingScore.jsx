@@ -125,7 +125,7 @@ export default function OnboardingScore({ setActiveScreen, currentUser }) {
 
         <button 
           onClick={() => setActiveScreen('onboarding-approval')}
-          className="w-full bg-amber text-white rounded-lg py-3 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] transition-all cursor-pointer text-center"
+          className="w-full bg-amber text-white rounded-lg py-3 text-sm font-bold shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] transition-all cursor-pointer text-center"
         >
           Continue
         </button>

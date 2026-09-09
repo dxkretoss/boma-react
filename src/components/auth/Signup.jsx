@@ -42,17 +42,17 @@ export default function Signup({
 
   return (
     <form onSubmit={handleSignup}>
-      <h3 className="font-display text-[22px] font-extrabold text-ink mb-1">
+      <h3 className="font-serif text-[26px] font-bold text-ink mb-1">
         Create your account
       </h3>
-      <p className="text-ink-dim text-[13px] font-medium mb-6">
+      <p className="text-ink-dim text-[13px] font-medium mb-6 font-light">
         Takes about a minute — onboarding comes next.
       </p>
 
       <button
         type="button"
         onClick={loginWithGoogle}
-        className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 border border-border rounded-full bg-white text-ink text-[13.5px] font-bold shadow-sm hover:bg-panel-alt transition-all cursor-pointer mb-5"
+        className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 border border-border rounded-full bg-white text-ink text-[13.5px] font-semibold shadow-xs hover:bg-panel-alt transition-all cursor-pointer mb-5"
       >
         <GoogleIcon />
         <span>Sign up with Google</span>
@@ -74,7 +74,7 @@ export default function Signup({
           value={signupName}
           onChange={(e) => setSignupName(e.target.value)}
           required 
-          className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
+          className="w-full bg-panel border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
         />
       </div>
       <div className="mb-3">
@@ -85,7 +85,7 @@ export default function Signup({
           value={signupEmail}
           onChange={(e) => setSignupEmail(e.target.value)}
           required 
-          className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
+          className="w-full bg-panel border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
         />
       </div>
       <div className="mb-3">
@@ -97,7 +97,7 @@ export default function Signup({
             value={signupPassword}
             onChange={(e) => setSignupPassword(e.target.value)}
             required 
-            className="w-full bg-panel border border-border rounded-lg pl-3.5 pr-10 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
+            className="w-full bg-panel border border-border rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
           />
           <button
             type="button"
@@ -117,7 +117,7 @@ export default function Signup({
             value={signupConfirmPassword}
             onChange={(e) => setSignupConfirmPassword(e.target.value)}
             required 
-            className="w-full bg-panel border border-border rounded-lg pl-3.5 pr-10 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
+            className="w-full bg-panel border border-border rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
           />
           <button
             type="button"
@@ -131,7 +131,7 @@ export default function Signup({
       <button 
         type="submit" 
         disabled={loading}
-        className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+        className="w-full bg-amber text-white rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {loading ? (
           <>

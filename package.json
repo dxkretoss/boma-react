@@ -12,9 +12,14 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.3.3",
+    "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^13.2.0",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-phone-input-2": "^2.15.1",
+    "react-router-dom": "^7.18.3",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

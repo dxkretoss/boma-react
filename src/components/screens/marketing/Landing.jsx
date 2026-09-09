@@ -33,7 +33,7 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
           <div className="flex items-center gap-3.5 flex-wrap">
             <button
               onClick={handleGetStarted}
-              className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
+              className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
             >
               Get Started
             </button>
@@ -61,7 +61,7 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
         <div className="border border-border rounded-custom p-6 bg-panel shadow-custom flex flex-col relative text-left">
           <div className="w-[42px] h-[42px] rounded-xl bg-teal-soft flex items-center justify-center mb-3.5">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 8a3 3 0 113-3 3 3 0 01-3 3zm9 11v-1a7 7 0 00-7-7h-4a7 7 0 00-7 7v1h2v-1a5 5 0 015-5h4a5 5 0 015 5v1z" fill="#0E4C8C" />
+              <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 8a3 3 0 113-3 3 3 0 01-3 3zm9 11v-1a7 7 0 00-7-7h-4a7 7 0 00-7 7v1h2v-1a5 5 0 015-5h4a5 5 0 015 5v1z" fill="#B87333" />
             </svg>
           </div>
           <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">1. Match on Compatibility</h4>
@@ -75,7 +75,7 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
         <div className="border border-border rounded-custom p-6 bg-panel shadow-custom flex flex-col relative text-left">
           <div className="w-[42px] h-[42px] rounded-xl bg-teal-soft flex items-center justify-center mb-3.5">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 21a9 9 0 119-9 9 9 0 01-9 9zm0-16a7 7 0 107 7 7 7 0 00-7-7zm-1 3h2v5h-2zm0 7h2v2h-2z" fill="#0E4C8C" />
+              <path d="M12 21a9 9 0 119-9 9 9 0 01-9 9zm0-16a7 7 0 107 7 7 7 0 00-7-7zm-1 3h2v5h-2zm0 7h2v2h-2z" fill="#B87333" />
             </svg>
           </div>
           <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">2. Bond in The Commons</h4>
@@ -89,7 +89,7 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
         <div className="border border-border rounded-custom p-6 bg-panel shadow-custom flex flex-col relative text-left">
           <div className="w-[42px] h-[42px] rounded-xl bg-teal-soft flex items-center justify-center mb-3.5">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2zM5 5v14h14V5zM12 6l5 4v6h-3v-3h-4v3H7v-6z" fill="#0E4C8C" />
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2zM5 5v14h14V5zM12 6l5 4v6h-3v-3h-4v3H7v-6z" fill="#B87333" />
             </svg>
           </div>
           <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">3. Build the Neighborhood</h4>
@@ -115,9 +115,9 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
             <div className="flex flex-col p-2 text-left">
               <div className="w-11 h-11 rounded-xl bg-teal-soft flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="6" cy="6" r="3" fill="#0E4C8C" />
-                  <circle cx="14" cy="6" r="3" fill="#0E4C8C" />
-                  <path d="M2 17c0-3 2-5 4-5s4 2 4 5M10 17c0-3 2-5 4-5s4 2 4 5" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
+                  <circle cx="6" cy="6" r="3" fill="#B87333" />
+                  <circle cx="14" cy="6" r="3" fill="#B87333" />
+                  <path d="M2 17c0-3 2-5 4-5s4 2 4 5M10 17c0-3 2-5 4-5s4 2 4 5" stroke="#B87333" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">Real alignment, not luck</h4>
@@ -130,8 +130,8 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
             <div className="flex flex-col p-2 text-left">
               <div className="w-11 h-11 rounded-xl bg-teal-soft flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <rect x="3" y="8" width="14" height="9" rx="2" fill="#0E4C8C" />
-                  <path d="M6 8V6a4 4 0 018 0v2" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
+                  <rect x="3" y="8" width="14" height="9" rx="2" fill="#B87333" />
+                  <path d="M6 8V6a4 4 0 018 0v2" stroke="#B87333" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">Trust before commitment</h4>
@@ -144,8 +144,8 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
             <div className="flex flex-col p-2 text-left">
               <div className="w-11 h-11 rounded-xl bg-teal-soft flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 17V9l6-5 6 5v8" stroke="#0E4C8C" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
-                  <path d="M8 17v-5h4v5" stroke="#0E4C8C" strokeWidth="1.6" fill="none" />
+                  <path d="M4 17V9l6-5 6 5v8" stroke="#B87333" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
+                  <path d="M8 17v-5h4v5" stroke="#B87333" strokeWidth="1.6" fill="none" />
                 </svg>
               </div>
               <h4 className="font-display font-extrabold text-[17px] text-teal mb-2">A path already built for groups</h4>
@@ -273,9 +273,9 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
       </div>
 
       {/* Founding Thesis Banner */}
-      <div className="max-w-[1180px] mx-auto px-6 md:px-8 py-16 text-center  text-white rounded-2xl shadow-custom-lg mb-16 border border-white/5"
+      <div className="max-w-[1180px] mx-auto px-6 md:px-8 py-16 text-center text-white rounded-2xl shadow-custom-lg mb-16 border border-white/10"
         style={{
-          background: `linear-gradient(rgba(37, 99, 235, 0.85), rgba(37, 99, 235, 0.85)), url('/assets/quote_bg.png') center/cover no-repeat`
+          background: `linear-gradient(135deg, rgba(46, 35, 48, 0.92) 0%, rgba(196, 106, 74, 0.88) 100%), url('/assets/quote_bg.png') center/cover no-repeat`
         }}
       >
         <blockquote className="font-display font-extrabold text-[28px] md:text-[34px] leading-tight mb-2">
@@ -339,7 +339,7 @@ export default function Landing({ openAuthModal, setActiveScreen, currentUser })
         <div className="flex items-center gap-3.5 justify-center flex-wrap">
           <button
             onClick={handleGetStarted}
-            className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
+            className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
           >
             Get Started
           </button>

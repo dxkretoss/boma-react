@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, LogOut, User, BookOpen, Menu, X, Shield, Bell } from 'lucide-react';
 import { SHELL_MODES } from '../constants/screens';
 import { supabase } from '../supabaseClient';
+import Avatar from './Avatar';
 
 export default function Header({
   activeScreen,
@@ -10,7 +11,8 @@ export default function Header({
   onLogout,
   openAuthModal,
   adminUser,
-  currentUser
+  currentUser,
+  userPod
 }) {
   const [acctMenuOpen, setAcctMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -202,7 +204,7 @@ export default function Header({
     if (activeScreen === 'contact') return 'contact';
 
     if (activeScreen === 'learning') return 'learning';
-    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
+    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history', 'pod-invite', 'pod-pending', 'pod-review'].includes(activeScreen)) return 'profile';
     if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) return 'matching';
     if (activeScreen.startsWith('commons-')) return 'commons';
 
@@ -213,9 +215,9 @@ export default function Header({
 
   const linkClass = (navKey) => {
     const isActive = activeNav === navKey;
-    return `text-sm font-semibold py-1 border-b-2 transition-all duration-150 ${isActive
-      ? 'text-ink border-amber'
-      : 'text-ink-dim border-transparent hover:text-ink'
+    return `text-sm py-1 border-b-2 transition-all duration-150 ${isActive
+      ? 'text-[#2E2330] border-[#C46A4A] font-semibold'
+      : 'text-[#7A746B] border-transparent hover:text-[#2E2330] font-medium'
       }`;
   };
 
@@ -225,9 +227,13 @@ export default function Header({
         {/* Brand */}
         <div
           onClick={() => handleNav(userOnboarded ? 'learning' : 'landing')}
-          className="font-display font-extrabold text-[22px] tracking-tight text-ink cursor-pointer hover:opacity-90"
+          className="cursor-pointer hover:opacity-90 flex items-center"
         >
-          BOMA
+          <img
+            src="/assets/logo1.png"
+            alt="BOMA"
+            className="h-9 w-auto max-w-[140px] object-contain"
+          />
         </div>
 
         {/* Marketing Navigation Links */}
@@ -299,17 +305,7 @@ export default function Header({
                       onClick={handleAcctTriggerClick}
                       className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                     >
-                      {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-                        <img
-                          src={currentUser.avatar_url}
-                          className="w-8 h-8 rounded-full border border-border object-cover"
-                          alt=""
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
-                          {(currentUser.name || currentUser.email || 'U').substring(0, 1).toUpperCase()}
-                        </div>
-                      )}
+                      <Avatar user={currentUser} className="w-8 h-8" />
                       <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
                     </button>
 
@@ -349,13 +345,13 @@ export default function Header({
                 <>
                   <button
                     onClick={() => openAuthModal('login')}
-                    className="bg-transparent border border-border text-ink rounded-lg px-4 py-2 text-sm font-bold hover:bg-panel-alt transition-all cursor-pointer"
+                    className="bg-transparent border border-[#E5DDD2] text-[#2E2330] rounded-full px-5 py-2 text-sm font-semibold hover:bg-[#EFEAE3] hover:text-[#2E2330] transition-all cursor-pointer"
                   >
                     Log in
                   </button>
                   <button
                     onClick={() => openAuthModal('signup')}
-                    className="bg-amber text-white rounded-lg px-4 py-2 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
+                    className="bg-[#C46A4A] text-white rounded-full px-5 py-2 text-sm font-semibold shadow-md hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] active:scale-95 transition-all cursor-pointer border border-transparent"
                   >
                     Get Started
                   </button>
@@ -371,7 +367,7 @@ export default function Header({
             <nav className="hidden md:flex items-center gap-[26px] ml-10 flex-1">
               <button onClick={() => handleNav('learning')} className={linkClass('learning')}>Learning</button>
               <button onClick={() => handleNav('profile')} className={linkClass('profile')}>Profile</button>
-              {currentUser?.entry_path !== 'EXISTING_POD' && currentUser?.matching_status !== 'MATCHED' && (
+              {currentUser?.entry_path !== 'EXISTING_POD' && (
                 <button onClick={() => handleNav('matching-status')} className={linkClass('matching')}>Matching</button>
               )}
               <button onClick={() => handleNav('commons-dashboard')} className={linkClass('commons')}>The Commons</button>
@@ -434,17 +430,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-                    <img
-                      src={currentUser.avatar_url}
-                      className="w-8 h-8 rounded-full border border-border object-cover"
-                      alt=""
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
-                      {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
-                    </div>
-                  )}
+                  <Avatar user={currentUser} className="w-8 h-8" />
                   <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
                 </button>
 
@@ -497,17 +483,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {adminUser?.avatar_url && (adminUser.avatar_url.startsWith('http') || adminUser.avatar_url.startsWith('/') || adminUser.avatar_url.startsWith('assets/') || adminUser.avatar_url.startsWith('data:image/')) ? (
-                    <img
-                      src={adminUser.avatar_url}
-                      className="w-8 h-8 rounded-full border border-border object-cover"
-                      alt=""
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
-                      {(adminUser?.name || adminUser?.email || 'A').substring(0, 1).toUpperCase()}
-                    </div>
-                  )}
+                  <Avatar user={adminUser} className="w-8 h-8" />
                   <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
                 </button>
 
@@ -540,6 +516,7 @@ export default function Header({
             <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-ink-dim">
               <span>Onboarding Progress:</span>
               <span id="onb-progress" className="font-bold text-amber">
+                {(activeScreen === 'entry-path' || activeScreen === 'onboarding-entry') && 'Get Started'}
                 {activeScreen === 'onboarding-welcome' && 'Welcome'}
                 {activeScreen === 'onboarding-age' && 'Step 1 of 9'}
                 {activeScreen === 'onboarding-lifestyle' && 'Step 2 of 9'}
@@ -552,7 +529,9 @@ export default function Header({
                 {activeScreen === 'onboarding-score' && 'Step 9 of 9'}
                 {activeScreen === 'onboarding-approval' && 'Under Review'}
                 {activeScreen === 'verify-email' && 'Verify Email'}
-                {activeScreen.startsWith('pod-') && 'Group Registration'}
+                {activeScreen === 'pod-create' && 'Create Pod'}
+                {activeScreen === 'pod-member-onboarding' && 'Member Setup'}
+                {activeScreen.startsWith('pod-') && !['pod-create', 'pod-member-onboarding'].includes(activeScreen) && 'Group Registration'}
               </span>
             </div>
 
@@ -562,17 +541,7 @@ export default function Header({
                   onClick={handleAcctTriggerClick}
                   className="flex items-center gap-1.5 cursor-pointer hover:opacity-85"
                 >
-                  {currentUser.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-                    <img
-                      src={currentUser.avatar_url}
-                      className="w-8 h-8 rounded-full border border-border object-cover"
-                      alt=""
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
-                      {(currentUser.name || currentUser.email || 'U').substring(0, 1).toUpperCase()}
-                    </div>
-                  )}
+                  <Avatar user={currentUser} className="w-8 h-8" />
                   <ChevronDown className="w-3.5 h-3.5 text-ink-dim" />
                 </button>
 
@@ -634,13 +603,13 @@ export default function Header({
               <div className="flex gap-2.5 mt-2">
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="flex-1 bg-transparent border border-border text-ink rounded-lg py-2.5 text-sm font-bold text-center hover:bg-panel-alt"
+                  className="flex-1 bg-transparent border border-[#E5DDD2] text-[#2E2330] rounded-full py-2.5 text-sm font-semibold text-center hover:bg-[#EFEAE3] transition-all"
                 >
                   Log in
                 </button>
                 <button
                   onClick={() => openAuthModal('signup')}
-                  className="flex-1 bg-amber text-white rounded-lg py-2.5 text-sm font-bold text-center shadow-md hover:bg-[#2450C4]"
+                  className="flex-1 bg-[#C46A4A] text-white rounded-full py-2.5 text-sm font-semibold text-center shadow-md hover:bg-[#b05d3e] active:scale-95 transition-all border border-transparent"
                 >
                   Get Started
                 </button>
@@ -659,22 +628,12 @@ export default function Header({
               )}
               <button onClick={() => handleNav('learning')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Learning</button>
               <button onClick={() => handleNav('profile')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Profile</button>
-              {currentUser?.entry_path !== 'EXISTING_POD' && currentUser?.matching_status !== 'MATCHED' && (
+              {currentUser?.entry_path !== 'EXISTING_POD' && (
                 <button onClick={() => handleNav('matching-status')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">Matching</button>
               )}
               <button onClick={() => handleNav('commons-dashboard')} className="w-full text-left font-bold text-[15px] py-1.5 text-ink">The Commons</button>
               <div className="flex items-center gap-2 border-t border-border pt-4 mt-2">
-                {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-                  <img
-                    src={currentUser.avatar_url}
-                    className="w-8 h-8 rounded-full border border-border object-cover"
-                    alt=""
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display flex-shrink-0">
-                    {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
-                  </div>
-                )}
+                <Avatar user={currentUser} className="w-8 h-8" />
                 <div className="flex flex-col flex-1 leading-tight text-left">
                   <span className="font-bold text-sm text-ink">{currentUser?.name || 'User'}</span>
                   <span className="text-xs text-ink-dim font-medium">{currentUser?.email || 'user@boma.com'}</span>

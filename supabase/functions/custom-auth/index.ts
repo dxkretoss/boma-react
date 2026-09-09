@@ -1,11 +1,40 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 import nodemailer from "npm:nodemailer@6.9.1";
+import bcrypt from "npm:bcryptjs@2.4.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper to hash password securely
+async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+}
+
+// Helper to verify plaintext password against stored hash (with legacy fallback & auto-upgrade support)
+async function verifyPassword(plainPassword: string, storedHashOrPlain: string): Promise<boolean> {
+  if (!plainPassword || !storedHashOrPlain) return false;
+  // If stored value is a bcrypt hash
+  if (storedHashOrPlain.startsWith('$2a$') || storedHashOrPlain.startsWith('$2b$') || storedHashOrPlain.startsWith('$2y$')) {
+    try {
+      return await bcrypt.compare(plainPassword, storedHashOrPlain);
+    } catch {
+      return false;
+    }
+  }
+  // Backward compatibility fallback for legacy plaintext entries
+  return plainPassword === storedHashOrPlain;
+}
+
+// Helper to sanitize user object by returning all safe session fields
+function sanitizeUser(user: any) {
+  if (!user) return null;
+  const { password, verification_code, ...safeUser } = user;
+  return safeUser;
+}
 
 // Helper to send emails via SMTP
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
@@ -138,6 +167,7 @@ serve(async (req) => {
       if (checkError) throw checkError;
 
       const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const hashedPassword = await hashPassword(password);
 
       let userResult;
 
@@ -149,12 +179,12 @@ serve(async (req) => {
           );
         }
 
-        // Update existing unverified user
+        // Update existing unverified user with hashed password
         const { data, error } = await supabaseAdmin
           .from('users')
           .update({
             name,
-            password,
+            password: hashedPassword,
             verification_code: code,
           })
           .eq('id', existing.id)
@@ -164,13 +194,13 @@ serve(async (req) => {
         if (error) throw error;
         userResult = data;
       } else {
-        // Insert new user
+        // Insert new user with hashed password
         const { data, error } = await supabaseAdmin
           .from('users')
           .insert([
             {
               email: normalizedEmail,
-              password,
+              password: hashedPassword,
               name,
               role: 'user',
               user_onboarded: false,
@@ -194,7 +224,7 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, user: userResult }),
+        JSON.stringify({ success: true, message: 'Registration successful.', user: sanitizeUser(userResult) }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -229,15 +259,30 @@ serve(async (req) => {
         );
       }
 
-      if (user.password !== password) {
+      const isMatch = await verifyPassword(password, user.password);
+
+      if (!isMatch) {
         return new Response(
           JSON.stringify({ error: 'Incorrect password' }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // Auto-upgrade legacy plaintext password to secure bcrypt hash
+      if (user.password && !user.password.startsWith('$2a$') && !user.password.startsWith('$2b$') && !user.password.startsWith('$2y$')) {
+        try {
+          const newHashed = await hashPassword(password);
+          await supabaseAdmin
+            .from('users')
+            .update({ password: newHashed })
+            .eq('id', user.id);
+        } catch (upgradeErr) {
+          console.warn('Failed to auto-upgrade password hash:', upgradeErr);
+        }
+      }
+
       return new Response(
-        JSON.stringify({ success: true, user }),
+        JSON.stringify({ success: true, message: 'Login successful.', user: sanitizeUser(user) }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -288,7 +333,7 @@ serve(async (req) => {
       if (updateError) throw updateError;
 
       return new Response(
-        JSON.stringify({ success: true, user: updatedUser || { ...user, email_verified: true } }),
+        JSON.stringify({ success: true, message: 'Email verified successfully.', user: sanitizeUser(updatedUser || { ...user, email_verified: true }) }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -424,10 +469,12 @@ serve(async (req) => {
         );
       }
 
+      const hashedPassword = await hashPassword(newPassword);
+
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({
-          password: newPassword,
+          password: hashedPassword,
           verification_code: null,
         })
         .eq('email', normalizedEmail);
@@ -478,7 +525,7 @@ serve(async (req) => {
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, user: data }),
+        JSON.stringify({ success: true, message: 'Onboarding updated successfully.', user: sanitizeUser(data) }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

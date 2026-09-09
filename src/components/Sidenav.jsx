@@ -11,7 +11,8 @@ import {
   Home,
   FileText,
   MessageSquare,
-  Settings
+  Settings,
+  Info
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -27,7 +28,8 @@ const ICON_MAP = {
   doc: FileText,
   chat: MessageSquare,
   gear: Settings,
-  settings: Settings
+  settings: Settings,
+  info: Info
 };
 
 const SIDENAV_CONFIG = {
@@ -78,6 +80,7 @@ const SIDENAV_CONFIG = {
       { id: 'admin-pod-management', label: 'Pods', icon: 'doc' },
       { id: 'admin-questions', label: 'Questions', icon: 'edit' },
       { id: 'admin-readiness-logic', label: 'Readiness Score Logic', icon: 'gauge' },
+      { id: 'admin-about-boma', label: 'About BOMA', icon: 'info' },
       { id: 'admin-waitlist', label: 'Waitlist', icon: 'list' },
       { id: 'admin-village-test', label: 'Village Test List', icon: 'doc' }
     ]
@@ -88,12 +91,21 @@ export default function Sidenav({
   activeScreen,
   setActiveScreen,
   userOnboarded,
-  currentUser
+  currentUser,
+  userPod
 }) {
+  const isExistingPod = currentUser?.entry_path === 'EXISTING_POD';
+  const isPodCreator = Boolean(
+    userPod && (
+      (userPod.memberRole && userPod.memberRole.toUpperCase() === 'CREATOR') ||
+      userPod.created_by === currentUser?.id
+    )
+  );
+
   // Determine which section we are in
   const getSectionKey = () => {
     if (activeScreen === 'learning') return 'learning';
-    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history'].includes(activeScreen)) return 'profile';
+    if (['profile', 'profile-update', 'profile-edit', 'readiness-detail', 'status-tracking', 'pod-history', 'pod-invite', 'pod-pending', 'pod-review'].includes(activeScreen)) return 'profile';
     if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) return 'matching';
     if (activeScreen.startsWith('commons-')) return 'commons';
     if (activeScreen.startsWith('admin-')) return 'admin';
@@ -114,6 +126,16 @@ export default function Sidenav({
       <nav className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial">
         {(sectionKey === 'matching' && currentUser?.matching_status !== 'POD_ASSIGNED'
           ? cfg.items.filter(item => item.id === 'matching-status')
+          : sectionKey === 'commons' && currentUser?.matching_status !== 'MATCHED'
+          ? cfg.items.filter(item => item.id === 'commons-dashboard')
+          : sectionKey === 'profile' && isExistingPod
+          ? [
+              { id: 'profile', label: 'Overview', icon: 'user' },
+              ...(isPodCreator ? [{ id: 'pod-invite', label: 'Invite Members', icon: 'users' }] : []),
+              { id: 'status-tracking', label: 'Status Tracker', icon: 'list' },
+              { id: 'pod-history', label: 'My Pods', icon: 'home' },
+              { id: 'profile-update', label: 'Profile', icon: 'settings' }
+            ]
           : cfg.items
         ).map(item => {
           const Icon = ICON_MAP[item.icon];

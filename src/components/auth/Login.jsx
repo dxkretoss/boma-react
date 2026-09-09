@@ -36,17 +36,17 @@ export default function Login({
 
   return (
     <form onSubmit={handleLogin}>
-      <h3 className="font-display text-[22px] font-extrabold text-ink mb-1">
+      <h3 className="font-serif text-[26px] font-bold text-ink mb-1">
         Log in to BOMA
       </h3>
-      <p className="text-ink-dim text-[13px] font-medium mb-6">
+      <p className="text-ink-dim text-[13px] font-medium mb-6 font-light">
         Welcome back — let's get you to your Pod.
       </p>
 
       <button
         type="button"
         onClick={loginWithGoogle}
-        className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 border border-border rounded-full bg-white text-ink text-[13.5px] font-bold shadow-sm hover:bg-panel-alt transition-all cursor-pointer mb-5"
+        className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 border border-border rounded-full bg-white text-ink text-[13.5px] font-semibold shadow-xs hover:bg-panel-alt transition-all cursor-pointer mb-5"
       >
         <GoogleIcon />
         <span>Continue with Google</span>
@@ -68,7 +68,7 @@ export default function Login({
           value={loginEmail}
           onChange={(e) => setLoginEmail(e.target.value)}
           required
-          className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
+          className="w-full bg-panel border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
         />
       </div>
       <div className="mb-2">
@@ -80,7 +80,7 @@ export default function Login({
             value={loginPassword}
             onChange={(e) => setLoginPassword(e.target.value)}
             required
-            className="w-full bg-panel border border-border rounded-lg pl-3.5 pr-10 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
+            className="w-full bg-panel border border-border rounded-xl pl-3.5 pr-10 py-2.5 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
           />
           <button
             type="button"
@@ -92,14 +92,14 @@ export default function Login({
         </div>
       </div>
       <p className="mb-5 text-[13px] text-right">
-        <span onClick={() => setAuthOverlay({ open: true, mode: 'forgot' })} className="text-teal underline font-medium hover:text-ink cursor-pointer">
+        <span onClick={() => setAuthOverlay({ open: true, mode: 'forgot' })} className="text-amber underline font-medium hover:text-[#b05d3e] cursor-pointer">
           Forgot password?
         </span>
       </p>
       <button 
         type="submit" 
         disabled={loading}
-        className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+        className="w-full bg-amber text-white rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {loading ? (
           <>

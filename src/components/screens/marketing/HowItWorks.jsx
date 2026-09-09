@@ -47,7 +47,7 @@ export default function HowItWorks({ openAuthModal, setActiveScreen, currentUser
 
       <button
         onClick={handleGetStarted}
-        className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
+        className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer"
       >
         Get Started
       </button>

@@ -94,13 +94,13 @@ export default function OnboardingCommunity({
           <div className="flex items-center gap-3.5">
             <button 
               onClick={() => setActiveScreen('onboarding-lifestyle')}
-              className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-1.5 hover:bg-panel-alt transition-all cursor-pointer"
+              className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-1.5 hover:bg-panel-alt transition-all cursor-pointer shadow-md"
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <button 
               onClick={() => setActiveScreen('onboarding-location')}
-              className="bg-ink text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+              className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer shadow-md"
             >
               Continue
             </button>

@@ -107,11 +107,31 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
-                    <span className="inline-block animate-pulse">Loading waitlist entries...</span>
-                  </td>
-                </tr>
+                [...Array(6)].map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="p-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-border/70 shrink-0" />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-3.5 w-32 bg-border/70 rounded" />
+                          <div className="h-2.5 w-40 bg-border/40 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-4 w-24 bg-border/50 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-4 w-28 bg-border/50 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-4 w-20 bg-border/50 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-4 w-20 bg-border/40 rounded" />
+                    </td>
+                  </tr>
+                ))
               ) : entries.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">

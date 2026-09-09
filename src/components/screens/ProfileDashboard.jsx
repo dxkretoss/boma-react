@@ -1,4 +1,6 @@
 import React from 'react';
+import { Sparkles, MapPin, Calendar, Edit3, ArrowRight } from 'lucide-react';
+import Avatar from '../Avatar';
 
 export default function ProfileDashboard({
   currentUser,
@@ -11,50 +13,61 @@ export default function ProfileDashboard({
   setActiveScreen,
   formatTimeline
 }) {
+  const readinessScore = currentUser?.readiness_score || (isUserOnboarded ? 82 : 0);
+  const memberDate = currentUser?.created_at
+    ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'August 2026';
+
   return (
     <div className="pad py-12 px-6 md:px-8">
       {/* Profile Banner */}
       <div
-        className="rounded-[20px] p-[30px] border border-border flex items-center gap-5 mb-[26px]"
-        style={{ background: 'linear-gradient(120deg, var(--color-teal-soft) 0%, var(--color-panel) 70%)' }}
+        className="rounded-[20px] p-[30px] border border-white/10 flex items-center gap-5 mb-[26px] relative overflow-hidden shadow-custom-lg text-white"
+        style={{ background: 'linear-gradient(135deg, #2E2330 0%, #201823 45%, #382430 100%)' }}
       >
-        {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-          <img
-            src={currentUser.avatar_url}
-            className="rounded-full object-cover shrink-0 w-[72px] h-[72px] border border-border shadow-sm"
-            alt="Profile"
-          />
-        ) : (
-          <div className="w-[72px] h-[72px] rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-2xl font-display flex-shrink-0">
-            {(currentUser?.name || currentUser?.email || 'U').substring(0, 1).toUpperCase()}
-          </div>
-        )}
-        <div className="text-left flex-1">
-          <h3 className="font-display font-extrabold text-[22px] text-ink leading-tight">{currentUser?.name || 'User'}</h3>
-          {isProfileApproved ? (
-            <span className="inline-block bg-[#EAFDF8] text-sage border border-sage/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 ">
+        {/* Background ambient decorative glow */}
+        <div className="absolute top-0 right-1/4 w-[280px] h-[280px] rounded-full bg-radial from-[#C46A4A]/20 via-[#B87333]/10 to-transparent blur-3xl pointer-events-none" />
+
+        <Avatar
+          user={currentUser}
+          className="w-[72px] h-[72px] shadow-sm border border-white/20 shrink-0 relative z-10"
+          textClass="text-2xl"
+          alt={currentUser?.name || "Profile"}
+        />
+        <div className="text-left flex-1 relative z-10">
+          <h3 className="font-serif font-bold text-[24px] text-white leading-tight">{currentUser?.name || 'User'}</h3>
+          {isExistingPod ? (
+            <span className="inline-block bg-teal-soft/80 text-teal border border-teal/20 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5">
+              {userPod?.status === 'ACTIVE'
+                ? `Existing Pod: ${userPod.name} — Active in Commons`
+                : userPod?.status === 'UNDER_REVIEW'
+                ? `Existing Pod: ${userPod?.name || 'Group'} — Under Admin Review`
+                : `Existing Pod: ${userPod?.name || 'Group'} — Forming & Inviting Members`}
+            </span>
+          ) : isProfileApproved ? (
+            <span className="inline-block bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5">
               Readiness: {currentUser?.readiness_score || 82} — Approved &amp; Match-Ready
             </span>
           ) : isProfileUnderReview ? (
-            <span className="inline-block bg-[#FFF9E6] text-amber border border-amber/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 ">
+            <span className="inline-block bg-amber/20 text-[#D7A27A] border border-amber/30 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5">
               Readiness: {currentUser?.readiness_score || 82} — Under Admin Review
             </span>
           ) : isProfileRejected ? (
-            <span className="inline-block bg-[#FDF2F2] text-rust border border-rust/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 ">
+            <span className="inline-block bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5">
               Readiness: {currentUser?.readiness_score || 82} — Rejection Feedback
             </span>
           ) : (
-            <span className="inline-block bg-[#FDE8E8] text-rust border border-rust/10 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5 ">
+            <span className="inline-block bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-bold px-3 py-0.5 rounded-full mt-1.5">
               Readiness: Incomplete — Onboarding Pending
             </span>
           )}
-          <span className="block text-[13px] text-ink-dim mt-1">
-            {currentUser?.location_city || 'Austin, TX'} · Member since {currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'June 2026'}
+          <span className="block text-[13px] text-white/70 mt-1">
+            {currentUser?.location_city || 'Austin, TX'} · Member since {currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'August 2026'}
           </span>
         </div>
         <button
           onClick={() => setActiveScreen('profile-update')}
-          className="self-start bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2 px-4 rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+          className="self-start sm:self-center bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold py-2.5 px-5 rounded-full shadow-sm hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 relative z-10"
         >
           Edit Profile
         </button>
@@ -62,82 +75,114 @@ export default function ProfileDashboard({
 
       {/* KPI grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-[26px] text-left">
-        <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
-          <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-            {isUserOnboarded ? (currentUser?.readiness_score || '82') : '--'}
+        <div className="border border-border rounded-2xl p-5 bg-panel shadow-sm flex flex-col">
+          <div className="font-serif text-[30px] font-bold text-ink leading-tight">
+            {isExistingPod ? (currentUser?.readiness_score || 'Pre-Formed') : (isUserOnboarded ? (currentUser?.readiness_score || '82') : '--')}
           </div>
           <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
-            Readiness Score
+            {isExistingPod ? 'Group Formation' : 'Readiness Score'}
           </div>
         </div>
-        <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
-          <div className="font-display text-[22px] font-extrabold text-ink leading-tight pt-1">
+        <div className="border border-border rounded-2xl p-5 bg-panel shadow-sm flex flex-col">
+          <div className="font-serif text-[26px] font-bold text-ink leading-tight pt-1">
             {isExistingPod
-              ? (userPod?.status === 'ACTIVE' ? 'In Pod' : 'Setup')
+              ? (userPod?.status === 'ACTIVE' ? 'In Pod' : userPod?.status === 'UNDER_REVIEW' ? 'In Review' : 'Forming')
               : (isProfileApproved ? 'In Pool' : isProfileUnderReview ? 'Review' : isProfileRejected ? 'Rejected' : 'Incomplete')}
           </div>
           <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1.5 font-semibold">
             Current Status
           </div>
         </div>
-        <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
-          <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-            {isUserOnboarded ? (currentUser?.location_city || 'Austin, TX') : 'Not Set'}
+        <div className="border border-border rounded-2xl p-5 bg-panel shadow-sm flex flex-col">
+          <div className="font-serif text-[28px] font-bold text-ink leading-tight">
+            {currentUser?.location_city || (isExistingPod ? (userPod?.name || 'Self-Registered') : (isUserOnboarded ? 'Austin, TX' : 'Not Set'))}
           </div>
           <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
-            Preferred Location
+            {isExistingPod ? 'Registered Pod' : 'Preferred Location'}
           </div>
         </div>
-        <div className="border border-border rounded-custom p-5 bg-panel shadow-custom flex flex-col">
-          <div className="font-display text-[28px] font-extrabold text-ink leading-tight">
-            {isUserOnboarded ? formatTimeline(currentUser?.commitment_timeline) : 'Not Set'}
+        <div className="border border-border rounded-2xl p-5 bg-panel shadow-sm flex flex-col">
+          <div className="font-serif text-[28px] font-bold text-ink leading-tight">
+            {isExistingPod ? (userPod?.group_type || 'Friends/Family') : (isUserOnboarded ? formatTimeline(currentUser?.commitment_timeline) : 'Not Set')}
           </div>
           <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink-dim mt-1 font-semibold">
-            Commitment
+            {isExistingPod ? 'Group Type' : 'Commitment'}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 text-left">
-        {/* Preferences Summary Card */}
-        <div className="border border-border rounded-custom p-[26px] bg-panel shadow-custom flex flex-col justify-between">
-          {isUserOnboarded ? (
+      {/* Main content grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-[26px] text-left">
+        {/* Left Card: Readiness / Existing Pod Overview */}
+        <div className="border border-border rounded-2xl p-[26px] bg-panel shadow-sm flex flex-col justify-between">
+          {isExistingPod ? (
             <>
               <div>
-                <h4 className="font-display font-extrabold text-lg text-ink mb-2">Preferences summary</h4>
-                <ul className="list-none p-0 m-0 mt-2.5">
-                  <li className="flex items-start gap-2.5 py-[11px] border-b border-border text-[13.5px] text-ink font-medium">
-                    <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                    <span>{currentUser?.location_city || 'Austin, TX'} · {currentUser?.setting_preference ? (currentUser.setting_preference.charAt(0).toUpperCase() + currentUser.setting_preference.slice(1)) : 'Suburban'} setting</span>
-                  </li>
-                  <li className="flex items-start gap-2.5 py-[11px] border-b border-border text-[13.5px] text-ink font-medium">
-                    <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                    <span>{currentUser?.housing_intent === 'purchase' || currentUser?.housing_intent === 'purchase-primary' ? 'Purchase primary residence' : currentUser?.housing_intent === 'co-develop' ? 'Co-develop property' : currentUser?.housing_intent === 'investment' ? 'Investment hold' : 'Lifestyle-based co-living'}</span>
-                  </li>
-                  <li className="flex items-start gap-2.5 py-[11px] text-[13.5px] text-ink font-medium">
-                    <div className="w-4 h-4 border border-sage rounded-[4px] shrink-0 mt-0.5 bg-sage"></div>
-                    <span>{formatTimeline(currentUser?.commitment_timeline) || '5+ years'} commitment</span>
-                  </li>
-                </ul>
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Existing Pod Overview</h4>
+                <p className="text-[13.5px] text-ink-dim mt-2 leading-relaxed font-light">
+                  {userPod
+                    ? `You are registered in the self-formed pod "${userPod.name}". Algorithmic matching is skipped since your community group is already formed.`
+                    : 'You are registered under Path B (Existing Pod). You can invite your co-members to complete setup and skip matching.'}
+                </p>
+                <div className="flex gap-2.5 flex-wrap mt-[14px]">
+                  <span className="bg-panel-alt text-ink text-xs font-semibold px-3 py-1 rounded-full border border-border">
+                    Pod: {userPod?.name || 'Self-Registered'}
+                  </span>
+                  <span className="bg-panel-alt text-ink text-xs font-semibold px-3 py-1 rounded-full border border-border">
+                    Type: {userPod?.group_type || 'Group'}
+                  </span>
+                  <span className="bg-teal-soft/60 text-teal text-xs font-semibold px-3 py-1 rounded-full border border-teal/20">
+                    Matching Skipped
+                  </span>
+                </div>
+              </div>
+              {(() => {
+                const isPodCreator = userPod ? (userPod.memberRole === 'CREATOR' || userPod.created_by === currentUser?.id) : false;
+                return (
+                  <button
+                    onClick={() => setActiveScreen(userPod?.status === 'ACTIVE' ? 'commons-dashboard' : isPodCreator ? 'pod-invite' : 'pod-history')}
+                    className="bg-amber text-white rounded-full py-2.5 px-5 text-xs font-semibold w-fit hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer mt-[14px] shadow-sm flex items-center gap-1.5"
+                  >
+                    {userPod?.status === 'ACTIVE' ? 'Go to Pod Commons →' : isPodCreator ? 'Invite Pod Members →' : 'View My Pod →'}
+                  </button>
+                );
+              })()}
+            </>
+          ) : isUserOnboarded ? (
+            <>
+              <div>
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Readiness Breakdown</h4>
+                <p className="text-[13.5px] text-ink-dim mt-2 leading-relaxed font-light">
+                  {isProfileApproved
+                    ? 'Your profile is approved. Pod matching criteria and shared commons features are active.'
+                    : isProfileUnderReview
+                      ? 'Admin review in progress. We are verifying your questionnaire responses.'
+                      : 'Feedback received on your submission. Please update your profile.'}
+                </p>
+                <div className="flex gap-2.5 flex-wrap mt-[14px]">
+                  <span className="bg-panel-alt text-ink text-xs font-semibold px-3 py-1 rounded-full border border-border">Values Align: High</span>
+                  <span className="bg-panel-alt text-ink text-xs font-semibold px-3 py-1 rounded-full border border-border">Finances: Verified</span>
+                  <span className="bg-panel-alt text-ink text-xs font-semibold px-3 py-1 rounded-full border border-border">Timeline: Aligned</span>
+                </div>
               </div>
               <button
-                onClick={() => setActiveScreen('profile-update')}
-                className="bg-transparent border border-border text-ink rounded-lg py-2 px-4 text-xs font-bold w-fit hover:bg-panel-alt transition-colors cursor-pointer mt-[14px]"
+                onClick={() => setActiveScreen('readiness-detail')}
+                className="bg-amber text-white rounded-full py-2.5 px-5 text-xs font-semibold w-fit hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer mt-[14px] shadow-sm"
               >
-                Edit preferences
+                View Score Breakdown →
               </button>
             </>
           ) : (
             <>
               <div>
-                <h4 className="font-display font-extrabold text-lg text-ink mb-2">Preferences summary</h4>
-                <p className="my-3 text-ink-dim text-[13px] leading-relaxed">
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Readiness Breakdown</h4>
+                <p className="my-3 text-ink-dim text-[13px] leading-relaxed font-light">
                   Profile incomplete — complete your 9 onboarding questions to calculate preferences, readiness score, and location bounds.
                 </p>
               </div>
               <button
                 onClick={() => setActiveScreen('entry-path')}
-                className="bg-amber text-white rounded-lg py-2 px-4 text-xs font-bold w-fit hover:bg-[#2450C4] transition-colors cursor-pointer mt-[14px] shadow-sm"
+                className="bg-amber text-white rounded-full py-2.5 px-5 text-xs font-semibold w-fit hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer mt-[14px] shadow-sm"
               >
                 Complete Onboarding Now →
               </button>
@@ -145,28 +190,64 @@ export default function ProfileDashboard({
           )}
         </div>
 
-        {/* Status Card */}
-        <div className="border border-border rounded-custom p-[26px] bg-panel shadow-custom flex flex-col justify-between">
-          {isUserOnboarded ? (
+        {/* Right Card: Status & Commons */}
+        <div className="border border-border rounded-2xl p-[26px] bg-panel shadow-sm flex flex-col justify-between">
+          {isExistingPod ? (
             <>
               <div>
-                <h4 className="font-display font-extrabold text-lg text-ink mb-2">Status</h4>
-                <p className="text-[13.5px] text-ink-dim mt-2 font-medium">
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Group Status</h4>
+                <p className="text-[13.5px] text-ink-dim mt-2 font-light">
+                  {userPod?.status === 'ACTIVE'
+                    ? 'Group verified & approved → The Commons is active'
+                    : userPod?.status === 'UNDER_REVIEW'
+                      ? 'Pod submitted → Under Board review in Existing Pod Queue'
+                      : 'Pod created → Inviting members to join group'}
+                </p>
+                <div className="h-2 rounded-full bg-panel-alt overflow-hidden mt-[14px]">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: userPod?.status === 'ACTIVE' ? '100%' : userPod?.status === 'UNDER_REVIEW' ? '70%' : '40%',
+                      background: userPod?.status === 'ACTIVE'
+                        ? 'linear-gradient(90deg, #2D7A5E, #10B981)'
+                        : 'linear-gradient(90deg, var(--color-amber), #B87333)'
+                    }}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (userPod?.status === 'ACTIVE') {
+                    setActiveScreen('commons-dashboard');
+                  } else {
+                    setActiveScreen('status-tracking');
+                  }
+                }}
+                className="bg-amber text-white text-xs font-semibold py-2.5 px-5 rounded-full shadow-sm hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer w-fit mt-[14px]"
+              >
+                {userPod?.status === 'ACTIVE' ? 'Open Pod Commons →' : 'View Journey Status →'}
+              </button>
+            </>
+          ) : isUserOnboarded ? (
+            <>
+              <div>
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Status</h4>
+                <p className="text-[13.5px] text-ink-dim mt-2 font-light">
                   {isProfileApproved
                     ? 'Onboarding approved → Matching pool active'
                     : isProfileUnderReview
                       ? 'Onboarding complete → Under admin review'
                       : 'Profile needs attention → Rejected feedback'}
                 </p>
-                <div className="h-2 rounded-[6px] bg-panel-alt overflow-hidden mt-[14px]">
+                <div className="h-2 rounded-full bg-panel-alt overflow-hidden mt-[14px]">
                   <div
-                    className="h-full rounded-[6px] transition-all duration-300"
+                    className="h-full rounded-full transition-all duration-300"
                     style={{
                       width: isProfileApproved ? '100%' : isProfileUnderReview ? '70%' : '50%',
                       background: isProfileApproved
-                        ? 'linear-gradient(90deg, var(--color-teal), #10B981)'
+                        ? 'linear-gradient(90deg, #2D7A5E, #10B981)'
                         : isProfileUnderReview
-                          ? 'linear-gradient(90deg, var(--color-teal), var(--color-amber))'
+                          ? 'linear-gradient(90deg, var(--color-amber), #B87333)'
                           : 'linear-gradient(90deg, var(--color-amber), var(--color-rust))'
                     }}
                   />
@@ -180,7 +261,7 @@ export default function ProfileDashboard({
                     setActiveScreen('onboarding-approval');
                   }
                 }}
-                className="bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2.5 px-4.5 rounded-lg shadow-sm transition-colors cursor-pointer w-fit mt-[14px]"
+                className="bg-amber text-white text-xs font-semibold py-2.5 px-5 rounded-full shadow-sm hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer w-fit mt-[14px]"
               >
                 {isProfileApproved ? 'Check Matching Status →' : 'View Review Feedback →'}
               </button>
@@ -188,17 +269,17 @@ export default function ProfileDashboard({
           ) : (
             <>
               <div>
-                <h4 className="font-display font-extrabold text-lg text-ink mb-2">Status</h4>
-                <p className="my-3 text-ink-dim text-[13px] leading-relaxed font-semibold">
+                <h4 className="font-serif font-bold text-xl text-ink mb-2">Status</h4>
+                <p className="my-3 text-ink-dim text-[13px] leading-relaxed font-medium">
                   Complete Onboarding
                 </p>
-                <p className="text-ink-dim text-[12.5px] leading-relaxed">
+                <p className="text-ink-dim text-[12.5px] leading-relaxed font-light">
                   Your profile and matching entries are locked until you complete the questionnaire.
                 </p>
               </div>
               <button
                 onClick={() => setActiveScreen('entry-path')}
-                className="bg-ink hover:bg-[#2450C4] text-white rounded-lg py-2.5 px-4.5 text-xs font-bold w-fit transition-colors cursor-pointer mt-[14px] shadow-sm"
+                className="bg-amber text-white rounded-full py-2.5 px-5 text-xs font-semibold w-fit hover:bg-[#b05d3e] hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer mt-[14px] shadow-sm"
               >
                 Unlock Status Timeline →
               </button>
@@ -207,22 +288,6 @@ export default function ProfileDashboard({
         </div>
       </div>
 
-      {/* Bottom Button Row */}
-      <div className="flex items-center gap-3 mt-[10px] flex-wrap">
-        <button
-          onClick={() => setActiveScreen('matching-status')}
-          className="bg-amber text-white font-bold text-sm px-[22px] py-3 rounded-[10px] shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
-          style={{ boxShadow: '0 8px 20px -10px rgba(47, 95, 224, 0.55)' }}
-        >
-          View match status
-        </button>
-        <button
-          onClick={() => setActiveScreen('readiness-detail')}
-          className="bg-transparent border border-border text-ink font-bold text-sm px-[22px] py-3 rounded-[10px] hover:bg-panel-alt transition-all cursor-pointer"
-        >
-          Readiness breakdown
-        </button>
-      </div>
     </div>
   );
 }

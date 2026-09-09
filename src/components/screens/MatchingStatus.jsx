@@ -29,22 +29,22 @@ export default function MatchingStatus({
 
             <div className="font-mono text-[11px] uppercase tracking-wider text-sage mb-3 font-bold">Status: Active &amp; Approved</div>
 
-            <h1 className="font-display text-[24px] font-extrabold text-ink mb-2 leading-none">You are in a Pod!</h1>
+            <h1 className="font-serif text-[26px] font-bold text-ink mb-2 leading-tight">You are in a Pod!</h1>
 
-            <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2">
+            <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2 font-light">
               You are already an active member of the Pod <strong>{userPod.name}</strong>. You can collaborate, chat, and draft governance rules in your Pod Commons workspace.
             </p>
 
-            <div className="flex flex-col gap-2 w-full max-w-[280px]">
+            <div className="flex flex-col gap-2.5 w-full max-w-[280px]">
               <button
                 onClick={() => setActiveScreen('commons-dashboard')}
-                className="w-full bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer"
+                className="w-full bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold py-3 rounded-full shadow-sm hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer"
               >
                 Go to Pod Commons &rarr;
               </button>
               <button
                 onClick={() => setActiveScreen('pod-history')}
-                className="w-full bg-transparent border border-border text-ink hover:bg-panel-alt text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer"
+                className="w-full bg-transparent border border-border text-ink hover:bg-panel-alt text-xs font-semibold py-3 rounded-full transition-colors cursor-pointer"
               >
                 View My Pods
               </button>
@@ -56,17 +56,17 @@ export default function MatchingStatus({
               <Users className="w-5 h-5" />
             </div>
 
-            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-bold">Status: Pod is Forming</div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-semibold">Status: Pod is Forming</div>
 
-            <h1 className="font-display text-[24px] font-extrabold text-ink mb-2 leading-none">Pod is Forming</h1>
+            <h1 className="font-serif text-[26px] font-bold text-ink mb-2 leading-tight">Pod is Forming</h1>
 
-            <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2">
+            <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[385px] mt-2 font-light">
               Your self-registered pod <strong>{userPod.name}</strong> is currently being formed. Once all invited neighbors accept their invitations, the pod will be submitted to the Board.
             </p>
 
             <button
               onClick={() => setActiveScreen(userPod.memberRole === 'CREATOR' ? 'pod-invite' : 'commons-dashboard')}
-              className="w-full max-w-[280px] bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer"
+              className="w-full max-w-[280px] bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold py-3 rounded-full shadow-sm hover:shadow-md hover:shadow-[#C46A4A]/25 transition-all cursor-pointer"
             >
               {userPod.memberRole === 'CREATOR' ? 'Manage Invitations \u2192' : 'View Group Status'}
             </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, FileText } from 'lucide-react';
 
 export default function CommonsAgreement({
   alignedAgreements,
@@ -64,8 +64,8 @@ export default function CommonsAgreement({
       {/* Document Preview card */}
       <div className="border border-dashed border-teal rounded-2xl p-6 bg-gradient-to-br from-bg to-white max-w-[560px] mt-5">
         <div className="flex gap-4 items-center mb-4 flex-wrap sm:flex-nowrap">
-          <div className="w-11 h-11 rounded-xl bg-amber-soft text-amber flex items-center justify-center flex-shrink-0 text-xl font-bold">
-            📄
+          <div className="w-11 h-11 rounded-xl bg-amber-soft text-amber flex items-center justify-center flex-shrink-0 border border-amber/20 shadow-xs">
+            <FileText className="w-6 h-6 text-amber" />
           </div>
           <div className="text-left flex flex-col">
             <h4 className="font-display font-extrabold text-[15px] text-ink leading-tight">Draft Scaffolding Document</h4>
@@ -75,7 +75,7 @@ export default function CommonsAgreement({
 
         <button
           onClick={openAgreementDocModal}
-          className="w-full bg-amber text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-[#2450C4] active:scale-95 transition-all text-center justify-center cursor-pointer shadow-md"
+          className="w-full bg-amber text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all text-center justify-center cursor-pointer shadow-md"
         >
           Preview &amp; Export Document (.PDF)
         </button>

@@ -171,11 +171,28 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading ? (
-                <tr>
-                  <td colSpan={4} className="p-12 text-center text-ink-dim font-medium">
-                    <span className="inline-block animate-pulse">Loading village test submissions...</span>
-                  </td>
-                </tr>
+                [...Array(6)].map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="py-4 px-4 sm:px-6">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-border/70 shrink-0" />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-3.5 w-32 bg-border/70 rounded" />
+                          <div className="h-2.5 w-40 bg-border/40 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 sm:px-6">
+                      <div className="h-5 w-20 bg-border/50 rounded-full" />
+                    </td>
+                    <td className="py-4 px-4 sm:px-6">
+                      <div className="h-4 w-28 bg-border/40 rounded" />
+                    </td>
+                    <td className="py-4 px-4 sm:px-6 text-right">
+                      <div className="h-7 w-20 bg-border/40 rounded-lg ml-auto" />
+                    </td>
+                  </tr>
+                ))
               ) : submissions.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-12 text-center text-ink-dim font-medium">
@@ -249,8 +266,14 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
 
       {/* Answers Detail Modal Overlay */}
       {selectedSubmission && createPortal(
-        <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade">
-          <div className="bg-white border border-border rounded-2xl w-full max-w-[720px] max-h-[85vh] shadow-2xl flex flex-col relative overflow-hidden text-left animate-slide-up">
+        <div
+          onClick={() => setSelectedSubmission(null)}
+          className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-border rounded-2xl w-full max-w-[720px] max-h-[85vh] shadow-2xl flex flex-col relative overflow-hidden text-left animate-slide-up"
+          >
 
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-border p-6 pb-4 shrink-0 bg-slate-50/60">

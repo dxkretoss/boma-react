@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F4F7FB;
+  --bg: #F7F5F0;
   --panel: #FFFFFF;
-  --panel-alt: #EAF0F8;
-  --border: #D7E2EE;
-  --ink: #2F5FE0;
-  --ink-dim: #5B6B82;
-  --amber: #2F5FE0;
-  --amber-soft: #DCE6FB;
-  --teal: #0E4C8C;
-  --teal-soft: #E1EBF7;
-  --sage: #1F8A6B;
+  --panel-alt: #EFEAE3;
+  --border: #E5DDD2;
+  --ink: #2E2330;
+  --ink-dim: #7A746B;
+  --amber: #C46A4A;
+  --amber-soft: #F7EDE7;
+  --teal: #B87333;
+  --teal-soft: #EFE9E2;
+  --sage: #2D7A5E;
   --rust: #C4432E;
-  --navy-deep: #0B1E38;
+  --navy-deep: #2E2330;
   --radius: 16px;
-  --shadow: 0 1px 2px rgba(11, 30, 56, 0.05), 0 12px 32px -18px rgba(11, 30, 56, 0.22);
-  --shadow-lg: 0 24px 60px -30px rgba(11, 30, 56, 0.38);
+  --shadow: 0 1px 3px rgba(46, 35, 48, 0.06), 0 12px 32px -18px rgba(46, 35, 48, 0.15);
+  --shadow-lg: 0 24px 60px -30px rgba(46, 35, 48, 0.25);
 }
 
 @theme {
@@ -36,12 +36,101 @@
 
   --font-sans: 'Inter', sans-serif;
   --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
   --radius-custom: var(--radius);
   --shadow-custom: var(--shadow);
   --shadow-custom-lg: var(--shadow-lg);
 }
+
+.font-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* Custom Utilities for Luxury Real-Estate Design System */
+.bg-aubergine { background-color: #2E2330; }
+.bg-terracotta { background-color: #C46A4A; }
+.bg-clay { background-color: #D7A27A; }
+.bg-sand { background-color: #E7DED0; }
+.bg-bone { background-color: #F5F1EA; }
+.bg-copper { background-color: #B87333; }
+.bg-stone { background-color: #7A746B; }
+
+.text-aubergine { color: #2E2330; }
+.text-terracotta { color: #C46A4A; }
+.text-clay { color: #D7A27A; }
+.text-sand { color: #E7DED0; }
+.text-bone { color: #F5F1EA; }
+.text-copper { color: #B87333; }
+.text-stone { color: #7A746B; }
+
+.border-aubergine { border-color: #2E2330; }
+.border-terracotta { border-color: #C46A4A; }
+.border-clay { border-color: #D7A27A; }
+.border-sand { border-color: #E7DED0; }
+.border-copper { border-color: #B87333; }
+.border-stone { border-color: #7A746B; }
+
+/* Custom Grain Overlay */
+.bg-grain {
+  background-image: radial-gradient(rgba(46, 35, 48, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.bg-grain-dark {
+  background-image: radial-gradient(rgba(245, 241, 234, 0.04) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+/* Metallic Copper Glow */
+.copper-glow {
+  box-shadow: 0 0 35px -5px rgba(184, 115, 51, 0.35);
+}
+
+.copper-glow-sm {
+  box-shadow: 0 0 15px -2px rgba(184, 115, 51, 0.25);
+}
+
+/* Glassmorphic Dark Surface */
+.glass-dark {
+  background: rgba(46, 35, 48, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(231, 222, 208, 0.12);
+}
+
+.glass-light {
+  background: rgba(245, 241, 234, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(46, 35, 48, 0.08);
+}
+
+/* Quiet Luxury Hover & Card Lift */
+.card-hover-lift {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -15px rgba(46, 35, 48, 0.12);
+}
+
+/* Phone Mockup Styling */
+.phone-mockup-frame {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 
 @layer utilities {
   .animate-fade {
@@ -73,23 +162,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar styles to mimic clean native layout */
+/* Scrollbar styles with visible luxury brown/copper tone */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #B87333 rgba(46, 35, 48, 0.08);
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #F5F1EA;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 4px;
+  background: #B87333;
+  border-radius: 9999px;
+  border: 2px solid #F5F1EA;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #C46A4A;
+}
+
+::-webkit-scrollbar-corner {
+  background: #F5F1EA;
 }
 
 button {

@@ -41,10 +41,13 @@ export default function ConfirmModal({
   const cfg = getTypeConfig();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-deep/40 backdrop-blur-sm animate-fade text-left">
+    <div 
+      onClick={onCancel}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/75 backdrop-blur-md animate-fade text-left"
+    >
       {/* Modal Dialog Card */}
       <div 
-        className="w-full max-w-[420px] bg-panel border border-border rounded-custom shadow-custom-lg overflow-hidden relative p-6 flex flex-col"
+        className="w-full max-w-[420px] bg-white border border-border rounded-custom shadow-2xl overflow-hidden relative p-6 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

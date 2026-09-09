@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GATED_SCREENS } from '../../constants/screens';
-import { updateUser, fetchUserProfile, updateUserPreferencesAndScore } from '../../api/users';
+import { updateUser, fetchUserProfile, updateUserPreferencesAndScore, uploadUserAvatar } from '../../api/users';
 import { fetchPodDetails, fetchPodMembers, leavePod as leavePodApi, dissolvePod, updatePodAgreements } from '../../api/pods';
 import { findSuggestedMatches, acceptMatchedPod, declineMatchedPod } from '../../api/matching';
 import { getReadinessScoreBreakdown } from '../../api/onboarding';
@@ -92,7 +92,9 @@ export default function AppScreens({
   alignedAgreements,
   setAlignedAgreements,
   showConfirm,
-  showToast
+  showToast,
+  userPod: propUserPod,
+  setUserPod: propSetUserPod
 }) {
   // Local edit profile states
   const [editCity, setEditCity] = useState('Austin, TX');
@@ -116,12 +118,11 @@ export default function AppScreens({
     }
   }, [currentUser, activeScreen]);
 
-  const fileInputRef = useRef(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [editCityDropdownOpen, setEditCityDropdownOpen] = useState(false);
   const cityDropdownRef = useRef(null);
 
-  // Close city dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target)) {
@@ -142,39 +143,60 @@ export default function AppScreens({
     }
 
     setUploadingAvatar(true);
-    const reader = new FileReader();
+    try {
+      // 1. Upload to Supabase Storage Bucket ('avatars') and get public URL
+      const publicUrl = await uploadUserAvatar(currentUser.id, file);
 
-    reader.onload = async () => {
-      try {
-        const base64String = reader.result;
-        await updateUser(currentUser.id, { avatar_url: base64String });
-
-        if (setCurrentUser) {
-          setCurrentUser({
-            ...currentUser,
-            avatar_url: base64String
-          });
-        }
-
-        showToast("Profile image updated successfully!", "success");
-      } catch (err) {
-        console.error("Failed to update profile image:", err);
-        showToast("Failed to update profile image: " + err.message, "error");
-      } finally {
-        setUploadingAvatar(false);
+      if (setCurrentUser) {
+        setCurrentUser({
+          ...currentUser,
+          avatar_url: publicUrl
+        });
       }
-    };
 
-    reader.onerror = () => {
-      showToast("Failed to read image file.", "error");
+      showToast("Profile image updated successfully!", "success");
+    } catch (err) {
+      console.warn("Storage bucket upload failed, attempting fallback:", err);
+
+      // Graceful fallback: If Supabase storage bucket isn't set up yet, fallback to local FileReader data URL
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64String = reader.result;
+          await updateUser(currentUser.id, { avatar_url: base64String });
+
+          if (setCurrentUser) {
+            setCurrentUser({
+              ...currentUser,
+              avatar_url: base64String
+            });
+          }
+
+          showToast("Profile image updated successfully!", "success");
+        } catch (saveErr) {
+          console.error("Failed to update profile image:", saveErr);
+          showToast("Failed to update profile image: " + saveErr.message, "error");
+        } finally {
+          setUploadingAvatar(false);
+        }
+      };
+
+      reader.onerror = () => {
+        showToast("Failed to read image file.", "error");
+        setUploadingAvatar(false);
+      };
+
+      reader.readAsDataURL(file);
+      return;
+    } finally {
       setUploadingAvatar(false);
-    };
-
-    reader.readAsDataURL(file);
+    }
   };
 
   // Path B Pod States
-  const [userPod, setUserPod] = useState(null);
+  const [localUserPod, setLocalUserPod] = useState(null);
+  const userPod = propUserPod !== undefined ? propUserPod : localUserPod;
+  const setUserPod = propSetUserPod || setLocalUserPod;
   const [podMembersList, setPodMembersList] = useState([]);
   const [loadingPod, setLoadingPod] = useState(true);
   const [suggestedPod, setSuggestedPod] = useState(null);
@@ -228,15 +250,40 @@ export default function AppScreens({
 
           if (isMatchingPool) {
             if (details.status === 'CREATING') {
-              // Admin approved matching proposal, waiting for user confirmations
               const otherMembers = mems
-                .filter(m => m.id !== currentUser.id)
-                .map(m => ({
-                  id: m.id,
-                  name: m.name || 'Anonymous Member',
-                  score: m.readiness_score || 80,
-                  detail: `${m.commitment_timeline === 'timeline_5yr' ? '5+' : m.commitment_timeline === 'timeline_2yr' ? '2+' : 'Flexible'} years commitment · ${m.setting_preference || 'suburban'}`
-                }));
+                .filter(m => (m.userId || m.user_id) !== currentUser.id)
+                .map(m => {
+                  const score = m.readinessScore ?? m.readiness_score ?? 80;
+                  const timeline = m.commitmentTimeline || m.commitment_timeline;
+                  const setting = m.settingPreference || m.setting_preference;
+                  const timeLabel = timeline === 'timeline_5yr' ? '5+' : timeline === 'timeline_2yr' ? '2+' : timeline === 'timeline_flexible' || timeline === 'timeline_flex' ? 'Flexible' : 'Flexible';
+                  const settingLabel = setting ? setting.toLowerCase() : 'suburban';
+
+                  return {
+                    id: m.id,
+                    userId: m.userId || m.user_id,
+                    name: m.name || 'Anonymous Member',
+                    score: score,
+                    detail: `${timeLabel} years commitment · ${settingLabel}`,
+                    isSelf: false
+                  };
+                });
+
+              const selfMemberRecord = mems.find(m => (m.userId || m.user_id) === currentUser.id);
+              const selfTimeline = currentUser.commitment_timeline || selfMemberRecord?.commitmentTimeline;
+              const selfTimeLabel = selfTimeline === 'timeline_5yr' ? '5+' : selfTimeline === 'timeline_2yr' ? '2+' : 'Flexible';
+              const selfSetting = currentUser.setting_preference || selfMemberRecord?.settingPreference || 'suburban';
+
+              const selfMember = {
+                id: selfMemberRecord?.id || `self-${currentUser.id}`,
+                userId: currentUser.id,
+                name: currentUser.name || 'You',
+                score: currentUser.readiness_score ?? selfMemberRecord?.readinessScore ?? 80,
+                detail: `${selfTimeLabel} years commitment · ${selfSetting.toLowerCase()}`,
+                isSelf: true
+              };
+
+              const allPreviewMembers = [...otherMembers, selfMember];
 
               setSuggestedPod({
                 id: details.id,
@@ -247,7 +294,7 @@ export default function AppScreens({
                   'Co-development',
                   '5+ years commitment'
                 ],
-                members: otherMembers,
+                members: allPreviewMembers,
                 matchPct: 85
               });
 
@@ -304,7 +351,8 @@ export default function AppScreens({
           freshUser.profile_status !== currentUser.profile_status ||
           freshUser.matching_status !== currentUser.matching_status ||
           freshUser.user_onboarded !== currentUser.user_onboarded ||
-          freshUser.readiness_score !== currentUser.readiness_score
+          freshUser.readiness_score !== currentUser.readiness_score ||
+          freshUser.entry_path !== currentUser.entry_path
         )) {
           setCurrentUser(freshUser);
         }
@@ -346,55 +394,25 @@ export default function AppScreens({
   }
 
   // Intercept locked screens if user is not onboarded or profile is not approved yet (Path A / Path B)
+  // Check if user is on Existing Pod (Path B) flow based on database entry_path
   const isExistingPod = currentUser?.entry_path === 'EXISTING_POD';
-  const isProfileApproved = isExistingPod
-    ? (userPod?.status === 'ACTIVE')
+  const isProfileApproved = isExistingPod 
+    ? true 
     : (currentUser?.profile_status === 'APPROVED');
   const isProfileUnderReview = currentUser?.profile_status === 'UNDER_REVIEW';
   const isProfileRejected = currentUser?.profile_status === 'REJECTED';
-  const isUserOnboarded = currentUser?.onboarding_status === 'COMPLETED' || currentUser?.user_onboarded === true;
+  const isUserOnboarded =
+    currentUser?.onboarding_status === 'COMPLETED' ||
+    currentUser?.user_onboarded === true ||
+    currentUser?.profile_status === 'UNDER_REVIEW' ||
+    currentUser?.profile_status === 'APPROVED' ||
+    userOnboarded === true;
 
-  // Path B Specific Gating Redirects
-  if (isExistingPod && !loadingPod && GATED_SCREENS.includes(activeScreen)) {
-    if (!isUserOnboarded && userPod?.status !== 'ACTIVE') {
-      return (
-        <div className="max-w-[480px] mx-auto py-24 px-6 text-center animate-fade">
-          <div className="w-14 h-14 rounded-2xl bg-amber-soft text-amber flex items-center justify-center mx-auto mb-5">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <h3 className="font-display font-extrabold text-[20px] text-ink mb-2">Complete Profile Required</h3>
-          <p className="text-ink-dim text-sm leading-relaxed mb-6">
-            Before you can access Pod workspace tools, you must complete your BOMA onboarding profile.
-          </p>
-          <button
-            onClick={() => setActiveScreen('onboarding-age')}
-            className="bg-ink text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#2450C4] cursor-pointer"
-          >
-            Complete Profile
-          </button>
-        </div>
-      );
-    }
-
-    if (userPod?.status === 'CREATING') {
-      if (userPod.memberRole === 'CREATOR') {
-        setTimeout(() => setActiveScreen('pod-invite'), 10);
-        return null;
-      } else {
-        return <MemberWaitingView pod={userPod} currentUser={currentUser} setActiveScreen={setActiveScreen} />;
-      }
-    }
-    if (userPod?.status === 'UNDER_REVIEW') {
-      if (userPod.memberRole === 'CREATOR') {
-        setTimeout(() => setActiveScreen('pod-pending'), 10);
-        return null;
-      } else {
-        return <MemberWaitingView pod={userPod} currentUser={currentUser} setActiveScreen={setActiveScreen} />;
-      }
+  // Path B Specific Gating for Commons workspace tools
+  const COMMONS_SCREENS = ['commons-dashboard', 'commons-members', 'commons-agreement', 'commons-chat', 'commons-settings'];
+  if (isExistingPod && !loadingPod && COMMONS_SCREENS.includes(activeScreen)) {
+    if (!userPod) {
+      return <CommonsDashboard currentPod={null} userPod={null} setActiveScreen={setActiveScreen} />;
     }
     if (userPod?.status === 'REJECTED') {
       return <MemberWaitingView pod={userPod} currentUser={currentUser} setActiveScreen={setActiveScreen} />;
@@ -699,7 +717,7 @@ export default function AppScreens({
     }
   };
 
-  // Current Pod Data — always from DB
+  // Current Pod Data — available for active or existing/forming pod
   const currentPod = userPod
     ? {
       name: userPod.name,
@@ -707,15 +725,15 @@ export default function AppScreens({
       formed: userPod.created_at ? new Date(userPod.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
       photo: 'assets/pod_austin.png',
       avgReadiness: Math.round(
-        podMembersList.reduce((acc, m) => acc + m.readinessScore, 0) / (podMembersList.length || 1)
+        (podMembersList || []).reduce((acc, m) => acc + (m.readinessScore || 85), 0) / ((podMembersList && podMembersList.length) || 1)
       ),
-      health: 'Stable',
-      members: podMembersList.filter(m => m.userId !== currentUser?.id).map(m => ({
+      health: userPod.status === 'ACTIVE' ? 'Stable' : 'Forming',
+      members: (podMembersList || []).filter(m => m.userId !== currentUser?.id).map(m => ({
         name: m.name,
         avatarUrl: m.avatarUrl,
         detail: `${m.role === 'CREATOR' ? 'Group Admin' : 'Member'} · Joined`,
-        score: m.readinessScore,
-        joined: new Date(m.joinedAt).toLocaleDateString()
+        score: m.readinessScore || 85,
+        joined: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : 'Recently'
       }))
     }
     : null;
@@ -732,6 +750,8 @@ export default function AppScreens({
           isProfileApproved={isProfileApproved}
           isProfileUnderReview={isProfileUnderReview}
           isProfileRejected={isProfileRejected}
+          isExistingPod={isExistingPod}
+          userPod={userPod}
           openWhatsBomaModal={openWhatsBomaModal}
           openVideoModal={openVideoModal}
           setActiveScreen={setActiveScreen}
@@ -760,9 +780,6 @@ export default function AppScreens({
           setCurrentUser={setCurrentUser}
           editName={editName}
           setEditName={setEditName}
-          fileInputRef={fileInputRef}
-          uploadingAvatar={uploadingAvatar}
-          handleAvatarChange={handleAvatarChange}
           setActiveScreen={setActiveScreen}
           showToast={showToast}
         />
@@ -854,52 +871,88 @@ export default function AppScreens({
       {activeScreen === 'commons-dashboard' && (
         <CommonsDashboard
           currentPod={currentPod}
+          userPod={userPod}
           setActiveScreen={setActiveScreen}
         />
       )}
 
       {/* 11. COMMONS MEMBERS */}
-      {activeScreen === 'commons-members' && currentPod && (
-        <CommonsMembers
-          currentPod={currentPod}
-          currentUser={currentUser}
-          setActiveScreen={setActiveScreen}
-        />
+      {activeScreen === 'commons-members' && (
+        currentPod ? (
+          <CommonsMembers
+            currentPod={currentPod}
+            userPod={userPod}
+            isCreator={isCreator}
+            podMembersList={podMembersList}
+            currentUser={currentUser}
+            setActiveScreen={setActiveScreen}
+          />
+        ) : (
+          <CommonsDashboard
+            currentPod={null}
+            userPod={userPod}
+            setActiveScreen={setActiveScreen}
+          />
+        )
       )}
 
       {/* 12. COMMONS AGREEMENT */}
       {activeScreen === 'commons-agreement' && (
-        <CommonsAgreement
-          alignedAgreements={alignedAgreements}
-          toggleAgreementItem={toggleAgreementItem}
-          openAgreementDocModal={openAgreementDocModal}
-          setActiveScreen={setActiveScreen}
-        />
+        currentPod ? (
+          <CommonsAgreement
+            alignedAgreements={alignedAgreements}
+            toggleAgreementItem={toggleAgreementItem}
+            openAgreementDocModal={openAgreementDocModal}
+            setActiveScreen={setActiveScreen}
+          />
+        ) : (
+          <CommonsDashboard
+            currentPod={null}
+            userPod={userPod}
+            setActiveScreen={setActiveScreen}
+          />
+        )
       )}
 
       {/* 13. COMMONS CHAT */}
-      {activeScreen === 'commons-chat' && currentPod && (
-        <CommonsChat
-          currentPod={currentPod}
-          currentUser={currentUser}
-          chatMessages={chatMessages}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          chatLogRef={chatLogRef}
-          handleSendChatMessage={handleSendChatMessage}
-          setActiveScreen={setActiveScreen}
-        />
+      {activeScreen === 'commons-chat' && (
+        currentPod ? (
+          <CommonsChat
+            currentPod={currentPod}
+            currentUser={currentUser}
+            chatMessages={chatMessages}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            chatLogRef={chatLogRef}
+            handleSendChatMessage={handleSendChatMessage}
+            setActiveScreen={setActiveScreen}
+          />
+        ) : (
+          <CommonsDashboard
+            currentPod={null}
+            userPod={userPod}
+            setActiveScreen={setActiveScreen}
+          />
+        )
       )}
 
       {/* 14. COMMONS SETTINGS */}
       {activeScreen === 'commons-settings' && (
-        <CommonsSettings
-          isCreator={isCreator}
-          showConfirm={showConfirm}
-          deletePod={deletePod}
-          leavePod={leavePod}
-          setActiveScreen={setActiveScreen}
-        />
+        currentPod ? (
+          <CommonsSettings
+            isCreator={isCreator}
+            showConfirm={showConfirm}
+            deletePod={deletePod}
+            leavePod={leavePod}
+            setActiveScreen={setActiveScreen}
+          />
+        ) : (
+          <CommonsDashboard
+            currentPod={null}
+            userPod={userPod}
+            setActiveScreen={setActiveScreen}
+          />
+        )
       )}
 
       {/* 15. MY PODS HISTORY */}
@@ -907,6 +960,9 @@ export default function AppScreens({
         <PodHistory
           currentPod={currentPod}
           userPod={userPod}
+          podMembersList={podMembersList}
+          currentUser={currentUser}
+          isExistingPod={isExistingPod}
           isCreator={isCreator}
           podHistory={podHistory}
           deletePod={deletePod}

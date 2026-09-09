@@ -82,7 +82,7 @@ export default function ProfileEdit({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Setting preference</label>
             <select
@@ -109,40 +109,41 @@ export default function ProfileEdit({
             </select>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => setActiveScreen('profile')}
-            className="bg-transparent border border-border text-ink rounded-lg py-2 px-5 text-sm font-bold hover:bg-panel-alt transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={async () => {
-              if (currentUser?.id) {
-                try {
-                  const updates = {
-                    location_city: editCity,
-                    setting_preference: editSetting.toLowerCase(),
-                    housing_intent: editIntent === 'Purchase primary residence' ? 'purchase' : editIntent === 'Co-develop property' ? 'co-develop' : 'investment'
-                  };
-                  const updatedUser = await updateUserPreferencesAndScore(currentUser.id, updates);
-                  if (setCurrentUser) {
-                    setCurrentUser(updatedUser);
-                  }
-                  showToast("Preferences updated successfully!", "success");
-                } catch (err) {
-                  console.error('Error updating preferences:', err);
-                  showToast("Failed to save preference changes.", "error");
+      {/* Standalone outside action buttons with standard rounded-xl radius */}
+      <div className="flex items-center gap-3.5 mt-6">
+        <button
+          onClick={() => setActiveScreen('profile')}
+          className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={async () => {
+            if (currentUser?.id) {
+              try {
+                const updates = {
+                  location_city: editCity,
+                  setting_preference: editSetting.toLowerCase(),
+                  housing_intent: editIntent === 'Purchase primary residence' ? 'purchase' : editIntent === 'Co-develop property' ? 'co-develop' : 'investment'
+                };
+                const updatedUser = await updateUserPreferencesAndScore(currentUser.id, updates);
+                if (setCurrentUser) {
+                  setCurrentUser(updatedUser);
                 }
+                showToast("Preferences updated successfully!", "success");
+              } catch (err) {
+                console.error('Error updating preferences:', err);
+                showToast("Failed to save preference changes.", "error");
               }
-              setActiveScreen('profile');
-            }}
-            className="bg-ink text-white rounded-lg py-2 px-5 text-sm font-bold hover:bg-[#2450C4] transition-all cursor-pointer shadow-md"
-          >
-            Save changes
-          </button>
-        </div>
+            }
+            setActiveScreen('profile');
+          }}
+          className="bg-amber hover:bg-[#b05d3e] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+        >
+          Save changes
+        </button>
       </div>
     </div>
   );

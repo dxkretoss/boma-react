@@ -67,7 +67,7 @@ export default function PodReview({ podRegName, podRegType, setActiveScreen, cur
         <p className="text-ink-dim text-sm mb-6">You need to set up a Pod group first before submitting for review.</p>
         <button 
           onClick={() => setActiveScreen('pod-create')}
-          className="bg-ink text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#2450C4]"
+          className="bg-amber text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#b05d3e] shadow-md cursor-pointer transition-all"
         >
           Create Pod Group
         </button>
@@ -118,7 +118,7 @@ export default function PodReview({ podRegName, podRegType, setActiveScreen, cur
           <button 
             onClick={handleSubmit}
             disabled={submitting}
-            className="bg-amber text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer shadow-md disabled:opacity-50 flex items-center gap-2"
+            className="bg-amber text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer shadow-md disabled:opacity-50 flex items-center gap-2"
           >
             {submitting ? (
               <>

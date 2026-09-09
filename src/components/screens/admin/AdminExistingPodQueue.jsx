@@ -93,9 +93,18 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
     }
   };
 
+  // Helper to compute member readiness score
+  const getMemberScore = (m) => {
+    if (m.readinessScore && m.readinessScore > 0) return m.readinessScore;
+    if (m.commitmentTimeline) {
+      return m.commitmentTimeline === 'timeline_5yr' ? 90 : m.commitmentTimeline === 'timeline_flex' ? 80 : 85;
+    }
+    return 0;
+  };
+
   // Calculate Avg Readiness
   const avgReadiness = selectedPodMembers.length 
-    ? Math.round(selectedPodMembers.reduce((acc, m) => acc + m.readinessScore, 0) / selectedPodMembers.length)
+    ? Math.round(selectedPodMembers.reduce((acc, m) => acc + getMemberScore(m), 0) / selectedPodMembers.length)
     : 0;
 
   if (selectedPod) {
@@ -175,26 +184,60 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {selectedPodMembers.map((m, idx) => (
-                    <div key={idx} className="flex justify-between items-center gap-4 bg-panel/35 border border-border/50 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-ink-dim font-display">
-                          {m.name.substring(0, 1).toUpperCase()}
+                  {selectedPodMembers.map((m, idx) => {
+                    const memberScore = getMemberScore(m);
+                    const isOnboarded = m.onboardingStatus === 'COMPLETED' || Boolean(m.housingIntent || m.commitmentTimeline);
+
+                    return (
+                      <div key={idx} className="bg-panel/35 border border-border/50 rounded-xl p-4.5 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-sm text-ink-dim font-display shrink-0">
+                              {m.name.substring(0, 1).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <span className="text-sm font-bold text-ink leading-tight">{m.name}</span>
+                              <span className="text-xs text-ink-dim mt-0.5">{m.role === 'CREATOR' ? 'Coordinator' : 'Member'} · {m.email}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
+                              isOnboarded
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                            }`}>
+                              {isOnboarded ? 'Onboarded' : 'Onboarding Pending'}
+                            </span>
+                            <span className={`text-xs font-bold font-mono px-3 py-1 rounded-lg ${
+                              memberScore >= 70 ? 'bg-emerald-50 text-sage border border-sage/10' : 'bg-amber-soft text-amber border border-amber/10'
+                            }`}>
+                              Score: {memberScore}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-sm font-bold text-ink leading-tight">{m.name}</span>
-                          <span className="text-xs text-ink-dim mt-0.5">{m.role === 'CREATOR' ? 'Coordinator' : 'Member'} · {m.email}</span>
+
+                        {/* Questionnaire answers tracking */}
+                        <div className="bg-white border border-border/60 rounded-lg p-3 text-xs grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                          <div>
+                            <span className="font-mono text-[9.5px] uppercase tracking-wider text-ink-dim block font-bold">
+                              Housing Intent
+                            </span>
+                            <span className="font-semibold text-ink">
+                              {m.housingIntent === 'co-develop' ? 'Co-develop property' : m.housingIntent === 'purchase' ? 'Purchase primary residence' : m.housingIntent === 'investment' ? 'Investment hold' : m.housingIntent || '—'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-mono text-[9.5px] uppercase tracking-wider text-ink-dim block font-bold">
+                              Commitment Timeline
+                            </span>
+                            <span className="font-semibold text-ink">
+                              {m.commitmentTimeline === 'timeline_2yr' ? '2+ years' : m.commitmentTimeline === 'timeline_5yr' ? '5+ years' : m.commitmentTimeline === 'timeline_flex' ? 'Flexible' : m.commitmentTimeline || '—'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold font-mono px-3 py-1 rounded-lg ${
-                          m.readinessScore >= 70 ? 'bg-emerald-50 text-sage border border-sage/10' : 'bg-amber-soft text-amber border border-amber/10'
-                        }`}>
-                          Score: {m.readinessScore}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -215,7 +258,7 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
                   <button
                     onClick={handleApprove}
                     disabled={processingAction || loadingMembers}
-                    className="w-full bg-[#2F5FE0] hover:bg-[#2450C4] text-white py-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
+                    className="w-full bg-amber hover:bg-[#b05d3e] text-white py-3 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
                   >
                     {processingAction ? (
                       <>
@@ -298,9 +341,44 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
 
       <div className="w-full space-y-4">
         {loading ? (
-          <div className="py-16 text-center bg-white border border-border rounded-2xl shadow-sm">
-            <Loader2 className="w-8 h-8 text-teal animate-spin mx-auto mb-2" />
-            <span className="text-xs text-ink-dim font-semibold font-mono">Syncing review queue...</span>
+          <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider">
+                    <th className="p-4 px-6">Pod Group</th>
+                    <th className="p-4 px-6">Group Type</th>
+                    <th className="p-4 px-6">Registered Date</th>
+                    <th className="p-4 px-6">Status</th>
+                    <th className="p-4 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {[...Array(5)].map((_, idx) => (
+                    <tr key={idx} className="animate-pulse">
+                      <td className="p-4 px-6">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-4 w-40 bg-border/70 rounded" />
+                          <div className="h-3 w-56 bg-border/40 rounded" />
+                        </div>
+                      </td>
+                      <td className="p-4 px-6">
+                        <div className="h-5 w-20 bg-border/50 rounded-full" />
+                      </td>
+                      <td className="p-4 px-6">
+                        <div className="h-4 w-20 bg-border/40 rounded" />
+                      </td>
+                      <td className="p-4 px-6">
+                        <div className="h-5 w-24 bg-border/50 rounded-full" />
+                      </td>
+                      <td className="p-4 px-6 text-right">
+                        <div className="h-7 w-20 bg-border/40 rounded-full ml-auto" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : pods.length === 0 ? (
           <div className="border border-border border-dashed rounded-2xl p-10 bg-panel-alt/10 text-center max-w-[500px]">
@@ -346,7 +424,7 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
                       <td className="p-4 px-6 text-right whitespace-nowrap">
                         <button
                           onClick={() => setSelectedPod(pod)}
-                          className="bg-[#2F5FE0] hover:bg-[#2450C4] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+                          className="bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm transition-colors cursor-pointer whitespace-nowrap"
                         >
                           Inspect Details &rarr;
                         </button>

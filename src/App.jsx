@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import ProtoBar from './components/ProtoBar';
 import Header from './components/Header';
@@ -7,10 +8,13 @@ import OnbPanel from './components/OnbPanel';
 import Footer from './components/Footer';
 import Modals from './components/Modals';
 import MarketingScreens from './components/screens/MarketingScreens';
+import LandingPage from './LandingPage/LandingPage';
 import OnboardingScreens from './components/screens/OnboardingScreens';
 import AppScreens from './components/screens/AppScreens';
 import AdminScreens from './components/screens/AdminScreens';
 import { SHELL_MODES } from './constants/screens';
+import { fetchUserProfile } from './api/users';
+import { fetchPodDetails } from './api/pods';
 import ConfirmModal from './components/ConfirmModal';
 import Toast from './components/Toast';
 
@@ -47,6 +51,9 @@ const INITIAL_CHAT_MESSAGES = [
 ];
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Global screens states
   const [activeScreen, setActiveScreen] = useState(() => {
     const path = window.location.pathname;
@@ -78,6 +85,11 @@ function App() {
   useEffect(() => {
     if (adminUser) {
       localStorage.setItem('boma_admin_user', JSON.stringify(adminUser));
+      if (activeScreen === 'admin-login' || location.pathname.startsWith('/admin')) {
+        const parts = location.pathname.split('/');
+        const subTab = parts[2];
+        setActiveScreen(subTab ? 'admin-' + subTab : 'admin-dashboard');
+      }
     } else {
       localStorage.removeItem('boma_admin_user');
     }
@@ -103,9 +115,44 @@ function App() {
   const [inviteToken, setInviteToken] = useState(null);
   const [isInvitationFlow, setIsInvitationFlow] = useState(false);
 
+  const [userPod, setUserPod] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setUserPod(null);
+      return;
+    }
+    async function syncUserDataAndPod() {
+      try {
+        const [freshUser, pod] = await Promise.all([
+          fetchUserProfile(currentUser.id),
+          fetchPodDetails(currentUser.id)
+        ]);
+
+        setUserPod(pod || null);
+
+        if (freshUser) {
+          if (JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
+            setCurrentUser(freshUser);
+            localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
+          }
+        }
+      } catch (err) {
+        console.error('App.jsx syncUserDataAndPod error:', err);
+      }
+    }
+    syncUserDataAndPod();
+  }, [currentUser?.id, currentUser?.entry_path, activeScreen]);
+
   useEffect(() => {
     if (currentUser) {
-      setUserOnboarded(currentUser.user_onboarded || false);
+      setUserOnboarded(
+        currentUser.user_onboarded === true ||
+        currentUser.onboarding_status === 'COMPLETED' ||
+        currentUser.profile_status === 'UNDER_REVIEW' ||
+        currentUser.profile_status === 'APPROVED' ||
+        false
+      );
     } else {
       setUserOnboarded(false);
     }
@@ -221,10 +268,14 @@ function App() {
   // Chat Log State
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
 
-  // Scroll to top of window on screen changes
+  // Scroll to top of window immediately on screen or pathname changes (unless navigating to an anchor hash)
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [activeScreen]);
+    if (!window.location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    }
+  }, [activeScreen, location.pathname]);
 
   const checkAuthAndNavigate = (screenId, currentU = currentUser, adminU = adminUser) => {
     // Read from localStorage directly if state is lagging to avoid async race condition
@@ -256,81 +307,87 @@ function App() {
     return screenId;
   };
 
-  // Detect URL path changes and handle popstate routing
-  const navigateTo = (screenId) => {
-    const resolvedScreenId = checkAuthAndNavigate(screenId);
+  // Navigate helper function using react-router-dom
+  const navigateTo = (screenIdOrPath) => {
+    if (typeof screenIdOrPath === 'string' && screenIdOrPath.startsWith('/')) {
+      navigate(screenIdOrPath);
+      return;
+    }
+    const resolvedScreenId = checkAuthAndNavigate(screenIdOrPath);
+    setActiveScreen(resolvedScreenId);
 
     let path = '/';
     if (resolvedScreenId === 'how-it-works') path = '/howworks';
     else if (resolvedScreenId === 'about') path = '/about';
     else if (resolvedScreenId === 'contact') path = '/contact';
+    else if (resolvedScreenId === 'landing2') path = '/landing2';
     else if (resolvedScreenId === 'landing') path = '/';
     else if (resolvedScreenId === 'verify-email') path = '/verify-email';
     else if (resolvedScreenId === 'reset-password') path = '/reset-password';
     else if (resolvedScreenId === 'learning') path = '/learning';
     else if (resolvedScreenId === 'profile') path = '/profile';
+    else if (resolvedScreenId === 'admin-login') path = '/admin';
     else if (resolvedScreenId.startsWith('admin-')) {
       const subTab = resolvedScreenId.substring(6);
       path = subTab === 'dashboard' ? '/admin' : `/admin/${subTab}`;
     }
     else path = '/' + resolvedScreenId;
 
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
+    if (location.pathname !== path) {
+      navigate(path);
     }
-    setActiveScreen(resolvedScreenId);
   };
 
+  // Sync activeScreen state on URL pathname change
   useEffect(() => {
-    const handleUrlChange = () => {
-      const path = window.location.pathname;
-      let targetScreen = 'landing';
+    const path = location.pathname;
+    let targetScreen = 'landing';
 
-      if (path === '/howworks') {
-        targetScreen = 'how-it-works';
-      } else if (path === '/about') {
-        targetScreen = 'about';
-      } else if (path === '/contact') {
-        targetScreen = 'contact';
-      } else if (path === '/admin' || path.startsWith('/admin/')) {
-        const parts = path.split('/');
-        const subTab = parts[2];
-        targetScreen = subTab ? 'admin-' + subTab : 'admin-dashboard';
-      } else if (path === '/verify-email') {
-        targetScreen = 'verify-email';
-      } else if (path === '/reset-password') {
-        targetScreen = 'reset-password';
-      } else if (path === '/learning') {
-        targetScreen = 'learning';
-      } else if (path === '/profile') {
-        targetScreen = 'profile';
-      } else if (path === '/') {
-        targetScreen = 'landing';
+    if (path === '/') {
+      targetScreen = 'landing';
+    } else if (path === '/landing2') {
+      targetScreen = 'landing2';
+    } else if (path === '/howworks') {
+      targetScreen = 'how-it-works';
+    } else if (path === '/about') {
+      targetScreen = 'about';
+    } else if (path === '/contact') {
+      targetScreen = 'contact';
+    } else if (path === '/admin' || path.startsWith('/admin/')) {
+      const parts = path.split('/');
+      const subTab = parts[2];
+      targetScreen = subTab ? 'admin-' + subTab : 'admin-dashboard';
+    } else if (path === '/verify-email') {
+      targetScreen = 'verify-email';
+    } else if (path === '/reset-password') {
+      targetScreen = 'reset-password';
+    } else if (path === '/learning') {
+      targetScreen = 'learning';
+    } else if (path === '/profile') {
+      targetScreen = 'profile';
+    } else {
+      const screenId = path.substring(1);
+      if (SHELL_MODES[screenId]) {
+        targetScreen = screenId;
       } else {
-        const screenId = path.substring(1);
-        targetScreen = screenId || 'landing';
+        targetScreen = 'not-found';
       }
+    }
 
-      const storedUser = localStorage.getItem('boma_current_user');
-      const storedAdmin = localStorage.getItem('boma_admin_user');
-      const currentU = storedUser ? JSON.parse(storedUser) : null;
-      const adminU = storedAdmin ? JSON.parse(storedAdmin) : null;
+    const storedUser = localStorage.getItem('boma_current_user');
+    const storedAdmin = localStorage.getItem('boma_admin_user');
+    const currentU = storedUser ? JSON.parse(storedUser) : null;
+    const adminU = storedAdmin ? JSON.parse(storedAdmin) : null;
 
-      const resolved = checkAuthAndNavigate(targetScreen, currentU, adminU);
-      setActiveScreen(resolved);
-    };
-
-    window.addEventListener('popstate', handleUrlChange);
-    handleUrlChange();
-
-    return () => window.removeEventListener('popstate', handleUrlChange);
-  }, []);
+    const resolved = checkAuthAndNavigate(targetScreen, currentU, adminU);
+    setActiveScreen(resolved);
+  }, [location.pathname]);
 
   // Determine active shell mode
   const shellMode = SHELL_MODES[activeScreen] || 'marketing';
   const isAppOrAdmin = shellMode === 'app' || (shellMode === 'admin' && !!adminUser);
   const isExistingPodFlow = [
-    'pod-create', 'pod-invite', 'pod-member-onboarding', 'pod-review', 'pod-pending'
+    'pod-create', 'pod-member-onboarding'
   ].includes(activeScreen);
 
   // Dynamic layout wrappers to match index.html styling hierarchy
@@ -351,16 +408,23 @@ function App() {
       shellFrameClass = "flex-1 w-full grid grid-cols-1 md:grid-cols-[400px_1fr] items-stretch min-h-[calc(100vh-64px)] relative";
       mainContentClass = "flex-1 w-full min-h-[500px] flex items-center";
     }
+  } else if (shellMode === 'auth') {
+    shellFrameClass = "flex-1 w-full min-h-screen relative";
+    mainContentClass = activeScreen === 'admin-login'
+      ? "flex-1 w-full min-h-screen"
+      : "flex-1 w-full flex items-center justify-center";
   } else {
     // marketing
     shellFrameClass = "flex-1 w-full relative";
-    mainContentClass = "flex-1 w-full max-w-[1180px] mx-auto min-h-[500px]";
+    mainContentClass = activeScreen === 'landing'
+      ? "flex-1 w-full min-h-[500px]"
+      : "flex-1 w-full max-w-[1180px] mx-auto min-h-[500px]";
   }
 
   // Modal actions helpers
-  const openAuthModal = (mode) => {
+  const openAuthModal = (mode, initialEmail = '') => {
     clearToast();
-    setAuthOverlay({ open: true, mode });
+    setAuthOverlay({ open: true, mode, initialEmail });
   };
 
 
@@ -392,7 +456,7 @@ function App() {
 
 
       {/* 2. Main Site Navigation */}
-      {(!activeScreen.startsWith('admin-') || !!adminUser) && (
+      {(!activeScreen.startsWith('admin-') || !!adminUser) && activeScreen !== 'landing' && activeScreen !== 'admin-login' && (
         <Header
           activeScreen={activeScreen}
           setActiveScreen={navigateTo}
@@ -401,6 +465,7 @@ function App() {
           openAuthModal={openAuthModal}
           adminUser={adminUser}
           currentUser={currentUser}
+          userPod={userPod}
         />
       )}
 
@@ -413,6 +478,7 @@ function App() {
             setActiveScreen={navigateTo}
             userOnboarded={userOnboarded}
             currentUser={currentUser}
+            userPod={userPod}
           />
         )}
 
@@ -421,69 +487,170 @@ function App() {
           <OnbPanel activeScreen={activeScreen} />
         )}
 
-        {/* Renders screen content */}
+        {/* Renders screen content via React Router Routes */}
         <main className={mainContentClass}>
-          <MarketingScreens
-            activeScreen={activeScreen}
-            setActiveScreen={navigateTo}
-            openAuthModal={openAuthModal}
-            userOnboarded={userOnboarded}
-            setUserOnboarded={setUserOnboarded}
-            registeredEmail={registeredEmail}
-            setCurrentUser={setCurrentUser}
-            currentUser={currentUser}
-            showToast={showToast}
-            inviteToken={inviteToken}
-            setInviteToken={setInviteToken}
-            isInvitationFlow={isInvitationFlow}
-            setIsInvitationFlow={setIsInvitationFlow}
-          />
+          <Routes>
+            <Route path="/" element={
+              <LandingPage
+                openAuthModal={openAuthModal}
+                setActiveScreen={navigateTo}
+                currentUser={currentUser}
+              />
+            } />
+            <Route path="/landing2" element={
+              <MarketingScreens
+                activeScreen="landing2"
+                setActiveScreen={navigateTo}
+                openAuthModal={openAuthModal}
+                userOnboarded={userOnboarded}
+                setUserOnboarded={setUserOnboarded}
+                registeredEmail={registeredEmail}
+                setCurrentUser={setCurrentUser}
+                currentUser={currentUser}
+                showToast={showToast}
+                inviteToken={inviteToken}
+                setInviteToken={setInviteToken}
+                isInvitationFlow={isInvitationFlow}
+                setIsInvitationFlow={setIsInvitationFlow}
+              />
+            } />
+            <Route path="/howworks" element={
+              <MarketingScreens
+                activeScreen="how-it-works"
+                setActiveScreen={navigateTo}
+                openAuthModal={openAuthModal}
+                userOnboarded={userOnboarded}
+                setUserOnboarded={setUserOnboarded}
+                registeredEmail={registeredEmail}
+                setCurrentUser={setCurrentUser}
+                currentUser={currentUser}
+                showToast={showToast}
+                inviteToken={inviteToken}
+                setInviteToken={setInviteToken}
+                isInvitationFlow={isInvitationFlow}
+                setIsInvitationFlow={setIsInvitationFlow}
+              />
+            } />
+            <Route path="/about" element={
+              <MarketingScreens
+                activeScreen="about"
+                setActiveScreen={navigateTo}
+                openAuthModal={openAuthModal}
+                userOnboarded={userOnboarded}
+                setUserOnboarded={setUserOnboarded}
+                registeredEmail={registeredEmail}
+                setCurrentUser={setCurrentUser}
+                currentUser={currentUser}
+                showToast={showToast}
+                inviteToken={inviteToken}
+                setInviteToken={setInviteToken}
+                isInvitationFlow={isInvitationFlow}
+                setIsInvitationFlow={setIsInvitationFlow}
+              />
+            } />
+            <Route path="/contact" element={
+              <MarketingScreens
+                activeScreen="contact"
+                setActiveScreen={navigateTo}
+                openAuthModal={openAuthModal}
+                userOnboarded={userOnboarded}
+                setUserOnboarded={setUserOnboarded}
+                registeredEmail={registeredEmail}
+                setCurrentUser={setCurrentUser}
+                currentUser={currentUser}
+                showToast={showToast}
+                inviteToken={inviteToken}
+                setInviteToken={setInviteToken}
+                isInvitationFlow={isInvitationFlow}
+                setIsInvitationFlow={setIsInvitationFlow}
+              />
+            } />
+            <Route path="*" element={
+              activeScreen === 'not-found' ? (
+                <MarketingScreens
+                  activeScreen="not-found"
+                  setActiveScreen={navigateTo}
+                  openAuthModal={openAuthModal}
+                  userOnboarded={userOnboarded}
+                  setUserOnboarded={setUserOnboarded}
+                  registeredEmail={registeredEmail}
+                  setCurrentUser={setCurrentUser}
+                  currentUser={currentUser}
+                  showToast={showToast}
+                  inviteToken={inviteToken}
+                  setInviteToken={setInviteToken}
+                  isInvitationFlow={isInvitationFlow}
+                  setIsInvitationFlow={setIsInvitationFlow}
+                />
+              ) : (
+                <>
+                  <MarketingScreens
+                    activeScreen={activeScreen}
+                    setActiveScreen={navigateTo}
+                    openAuthModal={openAuthModal}
+                    userOnboarded={userOnboarded}
+                    setUserOnboarded={setUserOnboarded}
+                    registeredEmail={registeredEmail}
+                    setCurrentUser={setCurrentUser}
+                    currentUser={currentUser}
+                    showToast={showToast}
+                    inviteToken={inviteToken}
+                    setInviteToken={setInviteToken}
+                    isInvitationFlow={isInvitationFlow}
+                    setIsInvitationFlow={setIsInvitationFlow}
+                  />
 
-          <OnboardingScreens
-            activeScreen={activeScreen}
-            setActiveScreen={navigateTo}
-            userOnboarded={userOnboarded}
-            setUserOnboarded={setUserOnboarded}
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser}
-            showToast={showToast}
-          />
+                  <OnboardingScreens
+                    activeScreen={activeScreen}
+                    setActiveScreen={navigateTo}
+                    userOnboarded={userOnboarded}
+                    setUserOnboarded={setUserOnboarded}
+                    currentUser={currentUser}
+                    setCurrentUser={setCurrentUser}
+                    showToast={showToast}
+                  />
 
-          <AppScreens
-            activeScreen={activeScreen}
-            setActiveScreen={navigateTo}
-            userOnboarded={userOnboarded}
-            setUserOnboarded={setUserOnboarded}
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser}
-            podHistory={podHistory}
-            setPodHistory={setPodHistory}
-            openVideoModal={handleOpenVideo}
-            openWhatsBomaModal={() => setWhatsBomaModalOpen(true)}
-            openAgreementDocModal={() => setAgreementDocModalOpen(true)}
-            chatMessages={chatMessages}
-            setChatMessages={setChatMessages}
-            alignedAgreements={alignedAgreements}
-            setAlignedAgreements={setAlignedAgreements}
-            showConfirm={showConfirm}
-            showToast={showToast}
-          />
+                  <AppScreens
+                    activeScreen={activeScreen}
+                    setActiveScreen={navigateTo}
+                    userOnboarded={userOnboarded}
+                    setUserOnboarded={setUserOnboarded}
+                    currentUser={currentUser}
+                    setCurrentUser={setCurrentUser}
+                    podHistory={podHistory}
+                    setPodHistory={setPodHistory}
+                    openVideoModal={handleOpenVideo}
+                    openWhatsBomaModal={() => setWhatsBomaModalOpen(true)}
+                    openAgreementDocModal={() => setAgreementDocModalOpen(true)}
+                    chatMessages={chatMessages}
+                    setChatMessages={setChatMessages}
+                    alignedAgreements={alignedAgreements}
+                    setAlignedAgreements={setAlignedAgreements}
+                    showConfirm={showConfirm}
+                    showToast={showToast}
+                    userPod={userPod}
+                    setUserPod={setUserPod}
+                  />
 
-          <AdminScreens
-            activeScreen={activeScreen}
-            setActiveScreen={navigateTo}
-            adminViewPodId={adminViewPodId}
-            setAdminViewPodId={setAdminViewPodId}
-            adminUser={adminUser}
-            setAdminUser={setAdminUser}
-            showToast={showToast}
-            showConfirm={showConfirm}
-          />
+                  <AdminScreens
+                    activeScreen={activeScreen}
+                    setActiveScreen={navigateTo}
+                    adminViewPodId={adminViewPodId}
+                    setAdminViewPodId={setAdminViewPodId}
+                    adminUser={adminUser}
+                    setAdminUser={setAdminUser}
+                    showToast={showToast}
+                    showConfirm={showConfirm}
+                  />
+                </>
+              )
+            } />
+          </Routes>
         </main>
       </div>
 
       {/* 4. Footer */}
-      {shellMode === 'marketing' && activeScreen !== 'admin-login' && (
+      {shellMode === 'marketing' && activeScreen !== 'admin-login' && activeScreen !== 'landing' && (
         <Footer
           setActiveScreen={navigateTo}
           openAuthModal={openAuthModal}
@@ -502,6 +669,7 @@ function App() {
         agreementDocModalOpen={agreementDocModalOpen}
         setAgreementDocModalOpen={setAgreementDocModalOpen}
         setActiveScreen={navigateTo}
+        userOnboarded={userOnboarded}
         setUserOnboarded={setUserOnboarded}
         registeredEmail={registeredEmail}
         setRegisteredEmail={setRegisteredEmail}

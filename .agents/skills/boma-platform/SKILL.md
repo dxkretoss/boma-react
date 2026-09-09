@@ -111,13 +111,18 @@ src/
 
 ---
 
-## Rule 2 — Supabase Edge Functions (MANDATORY)
+## Rule 2 — Supabase Edge Functions for Cross-Platform Backend & Mobile Parity (MANDATORY)
 
-All server-side logic — email sending, webhook handling, third-party API calls, background processing, sensitive operations — runs as a **Supabase Edge Function** in `supabase/functions/`.
+**Whenever creating any new backend data operations, saving data, updating records, or implementing new dynamic features, you MUST create a dedicated Supabase Edge Function in `supabase/functions/<function-name>/index.ts`.**
 
-### Existing Pattern
+### Why
 
-[`supabase/functions/send-verification-email/index.ts`](file:///d:/Boma_react/supabase/functions/send-verification-email/index.ts) is the reference implementation. **Study it before creating new edge functions.**
+- **Mobile App Direct Parity**: The mobile app developer directly invokes these exact same Edge Function endpoints (`/functions/v1/<name>`), eliminating duplicate backend logic between the web and mobile apps.
+- All server-side logic — email sending, database persistence, webhook handling, third-party integrations, and dynamic data processing — is centralized, secure, and cross-platform.
+
+### Existing Reference Implementation
+
+[`supabase/functions/manage-learning-videos/index.ts`](file:///d:/Boma_react/supabase/functions/manage-learning-videos/index.ts) and [`supabase/functions/send-verification-email/index.ts`](file:///d:/Boma_react/supabase/functions/send-verification-email/index.ts) are the reference implementations. **Study them before creating new edge functions.**
 
 ### Rules
 
@@ -193,27 +198,28 @@ BOMA has a defined design system. **Every UI element must use the design tokens 
 
 ```css
 @theme {
-  --color-bg: #F4F7FB;           /* Page background — cool light blue-grey */
-  --color-panel: #FFFFFF;         /* Card / panel backgrounds */
-  --color-panel-alt: #EAF0F8;    /* Alternate panel tint */
-  --color-border: #D7E2EE;       /* All borders and dividers */
-  --color-ink: #2F5FE0;          /* Primary text + primary action color (blue) */
-  --color-ink-dim: #5B6B82;      /* Secondary / muted text */
-  --color-amber: #2F5FE0;        /* Accent (mapped to primary blue) */
-  --color-amber-soft: #DCE6FB;   /* Soft accent background */
-  --color-teal: #0E4C8C;         /* Deep blue for links, emphasis */
-  --color-teal-soft: #E1EBF7;    /* Soft teal background */
-  --color-sage: #1F8A6B;         /* Success / positive state */
+  --color-bg: #F7F5F0;           /* Page background — warm luxury sand/bone */
+  --color-panel: #FFFFFF;        /* Card / panel backgrounds */
+  --color-panel-alt: #EFEAE3;    /* Alternate panel tint — soft warm clay tint */
+  --color-border: #E5DDD2;       /* All borders and dividers — warm muted sand */
+  --color-ink: #2E2330;          /* Primary deep aubergine text */
+  --color-ink-dim: #7A746B;      /* Secondary / muted warm grey text */
+  --color-amber: #C46A4A;        /* Primary accent / Terracotta brand color */
+  --color-amber-soft: #F7EDE7;   /* Soft terracotta background */
+  --color-teal: #B87333;         /* Warm copper for links, accents, and emphasis */
+  --color-teal-soft: #EFE9E2;    /* Soft warm stone background */
+  --color-sage: #2D7A5E;         /* Success / positive state */
   --color-rust: #C4432E;         /* Error / destructive state */
-  --color-navy-deep: #0B1E38;    /* Deepest dark for contrast */
+  --color-navy-deep: #2E2330;    /* Deep aubergine dark for contrast */
 
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Bricolage Grotesque', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
 
   --radius-custom: 16px;
-  --shadow-custom: 0 1px 2px rgba(11,30,56,0.05), 0 12px 32px -18px rgba(11,30,56,0.22);
-  --shadow-custom-lg: 0 24px 60px -30px rgba(11,30,56,0.38);
+  --shadow-custom: 0 1px 2px rgba(46,35,48,0.05), 0 12px 32px -18px rgba(46,35,48,0.18);
+  --shadow-custom-lg: 0 24px 60px -30px rgba(46,35,48,0.28);
 }
 ```
 
@@ -221,28 +227,29 @@ BOMA has a defined design system. **Every UI element must use the design tokens 
 
 | Element | Font | Weight | Size | Usage |
 | --- | --- | --- | --- | --- |
-| Page titles / Hero headings | `font-display` (Bricolage Grotesque) | `extrabold` (800) | 28–36px | Screen titles, marketing headers |
-| Section headings | `font-display` | `bold` (700) | 20–26px | Card titles, section labels |
-| Body text | `font-sans` (Inter) | `medium` (500) | 14–15px | Paragraphs, descriptions |
-| Labels / Tags | `font-mono` (IBM Plex Mono) | `semibold` (600) | 10–12px | Uppercase tracking, metadata labels |
+| Hero / Editorial headings | `font-serif` or `font-display` (Cormorant Garamond) | `bold` (700) / `extrabold` (800) | 28–48px | Screen titles, marketing hero, feature highlights |
+| Section headings | `font-serif` / `font-sans` | `bold` (700) | 20–26px | Card titles, section labels |
+| Body text | `font-sans` (Inter) | `normal` (400) / `medium` (500) | 14–15px | Paragraphs, descriptions, UI labels |
+| Labels / Tags / Meta | `font-mono` (JetBrains Mono / IBM Plex) | `semibold` (600) | 10–12px | Uppercase tracking, metadata badges |
 | Inputs | `font-sans` | `medium` (500) | 14px | Form fields |
 
 ### Visual Rules
 
-1. **Border radius:** Use `rounded-2xl` (16px) for cards and panels. `rounded-lg` (8px) for inputs and small elements. `rounded-full` for pills, avatars, buttons.
+1. **Border radius:** Use `rounded-2xl` (16px) for cards and panels. `rounded-xl` or `rounded-full` for buttons, pills, avatars.
 
 2. **Shadows:** Use `shadow-custom` token for cards. Use `shadow-custom-lg` for elevated modals and dropdowns.
 
 3. **Spacing:** Follow a 4px base grid. Standard padding: `p-6` for cards, `px-4 py-2.5` for buttons, `mb-6` between sections.
 
 4. **Color usage:**
-   - Primary actions: `bg-ink text-white` (blue buttons).
-   - Secondary actions: `border border-border bg-white text-ink`.
+   - Primary actions: `bg-amber text-white hover:bg-[#b05d3e]` (Terracotta buttons).
+   - Secondary / Dark actions: `bg-ink text-white hover:bg-[#201822]`.
+   - Outlined actions: `border border-border bg-white text-ink hover:bg-panel-alt`.
    - Destructive: `bg-rust text-white`.
    - Success: `bg-sage text-white`.
-   - Locked / gated UI: `bg-amber-soft text-amber` badge + blurred teaser.
+   - Badges & pills: `bg-amber-soft text-amber border border-amber/20` or `bg-teal-soft text-teal`.
 
-5. **Hover states:** Always include `hover:` transitions. Primary buttons: `hover:bg-[#2450C4] hover:-translate-y-[1px]`. Links: `hover:text-ink`. Cards: `hover:shadow-lg`.
+5. **Hover states:** Always include `hover:` transitions with `transition-all duration-200`. Primary buttons: `hover:bg-[#b05d3e] hover:-translate-y-[0.5px] active:scale-95`. Links: `hover:text-ink`. Cards: `hover:shadow-lg`.
 
 6. **Animations:** Use the `animate-fade` utility class for screen transitions. Keep animations subtle — 200ms ease. No flashy animations.
 
@@ -490,6 +497,48 @@ Pre-flight findings:
 
 ---
 
+## Rule 12 — No Technical or Backend Jargon in User-Facing UI (MANDATORY)
+
+**Never use technical words like "database", "Supabase", "SQL", "API sync", "edge function", "table query", or backend architecture terms anywhere in user-facing UI, button labels, toasts, loaders, or empty states.**
+
+### Why
+
+- Technical jargon makes the platform feel like an unpolished developer prototype rather than a premium, luxury consumer product.
+- Members and admins should see domain-relevant, human-friendly, contextual messages (e.g. "No matching pods found", "Loading users...", "System Active").
+
+### Rules
+
+1. **Empty States:** When a list is empty, display a helpful, user-friendly domain message. Never say "No records found in database" or "No data in Supabase".
+   - ❌ "No pods found in the database."
+   - ✅ "No active pods found." / "No members found in this group."
+2. **Loading States:** Use clean, friendly terminology.
+   - ❌ "Loading database users..." / "Loading answers from Supabase..."
+   - ✅ "Loading users..." / "Loading member responses..."
+3. **Status Cards & Metrics:** Metric cards must track real business or community metrics, never technical plumbing.
+   - ❌ "API Sync: Live & Edge Synced"
+   - ✅ "Draft Guides", "Active Members", "Total Applications"
+4. **Error & Toast Messages:** Keep errors friendly and actionable.
+   - ❌ "Failed to load matching weights from database."
+   - ✅ "Unable to load matching weights. Please try again."
+
+## Rule 13 — Secure Password Hashing & Sensitive Data Protection (MANDATORY)
+
+**Never save or store passwords in plain text anywhere in Supabase tables, Edge Functions, or storage.** Passwords are highly sensitive credentials and must ALWAYS be securely hashed before being stored in the database.
+
+### Why
+
+- Storing plain text passwords in database columns exposes user credentials to unauthorized access, leaks, and security vulnerabilities.
+- Cryptographic one-way hashing (using standard algorithms like `bcrypt` with salt rounds) ensures that even with direct database read access, passwords cannot be decoded or viewed.
+
+### Rules
+
+1. **Always Hash Passwords Before Database Insertion:** On registration, account creation, or password reset, always pass the password through a secure one-way hash function (e.g., `bcrypt.hash(password, salt)`) before writing to the `users` table.
+2. **Verify Hashes on Login:** During authentication / login, never compare passwords with direct string equality against raw stored values. Use `bcrypt.compare(candidatePassword, storedHash)` to verify credentials.
+3. **Never Return Passwords in API Responses:** Never expose or return user password hashes in frontend responses, API payloads, or client state.
+4. **Auto-Upgrade Legacy Records:** When authenticating legacy unhashed accounts, verify and immediately upgrade the stored record to a secure bcrypt hash upon successful login.
+
+---
+
 ## Checklist — Run Before Every PR / Commit
 
 - [ ] No `import { supabase }` in any component/screen file.
@@ -504,3 +553,7 @@ Pre-flight findings:
 - [ ] `navigateTo` used for screen changes, not raw `setActiveScreen`.
 - [ ] **No native `alert()`, `confirm()`, or `prompt()` calls anywhere in the codebase.**
 - [ ] **All user alerts and notifications use the `showToast` or `showConfirm` overlay systems.**
+- [ ] **No technical jargon ("Supabase", "database", "API sync", etc.) in any user-facing text, loaders, or empty states.**
+- [ ] **All backend/data saving & dynamic operations have a corresponding Supabase Edge Function in `supabase/functions/` for mobile app developer consumption.**
+- [ ] **Never store plain text passwords in Supabase — all passwords must be hashed using secure algorithms (bcrypt) before database insertion/updating.**
+

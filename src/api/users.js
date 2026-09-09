@@ -149,3 +149,44 @@ export async function updateUserPreferencesAndScore(userId, prefs) {
 
   return updatedUser;
 }
+
+/**
+ * Uploads a user avatar image to Supabase Storage bucket ('avatars')
+ * and updates the user's avatar_url in the database.
+ * @param {string} userId
+ * @param {File} file
+ * @returns {Promise<string>} Generated public image URL
+ */
+export async function uploadUserAvatar(userId, file) {
+  if (!userId || !file) {
+    throw new Error('User ID and image file are required.');
+  }
+
+  const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
+  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+  // 1. Upload to Supabase Storage bucket 'avatars'
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
+  if (uploadError) {
+    // If bucket upload fails, throw descriptive error
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+
+  // 2. Generate public URL for the uploaded file
+  const { data: publicUrlData } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(fileName);
+
+  const publicUrl = publicUrlData?.publicUrl;
+
+  // 3. Save the clean public URL into the users table
+  await updateUser(userId, { avatar_url: publicUrl });
+
+  return publicUrl;
+}

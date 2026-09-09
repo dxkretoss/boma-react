@@ -54,7 +54,7 @@ export default function OnboardingIntent({ housingIntent, setHousingIntent, setA
             </button>
             <button 
               onClick={() => setActiveScreen('onboarding-commitment')}
-              className="bg-ink text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+              className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer shadow-md"
             >
               Continue
             </button>

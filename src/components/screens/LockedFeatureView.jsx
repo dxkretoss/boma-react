@@ -45,7 +45,7 @@ export function LockedFeatureView({ screenId, currentUser, onStartOnboarding, on
         <div className="flex items-center gap-3 justify-center">
           <button
             onClick={onGoToReview}
-            className="bg-amber text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+            className="bg-amber text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer"
           >
             Check Review Status
           </button>
@@ -116,7 +116,8 @@ export function LockedFeatureView({ screenId, currentUser, onStartOnboarding, on
     'commons-agreement': { title: 'Unlock Agreement Scaffolding', icon: FileText, desc: 'Collaborate on working governance drafts after completing your onboarding profile.' },
     'commons-chat': { title: 'Unlock Pod Chat', icon: MessageSquare, desc: 'Connect and chat with your Pod members once your profile questionnaire is complete.' },
     'commons-settings': { title: 'Unlock Pod Settings', icon: Settings, desc: 'Pod configuration and notification options unlock after completing onboarding.' },
-    'readiness-detail': { title: 'Unlock Readiness Score Breakdown', icon: Lock, desc: 'Your rules-based readiness score and category breakdown calculate after completing onboarding.' }
+    'readiness-detail': { title: 'Unlock Readiness Score Breakdown', icon: Lock, desc: 'Your rules-based readiness score and category breakdown calculate after completing onboarding.' },
+    'pod-history': { title: 'Unlock My Pods', icon: HomeIcon, desc: 'Complete your 9 onboarding questions to view active and past Pod memberships.' }
   };
 
   const meta = metaTitles[screenId] || { title: 'Unlock Feature', icon: Lock, desc: 'Complete your onboarding questions to unlock this feature.' };
@@ -149,7 +150,7 @@ export function LockedFeatureView({ screenId, currentUser, onStartOnboarding, on
               <div className="h-3 w-[60%] bg-slate-300 rounded mb-1.5"></div>
               <div className="h-2.5 w-[40%] bg-slate-200 rounded"></div>
             </div>
-            <div className="h-6 w-12 bg-blue-300 rounded-full"></div>
+            <div className="h-6 w-12 bg-amber/40 rounded-full"></div>
           </div>
           <div className="h-2 w-full bg-slate-200 rounded mb-3"></div>
           <div className="flex gap-2">
@@ -172,7 +173,7 @@ export function LockedFeatureView({ screenId, currentUser, onStartOnboarding, on
       <div className="flex items-center gap-3 justify-center flex-wrap">
         <button
           onClick={onStartOnboarding}
-          className="bg-amber text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+          className="bg-amber text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer"
         >
           Complete Onboarding Profile (~8 min) →
         </button>
@@ -214,7 +215,7 @@ export function MemberWaitingView({ pod, currentUser, setActiveScreen }) {
               </p>
               <button
                 onClick={() => setActiveScreen('onboarding-age')}
-                className="mt-3 bg-ink hover:bg-[#2450C4] text-white font-bold text-xs px-4 py-2 rounded-lg shadow-sm cursor-pointer"
+                className="mt-3 bg-ink hover:bg-[#b05d3e] text-white font-bold text-xs px-4 py-2 rounded-lg shadow-sm cursor-pointer"
               >
                 Complete Profile
               </button>
@@ -235,7 +236,7 @@ export function MemberWaitingView({ pod, currentUser, setActiveScreen }) {
           <p className="text-ink-dim text-sm leading-relaxed text-center">
             The group coordinator has submitted the Pod. It is currently under verification by the BOMA board.
           </p>
-          <div className="bg-blue-50 border border-blue-200/40 rounded-xl p-4 text-left">
+          <div className="bg-amber-soft/60 border border-amber/20 rounded-xl p-4 text-left">
             <span className="text-xs text-teal font-bold">Under Review</span>
             <p className="text-ink-dim text-[11px] leading-relaxed mt-0.5">
               Administrators are checking membership statuses and readiness logs. You will be notified once approved.

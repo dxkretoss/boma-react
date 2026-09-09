@@ -17,6 +17,20 @@ export default function EntryPath({ setActiveScreen, currentUser, setCurrentUser
     setActiveScreen('onboarding-welcome');
   };
 
+  const handleSelectExistingPod = async () => {
+    if (currentUser?.id) {
+      try {
+        const updatedUser = await updateUser(currentUser.id, { entry_path: 'EXISTING_POD' });
+        if (setCurrentUser) {
+          setCurrentUser(updatedUser);
+        }
+      } catch (err) {
+        console.error('Error saving existing pod entry path:', err);
+      }
+    }
+    setActiveScreen('pod-create');
+  };
+
   return (
     <div className="w-full">
           <div className="flex justify-between items-start flex-wrap gap-4 mb-7 border-b border-border pb-6">
@@ -42,7 +56,7 @@ export default function EntryPath({ setActiveScreen, currentUser, setCurrentUser
               </div>
               <button 
                 onClick={handleSelectMatchingPool}
-                className="bg-amber text-white font-bold text-sm px-5 py-3 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer w-fit"
+                className="bg-amber text-white font-bold text-sm px-5 py-3 rounded-xl shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] active:scale-95 transition-all cursor-pointer w-fit"
               >
                 Join the Matching Pool
               </button>
@@ -56,7 +70,7 @@ export default function EntryPath({ setActiveScreen, currentUser, setCurrentUser
                 </p>
               </div>
               <button 
-                onClick={() => setActiveScreen('pod-create')}
+                onClick={handleSelectExistingPod}
                 className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-3 rounded-xl hover:bg-panel-alt transition-all cursor-pointer w-fit"
               >
                 Register an Existing Pod

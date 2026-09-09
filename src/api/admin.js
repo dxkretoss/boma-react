@@ -27,13 +27,45 @@ export async function fetchAdminUsers(filters = {}) {
     query = query.or(`name.ilike.${s},email.ilike.${s}`);
   }
 
-  query = query.order('created_at', { ascending: false });
-
-  const { data, error } = await query;
+  const { data: users, error } = await query;
   if (error) {
     throw new Error(`Failed to fetch admin users: ${error.message}`);
   }
-  return data || [];
+
+  // Fetch pod memberships in parallel to associate roles and pod names
+  let enrichedUsers = users || [];
+  try {
+    const { data: memberships } = await supabase
+      .from('pod_members')
+      .select('user_id, role, membership_status, pod_id, pods:pod_id (id, name, created_by, group_type, status)');
+
+    if (memberships && memberships.length > 0) {
+      const memberMap = {};
+      memberships.forEach(m => {
+        memberMap[m.user_id] = m;
+      });
+
+      enrichedUsers = (users || []).map(u => {
+        const mem = memberMap[u.id];
+        const pod = mem?.pods;
+        const isPodAdmin = mem?.role === 'CREATOR' || pod?.created_by === u.id;
+        const isPodMember = mem && !isPodAdmin;
+
+        return {
+          ...u,
+          entry_path: u.entry_path || 'MATCHING_POOL',
+          podRole: isPodAdmin ? 'CREATOR' : isPodMember ? 'MEMBER' : null,
+          podName: pod?.name || null,
+          podId: pod?.id || mem?.pod_id || null,
+          podStatus: pod?.status || null
+        };
+      });
+    }
+  } catch (memErr) {
+    console.warn('Could not fetch pod memberships for users:', memErr);
+  }
+
+  return enrichedUsers;
 }
 
 /**
@@ -65,10 +97,46 @@ export async function fetchUserOnboardingAnswers(userId) {
     questionMap[q.id] = q;
   });
 
-  return (data || []).map(resp => ({
+  const responses = (data || []).map(resp => ({
     ...resp,
     question: questionMap[resp.question_id] || { title: resp.question_key, step_number: 0 }
-  })).sort((a, b) => (a.question?.display_order || 0) - (b.question?.display_order || 0));
+  }));
+
+  // If user has direct profile fields (e.g. from existing pod short onboarding), ensure they appear in admin review
+  try {
+    const { data: userRec } = await supabase
+      .from('users')
+      .select('housing_intent, commitment_timeline, setting_preference, location_city')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (userRec) {
+      if (userRec.housing_intent && !responses.some(r => r.question_key === 'housing_intent')) {
+        const q = questions?.find(x => x.question_key === 'housing_intent');
+        responses.push({
+          id: `synth-housing-${userId}`,
+          user_id: userId,
+          question_key: 'housing_intent',
+          answer_json: { value: userRec.housing_intent },
+          question: q || { title: 'Primary Housing Intent', step_number: 6 }
+        });
+      }
+      if (userRec.commitment_timeline && !responses.some(r => r.question_key === 'commitment_timeline')) {
+        const q = questions?.find(x => x.question_key === 'commitment_timeline');
+        responses.push({
+          id: `synth-timeline-${userId}`,
+          user_id: userId,
+          question_key: 'commitment_timeline',
+          answer_json: { value: userRec.commitment_timeline },
+          question: q || { title: 'Minimum Commitment Timeline', step_number: 7 }
+        });
+      }
+    }
+  } catch (synthErr) {
+    console.warn('Could not check user fallback answers:', synthErr);
+  }
+
+  return responses.sort((a, b) => (a.question?.display_order || 0) - (b.question?.display_order || 0));
 }
 
 /**

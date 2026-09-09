@@ -74,7 +74,7 @@ export default function ProtoBar({
         
         <button
           onClick={toggleOnboarding}
-          style={{ backgroundColor: userOnboarded ? '#1F8A6B' : '#2F5FE0' }}
+          style={{ backgroundColor: userOnboarded ? '#2D7A5E' : '#C46A4A' }}
           className="text-white font-semibold rounded-md px-2.5 py-1 text-[11px] hover:opacity-90 active:scale-95 transition-all cursor-pointer ml-1"
         >
           Status: {userOnboarded ? 'Onboarded (Complete)' : 'Pending Onboarding'}

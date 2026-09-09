@@ -6,6 +6,7 @@ import Toast from '../../Toast';
 export default function ResetPasswordPage({ setActiveScreen }) {
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
+  const [hasUrlParams, setHasUrlParams] = useState(false);
   
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,19 +22,20 @@ export default function ResetPasswordPage({ setActiveScreen }) {
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get('email') || '';
     const tokenParam = params.get('token') || '';
-    setEmail(emailParam);
-    setToken(tokenParam);
+    if (emailParam) setEmail(emailParam);
+    if (tokenParam) setToken(tokenParam);
+    if (emailParam && tokenParam) setHasUrlParams(true);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email) {
-      setToast({ show: true, message: 'Missing email address from the reset link.', type: 'error' });
+      setToast({ show: true, message: 'Please enter your email address.', type: 'error' });
       return;
     }
     if (!token) {
-      setToast({ show: true, message: 'Missing verification token from the reset link.', type: 'error' });
+      setToast({ show: true, message: 'Please enter the 6-digit verification code.', type: 'error' });
       return;
     }
     if (newPassword.length < 6) {
@@ -81,6 +83,35 @@ export default function ResetPasswordPage({ setActiveScreen }) {
         </p>
 
         <form onSubmit={handleSubmit} className="w-full text-left">
+          {!hasUrlParams && (
+            <>
+              <div className="mb-4">
+                <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">Email</label>
+                <input
+                  type="email"
+                  placeholder="jordan@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">6-Digit Verification Code</label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  maxLength={6}
+                  value={token}
+                  onChange={(e) => setToken(e.target.value.replace(/[^0-9]/g, ''))}
+                  required
+                  className="w-full bg-panel border border-border rounded-lg px-3.5 py-2 font-mono text-center tracking-widest text-sm text-ink focus:outline-none focus:border-amber transition-colors font-bold"
+                />
+              </div>
+            </>
+          )}
+
           <div className="mb-4">
             <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">New Password</label>
             <div className="relative">
@@ -126,7 +157,7 @@ export default function ResetPasswordPage({ setActiveScreen }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-ink text-white rounded-lg py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-amber text-white rounded-lg py-2.5 text-sm font-bold hover:bg-[#b05d3e] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <>

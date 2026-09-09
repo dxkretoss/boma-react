@@ -29,7 +29,7 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
         });
       } catch (err) {
         console.error('Failed to load weights:', err);
-        setErrorMsg('Failed to load matching weights from database.');
+        setErrorMsg('Failed to load matching weights. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -194,7 +194,7 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
         </button>
         <button
           onClick={handleSaveWeights}
-          className={`rounded-lg py-2.5 px-5 text-sm font-bold transition-all cursor-pointer shadow-md text-white ${total === 100 ? "bg-amber hover:bg-[#2450C4]" : "bg-slate-400 cursor-not-allowed"
+          className={`rounded-lg py-2.5 px-5 text-sm font-bold transition-all cursor-pointer shadow-md text-white ${total === 100 ? "bg-amber hover:bg-[#b05d3e]" : "bg-slate-400 cursor-not-allowed"
             }`}
           disabled={saving || total !== 100}
         >
@@ -212,8 +212,14 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
       </div>
 
       {showInfoModal && createPortal(
-        <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade">
-          <div className="bg-white border border-border rounded-2xl w-full max-w-[560px] max-h-[500px] shadow-2xl flex flex-col relative overflow-hidden text-left animate-slide-up">
+        <div
+          onClick={() => setShowInfoModal(false)}
+          className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-border rounded-2xl w-full max-w-[560px] max-h-[500px] shadow-2xl flex flex-col relative overflow-hidden text-left animate-slide-up"
+          >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border pb-4 p-6 shrink-0 bg-[#F8FAFC]">
               <div>
@@ -295,7 +301,7 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
             <div className="border-t border-border p-4 bg-panel-alt flex justify-end shrink-0">
               <button
                 onClick={() => setShowInfoModal(false)}
-                className="bg-ink text-white font-bold text-xs px-5 py-2 rounded-lg hover:bg-[#2450C4] cursor-pointer"
+                className="bg-ink text-white font-bold text-xs px-5 py-2 rounded-lg hover:bg-[#b05d3e] cursor-pointer"
               >
                 Close
               </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchPodById, fetchPodMembers } from '../../../api/pods';
 import { Loader2 } from 'lucide-react';
+import Avatar from '../../Avatar';
 
 export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
   const [pod, setPod] = useState(null);
@@ -104,18 +105,18 @@ export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
               {members.map((m, i) => (
                 <div key={i} className="flex justify-between items-center gap-3 border-b border-border/70 last:border-b-0 pb-3 last:pb-0">
                   <div className="flex items-center gap-3">
-                    {m.avatarUrl ? (
-                      <img src={m.avatarUrl} className="w-9 h-9 rounded-full object-cover border border-border" alt={m.name} />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[11px] font-display border border-border flex-shrink-0">
-                        {(m.name || 'U').substring(0, 1).toUpperCase()}
-                      </div>
-                    )}
+                    <Avatar user={m} className="w-9 h-9 shadow-sm border border-border" textClass="text-xs" />
                     <div className="flex flex-col">
                       <b className="text-sm font-bold text-ink leading-tight">{m.name}</b>
                       <span className="text-xs text-ink-dim font-medium mt-0.5">
                         {m.role === 'CREATOR' ? 'Coordinator' : 'Member'} · Joined {new Date(m.joinedAt).toLocaleDateString()}
                       </span>
+                      {(m.housingIntent || m.commitmentTimeline) && (
+                        <span className="text-[10px] text-teal font-semibold mt-0.5">
+                          {m.housingIntent === 'co-develop' ? 'Co-develop' : m.housingIntent === 'purchase' ? 'Purchase' : m.housingIntent === 'investment' ? 'Investment' : m.housingIntent}
+                          {m.commitmentTimeline ? ` · ${m.commitmentTimeline === 'timeline_2yr' ? '2+ yrs' : m.commitmentTimeline === 'timeline_5yr' ? '5+ yrs' : m.commitmentTimeline}` : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className="bg-[#EAFDF8] text-sage border border-sage/10 text-[10.5px] font-bold px-2 py-0.5 rounded">

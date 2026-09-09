@@ -1,4 +1,5 @@
 import React from 'react';
+import Avatar from '../Avatar';
 
 export default function CommonsChat({
   currentPod,
@@ -23,44 +24,33 @@ export default function CommonsChat({
         <div className="border-b border-border p-4.5 px-6 bg-[#F8FAFC] flex justify-between items-center">
           <div className="flex flex-col text-left">
             <h4 className="font-display font-extrabold text-[15.5px] text-ink leading-tight">
-              {currentPod.name}
+              {currentPod?.name || 'Pod Chat'}
             </h4>
             <span className="text-[11px] text-ink-dim font-semibold mt-0.5">
-              {currentPod.members.length + 1} Active Members • Online
+              {(currentPod?.members?.length || 0) + 1} Active Members • Online
             </span>
           </div>
 
           <div className="flex -space-x-1.5 overflow-hidden">
-            {currentPod.members.map((m, i) => (
-              <div key={i} className="w-7 h-7 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[9px] font-display border border-white flex-shrink-0">
-                {(m.name || 'U').substring(0, 1).toUpperCase()}
-              </div>
+            {(currentPod?.members || []).map((m, i) => (
+              <Avatar key={i} user={m} className="w-7 h-7 border-2 border-white shadow-xs" textClass="text-[9px]" />
             ))}
-            {currentUser?.avatar_url && (currentUser.avatar_url.startsWith('http') || currentUser.avatar_url.startsWith('/') || currentUser.avatar_url.startsWith('assets/') || currentUser.avatar_url.startsWith('data:image/')) ? (
-              <img src={currentUser.avatar_url} className="w-7 h-7 rounded-full object-cover border border-white" alt="" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-amber flex items-center justify-center text-white font-extrabold text-[9px] font-display border border-white flex-shrink-0">
-                {(currentUser?.name || 'U').substring(0, 1).toUpperCase()}
-              </div>
-            )}
+            <Avatar user={currentUser} className="w-7 h-7 border-2 border-white shadow-xs" textClass="text-[9px]" />
           </div>
         </div>
 
         {/* Chat Messages Log */}
         <div
           ref={chatLogRef}
-          className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#FAFCFF] scroll-smooth"
+          className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#FAF8F5] scroll-smooth"
         >
           {chatMessages.map((msg, i) => (
             <div key={i} className={`flex gap-3 max-w-[85%] ${msg.isMe ? 'ml-auto flex-row-reverse text-right' : 'text-left'}`}>
-              {msg.avatar ? (
-                <img src={msg.avatar} className="w-8.5 h-8.5 rounded-full object-cover border border-border mt-0.5 flex-shrink-0" alt={msg.sender} />
-              ) : (
-                <div className={`w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-extrabold text-[11px] font-display border border-border mt-0.5 flex-shrink-0 ${msg.isMe ? 'bg-amber' : 'bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)]'
-                  }`}>
-                  {(msg.sender || 'U').substring(0, 1).toUpperCase()}
-                </div>
-              )}
+              <Avatar
+                user={msg.isMe ? currentUser : { name: msg.sender, avatar_url: msg.avatar }}
+                className="w-8.5 h-8.5 border border-border mt-0.5 flex-shrink-0"
+                textClass="text-[11px]"
+              />
               <div className="flex flex-col">
                 {!msg.isMe && (
                   <span className="text-[11.5px] font-bold text-ink mb-1">
@@ -94,7 +84,7 @@ export default function CommonsChat({
             />
             <button
               type="submit"
-              className="bg-amber text-white font-bold text-sm px-5 py-2.5 rounded-full hover:bg-[#2450C4] active:scale-95 transition-all shadow-md cursor-pointer"
+              className="bg-amber text-white font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all shadow-md cursor-pointer"
             >
               Send
             </button>

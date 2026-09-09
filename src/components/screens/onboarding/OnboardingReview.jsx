@@ -35,7 +35,7 @@ export default function OnboardingReview({ ageGroup, selectedLifestyles, decisio
             </button>
             <button 
               onClick={submitOnboarding}
-              className="bg-amber text-white font-bold text-sm px-7 py-3 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+              className="bg-amber text-white font-bold text-sm px-7 py-3 rounded-xl shadow-md hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer"
             >
               Submit
             </button>

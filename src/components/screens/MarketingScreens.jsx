@@ -1,5 +1,5 @@
 import React from 'react';
-import Landing from './marketing/Landing';
+import LandingPage from '../../LandingPage/LandingPage';
 import HowItWorks from './marketing/HowItWorks';
 import About from './marketing/About';
 import Contact from './marketing/Contact';
@@ -9,6 +9,7 @@ import ForgotPasswordScreen from './marketing/ForgotPasswordScreen';
 import ResetPasswordPage from './marketing/ResetPasswordPage';
 import VerifyEmail from './marketing/VerifyEmail';
 import JoinPod from './onboarding/JoinPod';
+import NotFound from './marketing/NotFound';
 
 export default function MarketingScreens({
   activeScreen,
@@ -27,6 +28,7 @@ export default function MarketingScreens({
 }) {
   if (![
     'landing', 
+    'landing2',
     'how-it-works', 
     'about', 
     'contact', 
@@ -35,19 +37,20 @@ export default function MarketingScreens({
     'forgot-password', 
     'reset-password', 
     'verify-email',
-    'join-pod'
+    'join-pod',
+    'not-found'
   ].includes(activeScreen)) {
     return null;
   }
 
   return (
     <div className="w-full">
-      {activeScreen === 'landing' && (
-        <Landing openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} currentUser={currentUser} />
+      {activeScreen === 'not-found' && (
+        <NotFound setActiveScreen={setActiveScreen} />
       )}
-      
-      {activeScreen === 'how-it-works' && (
-        <HowItWorks openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} currentUser={currentUser} />
+
+      {(activeScreen === 'landing' || activeScreen === 'landing2' || activeScreen === 'how-it-works') && (
+        <LandingPage openAuthModal={openAuthModal} setActiveScreen={setActiveScreen} currentUser={currentUser} />
       )}
 
       {activeScreen === 'about' && (

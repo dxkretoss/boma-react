@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Play, Pause, Download } from 'lucide-react';
 import { customRegister, customLogin, customRequestPasswordReset } from '../auth';
+import { fetchUserProfile } from '../api/users';
 import { supabase } from '../supabaseClient';
 import Toast from './Toast';
 import Login from './auth/Login';
@@ -17,6 +18,7 @@ export default function Modals({
   agreementDocModalOpen,
   setAgreementDocModalOpen,
   setActiveScreen,
+  userOnboarded,
   setUserOnboarded,
   updateOnboardUI,
   registeredEmail,
@@ -48,10 +50,14 @@ export default function Modals({
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'error', key: 0 });
 
-  // Clear modal toast on modal open/close or mode switch
+  // Clear modal toast on modal open/close or mode switch, and set initialEmail
   React.useEffect(() => {
     setToast({ show: false, message: '', type: 'error', key: 0 });
-  }, [authOverlay.open, authOverlay.mode]);
+    if (authOverlay.open && authOverlay.initialEmail) {
+      setSignupEmail(authOverlay.initialEmail);
+      setLoginEmail(authOverlay.initialEmail);
+    }
+  }, [authOverlay.open, authOverlay.mode, authOverlay.initialEmail]);
 
   // Processing state
   const [loading, setLoading] = useState(false);
@@ -108,16 +114,25 @@ export default function Modals({
       if (user.role === 'admin') {
         throw new Error('Invalid credentials');
       }
-      setToast({ show: true, message: `Welcome back, ${user.name}!`, type: 'success' });
+
+      let fullUser = user;
+      try {
+        const freshProfile = await fetchUserProfile(user.id);
+        if (freshProfile) fullUser = freshProfile;
+      } catch (err) {
+        console.warn('Could not load fresh profile after login:', err);
+      }
+
+      setToast({ show: true, message: `Welcome back, ${fullUser.name}!`, type: 'success' });
 
       setTimeout(() => {
         closeAuth();
-        setCurrentUser(user);
-        localStorage.setItem('boma_current_user', JSON.stringify(user));
-        setUserOnboarded(user.user_onboarded || false);
-        if (updateOnboardUI) updateOnboardUI(user.user_onboarded || false);
+        setCurrentUser(fullUser);
+        localStorage.setItem('boma_current_user', JSON.stringify(fullUser));
+        setUserOnboarded(fullUser.user_onboarded || false);
+        if (updateOnboardUI) updateOnboardUI(fullUser.user_onboarded || false);
 
-        if (user.role === 'admin') {
+        if (fullUser.role === 'admin') {
           setActiveScreen('admin-dashboard');
         } else {
           if (inviteToken && isInvitationFlow) {
@@ -205,11 +220,11 @@ export default function Modals({
       {authOverlay.open && (
         <div
           onClick={closeAuth}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 backdrop-blur-sm p-4 overflow-y-auto animate-fade"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[920px]  overflow-hidden grid grid-cols-1 md:grid-cols-2 relative shadow-custom-lg "
+            className="bg-white rounded-2xl w-full max-w-[920px] overflow-hidden grid grid-cols-1 md:grid-cols-2 relative shadow-2xl border border-border"
           >
             {/* Close Button */}
             <button
@@ -219,49 +234,59 @@ export default function Modals({
               <X className="w-[18px] h-[18px]" />
             </button>
 
-            {/* Left Info Panel */}
-            <div className="bg-[linear-gradient(160deg,#0B1E38_0%,#0E4C8C_100%)] text-white p-11 flex flex-col justify-between hidden md:flex">
-              <div>
-                <div className="font-mono text-[11px] uppercase tracking-[.12em] text-amber-soft mb-3.5 font-semibold">
+            {/* Left Info Panel with Background Image & Warm Gradient Overlay */}
+            <div className="relative bg-[#2E2330] text-white p-9 sm:p-10 flex flex-col justify-between hidden md:flex border-r border-white/10 overflow-hidden">
+              {/* Background Architectural Image */}
+              <img
+                src="/assets/hero_bg.jpg"
+                alt="BOMA Living Architecture"
+                className="absolute inset-0 w-full h-full object-cover object-center opacity-45 mix-blend-luminosity scale-105 pointer-events-none"
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2E2330] via-[#2E2330]/90 to-[#2E2330]/75" />
+
+              {/* Foreground Content */}
+              <div className="relative z-10">
+                <div className="font-mono text-[11px] uppercase tracking-[.15em] text-[#D7A27A] mb-3.5 font-bold">
                   Community-Matching for Real Estate
                 </div>
-                <h3 className="font-display text-[24px] font-extrabold leading-tight text-white mb-4">
+                <h3 className="font-serif text-[26px] font-bold leading-tight text-[#F5F1EA] mb-3.5">
                   Join 1,200+ people finding neighbors who actually fit.
                 </h3>
-                <p className="text-[#A3B3C8] text-sm leading-relaxed mb-6">
+                <p className="text-[#F5F1EA]/85 text-sm leading-relaxed mb-5 font-light">
                   BOMA matches you on lifestyle, values, location, and housing intent — then gives your Pod a space to build real trust before anything is financial.
                 </p>
 
-                <div className="flex gap-4 border-t border-b border-white/10 py-5 my-6 justify-between">
+                <div className="flex gap-4 border-t border-b border-white/15 py-4 my-5 justify-between">
                   <div>
-                    <div className="font-display text-[22px] font-extrabold text-white">86</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#7F92B0] font-semibold mt-0.5">Active Pods</div>
+                    <div className="font-serif text-[24px] font-bold text-white">86</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[#D7A27A] font-bold mt-0.5 font-mono">Active Pods</div>
                   </div>
                   <div>
-                    <div className="font-display text-[22px] font-extrabold text-white">94%</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#7F92B0] font-semibold mt-0.5">Stability Rate</div>
+                    <div className="font-serif text-[24px] font-bold text-white">94%</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[#D7A27A] font-bold mt-0.5 font-mono">Stability Rate</div>
                   </div>
                   <div>
-                    <div className="font-display text-[22px] font-extrabold text-white">8 min</div>
-                    <div className="text-[10px] uppercase tracking-wider text-[#7F92B0] font-semibold mt-0.5">Avg. Onboarding</div>
+                    <div className="font-serif text-[24px] font-bold text-white">8 min</div>
+                    <div className="text-[10px] uppercase tracking-wider text-[#D7A27A] font-bold mt-0.5 font-mono">Avg. Onboarding</div>
                   </div>
                 </div>
               </div>
 
-              {/* Sam Rivera Quote */}
-              <div className="bg-white/5 border border-white/8 rounded-xl p-4.5 text-[13px] text-[#D7E2EE] leading-normal">
-                <p className="italic text-[#D7E2EE] mb-2.5">
+              {/* Sam Rivera Quote Card */}
+              <div className="relative z-10 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4.5 text-[13px] text-[#F5F1EA] leading-normal shadow-lg">
+                <p className="italic text-[#F5F1EA] mb-2.5 font-light">
                   "We found three families who wanted exactly what we wanted, in six weeks."
                 </p>
                 <div className="flex items-center gap-2.5">
                   <img
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
                     alt="Sam Rivera"
-                    className="w-7 h-7 rounded-full object-cover border border-white/20 flex-shrink-0"
+                    className="w-7 h-7 rounded-full object-cover border border-[#B87333]/60 flex-shrink-0"
                   />
                   <div>
-                    <b className="block text-white text-[11.5px]">Sam Rivera</b>
-                    <span className="text-[10.5px] text-[#7F92B0] font-medium">Cedar Grove Pod</span>
+                    <b className="block text-white text-[11.5px] font-bold">Sam Rivera</b>
+                    <span className="text-[10.5px] text-[#D7A27A] font-medium font-mono">Cedar Grove Pod</span>
                   </div>
                 </div>
               </div>
@@ -269,7 +294,7 @@ export default function Modals({
 
             {/* Right Form Panel */}
             <div className="p-8 flex flex-col justify-center">
-               {/* LOGIN MODE */}
+              {/* LOGIN MODE */}
               {authOverlay.mode === 'login' && (
                 <Login
                   loginEmail={loginEmail}
@@ -308,11 +333,11 @@ export default function Modals({
               {/* FORGOT PASSWORD MODE */}
               {authOverlay.mode === 'forgot' && (
                 <ForgotPassword
-                  handleForgot={handleForgot}
                   setAuthOverlay={setAuthOverlay}
                   forgotEmail={forgotEmail}
                   setForgotEmail={setForgotEmail}
-                  loading={loading}
+                  setToast={setToast}
+                  closeAuth={closeAuth}
                 />
               )}
             </div>
@@ -409,11 +434,11 @@ export default function Modals({
       {whatsBomaModalOpen && (
         <div
           onClick={closeWhatsBoma}
-          className="fixed inset-0 z-100 flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-white/75 backdrop-blur-md p-4 overflow-y-auto animate-fade"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[680px] p-8 border border-border shadow-custom-lg relative "
+            className="bg-white rounded-2xl w-full max-w-[680px] p-8 border border-border shadow-2xl relative "
           >
             {/* Close Button */}
             <button
@@ -427,35 +452,44 @@ export default function Modals({
               Product Vision
             </div>
 
-            <h2 className="font-display text-[26px] font-extrabold text-ink leading-tight mb-4">
+            <h2 className="font-serif text-[28px] font-bold text-ink leading-tight mb-4">
               What is BOMA?
             </h2>
 
-            <p className="text-ink-dim text-[15px] leading-relaxed mb-6">
+            <p className="text-ink-dim text-[15px] leading-relaxed mb-6 font-light">
               BOMA is a community-matching platform for real estate co-housing. Traditional real estate focuses entirely on property listings and mortgages first, forcing people to find neighbors after the fact. BOMA reverses this order.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              <div className="border border-border rounded-xl p-4 bg-panel-alt/50">
-                <h4 className="font-display font-bold text-base text-ink mb-1.5">1. Values-First Matching</h4>
-                <p className="text-ink-dim text-[13px] leading-relaxed">
+              <div className="border border-border rounded-2xl p-4.5 bg-panel-alt/50">
+                <h4 className="font-serif font-bold text-lg text-ink mb-1.5">1. Values-First Matching</h4>
+                <p className="text-ink-dim text-[13px] leading-relaxed font-light">
                   Match with households who share your lifestyle, communication style, and location bounds.
                 </p>
               </div>
-              <div className="border border-border rounded-xl p-4 bg-panel-alt/50">
-                <h4 className="font-display font-bold text-base text-ink mb-1.5">2. Pod Commons</h4>
-                <p className="text-ink-dim text-[13px] leading-relaxed">
+              <div className="border border-border rounded-2xl p-4.5 bg-panel-alt/50">
+                <h4 className="font-serif font-bold text-lg text-ink mb-1.5">2. Pod Commons</h4>
+                <p className="text-ink-dim text-[13px] leading-relaxed font-light">
                   Collaborate in a shared workspace with draft agreement scaffolding before signing legal docs.
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={() => { closeWhatsBoma(); setActiveScreen('entry-path'); }}
-              className="w-full bg-amber text-white rounded-lg py-3 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer text-center"
-            >
-              Start Onboarding Profile Now →
-            </button>
+            {(!userOnboarded && !currentUser?.user_onboarded) ? (
+              <button
+                onClick={() => { closeWhatsBoma(); setActiveScreen('entry-path'); }}
+                className="w-full bg-amber text-white rounded-full py-3.5 text-sm font-semibold shadow-md hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer text-center"
+              >
+                Start Onboarding Profile Now →
+              </button>
+            ) : (
+              <button
+                onClick={() => { closeWhatsBoma(); setActiveScreen('profile'); }}
+                className="w-full bg-amber text-white rounded-full py-3.5 text-sm font-semibold shadow-md hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer text-center"
+              >
+                Go to Profile →
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -464,11 +498,11 @@ export default function Modals({
       {agreementDocModalOpen && (
         <div
           onClick={closeAgreementDoc}
-          className="fixed inset-0 z-120 flex items-center justify-center bg-navy-deep/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade"
+          className="fixed inset-0 z-120 flex items-center justify-center bg-white/75 backdrop-blur-md p-4 overflow-y-auto animate-fade"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-[660px] p-8 border border-border shadow-custom-lg relative "
+            className="bg-white rounded-2xl w-full max-w-[660px] p-8 border border-border shadow-2xl relative "
           >
             {/* Close Button */}
             <button
@@ -480,26 +514,26 @@ export default function Modals({
 
             {/* Header */}
             <div className="border-b border-border pb-3.5 mb-5 flex flex-col">
-              <h3 className="font-display text-[22px] font-extrabold text-navy-deep leading-tight">
+              <h3 className="font-serif text-[24px] font-bold text-navy-deep leading-tight">
                 Pod Agreement Scaffolding
               </h3>
-              <span className="text-[13px] text-ink-dim font-medium mt-1">Official Phase 1 Draft Alignment Document</span>
+              <span className="text-[13px] text-ink-dim font-medium mt-1 font-light">Official Phase 1 Draft Alignment Document</span>
             </div>
 
             {/* Content box */}
-            <div className="bg-[#F8FAFC] border border-border rounded-2xl p-5 mb-5 text-[13.5px] leading-relaxed text-ink">
+            <div className="bg-[#FAF8F5] border border-border rounded-2xl p-5 mb-5 text-[13.5px] leading-relaxed text-ink">
               <div className="flex flex-wrap justify-between items-center gap-2 mb-3.5">
                 <b className="text-base text-navy-deep font-bold">Cedar Grove Pod Alignment Draft</b>
-                <span className="bg-[#EAFDF8] text-sage border border-sage/10 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-sage/10 text-sage border border-sage/20 text-[10.5px] font-semibold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono">
                   Drafting in Progress
                 </span>
               </div>
 
-              <p className="text-ink-dim text-[12.5px] mb-4 font-medium">
+              <p className="text-ink-dim text-[12.5px] mb-4 font-light">
                 Prepared for: Sam Rivera, Morgan Chen, Taylor Kim, Jordan Lee
               </p>
 
-              <ol className="list-decimal pl-4.5 space-y-2.5 font-medium">
+              <ol className="list-decimal pl-4.5 space-y-2.5 font-normal">
                 <li>
                   <b className="text-navy-deep">Group Decision-Making:</b> Consensus vote required for purchases &gt; $1,000.
                 </li>
@@ -528,13 +562,13 @@ export default function Modals({
             <div className="flex gap-3.5 flex-wrap sm:flex-nowrap">
               <button
                 onClick={() => showToast('Exporting Cedar_Grove_Pod_Agreement.pdf... (demo)', 'success')}
-                className="flex-1 flex items-center justify-center gap-2 bg-amber text-white rounded-lg px-4 py-2.5 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 bg-amber text-white rounded-full px-5 py-3 text-sm font-semibold shadow-md hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer"
               >
                 <Download className="w-4 h-4" /> Download Document (.PDF)
               </button>
               <button
                 onClick={closeAgreementDoc}
-                className="bg-transparent border border-border text-ink rounded-lg px-5 py-2.5 text-sm font-bold hover:bg-panel-alt transition-all cursor-pointer"
+                className="bg-transparent border border-border text-ink rounded-full px-6 py-3 text-sm font-semibold hover:bg-panel-alt transition-all cursor-pointer"
               >
                 Close
               </button>

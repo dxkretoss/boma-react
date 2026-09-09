@@ -19,8 +19,8 @@ export default function StatusTracker({
         {(isExistingPod
           ? [
             { label: 'Account created & verified', desc: 'Completed', done: true },
-            { label: 'Onboarding profile completed', desc: userOnboarded ? 'Completed' : 'Pending — Complete 9 questions', done: userOnboarded },
-            { label: 'Joined Pod via invitation', desc: userPod ? `Joined: ${userPod.name}` : 'Waiting to join group', done: !!userPod },
+            { label: 'Join as existing pool', desc: userPod ? `Created: ${userPod.name} (${userPod.group_type || 'Group'})` : 'Registered as Existing Pool', done: true },
+            { label: 'Invited / Joined co-members', desc: userPod ? 'Invite link active' : 'Waiting to invite group', done: true },
             { label: 'Submitted group for review', desc: userPod?.status === 'UNDER_REVIEW' || userPod?.status === 'ACTIVE' ? 'Submitted' : userPod?.status === 'REJECTED' ? 'Flagged / Needs Attention' : 'Pending submission', done: userPod && ['UNDER_REVIEW', 'ACTIVE'].includes(userPod.status) },
             { label: 'Admin approved group & activated Commons', desc: userPod?.status === 'ACTIVE' ? 'Approved & Commons Activated' : 'Waiting for Board verification', done: userPod?.status === 'ACTIVE' }
           ]

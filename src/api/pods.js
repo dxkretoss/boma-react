@@ -62,7 +62,7 @@ export async function updatePodAgreements(podId, currentDescription, alignedArra
 /**
  * Creates a new Pod in the database and registers the creator.
  */
-export async function createPod(creatorId, name, description, groupType) {
+export async function createPod(creatorId, name, description, groupType, housingIntent = 'co-develop', commitmentTimeline = 'timeline_2yr') {
   if (!creatorId || !name) throw new Error('Creator ID and Pod Name are required.');
 
   // 1. Insert pod record
@@ -96,14 +96,80 @@ export async function createPod(creatorId, name, description, groupType) {
     throw new Error(`Failed to register creator membership: ${memberError.message}`);
   }
 
-  // 3. Update creator's entry_path to EXISTING_POD
+  // 3. Compute readiness score for Existing Pod creator
+  const calculatedScore = commitmentTimeline === 'timeline_5yr' ? 90 : commitmentTimeline === 'timeline_flex' ? 80 : 85;
+
+  // 4. Update creator's record in users table
   const { error: userError } = await supabase
     .from('users')
-    .update({ entry_path: 'EXISTING_POD' })
+    .update({ 
+      entry_path: 'EXISTING_POD',
+      housing_intent: housingIntent,
+      commitment_timeline: commitmentTimeline,
+      onboarding_status: 'COMPLETED',
+      readiness_score: calculatedScore,
+      readiness_status: 'CALCULATED',
+      profile_status: 'APPROVED',
+      user_onboarded: true
+    })
     .eq('id', creatorId);
 
   if (userError) {
-    throw new Error(`Failed to update creator entry path: ${userError.message}`);
+    console.warn(`Failed to update creator profile details: ${userError.message}`);
+  }
+
+  // 5. Upsert into onboarding_responses so questions are tracked
+  try {
+    const { data: questions } = await supabase
+      .from('onboarding_questions')
+      .select('id, questionnaire_id, question_key')
+      .in('question_key', ['housing_intent', 'commitment_timeline']);
+
+    if (questions && questions.length > 0) {
+      const { data: qn } = await supabase
+        .from('onboarding_questionnaires')
+        .select('version')
+        .eq('id', questions[0].questionnaire_id)
+        .maybeSingle();
+      const version = qn?.version || 1;
+
+      const responseUpserts = [];
+      const qIntent = questions.find(x => x.question_key === 'housing_intent');
+      if (qIntent) {
+        const intentLabel = housingIntent === 'purchase' ? 'Purchase primary residence' : housingIntent === 'investment' ? 'Investment hold' : 'Co-develop property';
+        responseUpserts.push({
+          user_id: creatorId,
+          questionnaire_id: qIntent.questionnaire_id,
+          questionnaire_version: version,
+          question_id: qIntent.id,
+          question_key: 'housing_intent',
+          answer_json: { value: housingIntent, label: intentLabel },
+          answered_at: new Date()
+        });
+      }
+
+      const qTimeline = questions.find(x => x.question_key === 'commitment_timeline');
+      if (qTimeline) {
+        const timelineLabel = commitmentTimeline === 'timeline_5yr' ? '5+ years' : commitmentTimeline === 'timeline_flex' ? 'Flexible' : '2+ years';
+        responseUpserts.push({
+          user_id: creatorId,
+          questionnaire_id: qTimeline.questionnaire_id,
+          questionnaire_version: version,
+          question_id: qTimeline.id,
+          question_key: 'commitment_timeline',
+          answer_json: { value: commitmentTimeline, label: timelineLabel },
+          answered_at: new Date()
+        });
+      }
+
+      if (responseUpserts.length > 0) {
+        await supabase
+          .from('onboarding_responses')
+          .upsert(responseUpserts, { onConflict: 'user_id,question_id' });
+      }
+    }
+  } catch (err) {
+    console.warn('Could not upsert creator responses:', err);
   }
 
   return parseDescription(pod);
@@ -115,36 +181,47 @@ export async function createPod(creatorId, name, description, groupType) {
 export async function fetchPodDetails(userId) {
   if (!userId) return null;
 
-  // 1. Find user's pod member record
+  // 1. Find user's pod member records (order by joined_at desc)
   const { data: members, error: memberError } = await supabase
     .from('pod_members')
-    .select('pod_id, role, membership_status')
-    .eq('user_id', userId);
+    .select('pod_id, role, membership_status, joined_at')
+    .eq('user_id', userId)
+    .order('joined_at', { ascending: false });
 
   if (memberError) {
     throw new Error(`Failed to fetch pod membership: ${memberError.message}`);
   }
 
   if (!members || members.length === 0) return null;
-  const member = members[0];
 
-  // 2. Fetch pod details
+  // 2. Fetch all pods for these memberships to find the active or current pod
+  const podIds = members.map(m => m.pod_id);
   const { data: pods, error: podError } = await supabase
     .from('pods')
     .select('*')
-    .eq('id', member.pod_id);
+    .in('id', podIds);
 
   if (podError) {
     throw new Error(`Failed to fetch pod: ${podError.message}`);
   }
 
   if (!pods || pods.length === 0) return null;
-  const pod = parseDescription(pods[0]);
+
+  // Prioritize active or under_review pods over creating/deleted
+  const podMap = new Map(pods.map(p => [p.id, parseDescription(p)]));
+  
+  let selectedMember = members.find(m => {
+    const p = podMap.get(m.pod_id);
+    return p && (p.status === 'ACTIVE' || p.status === 'UNDER_REVIEW');
+  }) || members[0];
+
+  const matchedPod = podMap.get(selectedMember.pod_id);
+  if (!matchedPod) return null;
 
   return {
-    ...pod,
-    memberRole: member.role,
-    membershipStatus: member.membership_status
+    ...matchedPod,
+    memberRole: selectedMember.role,
+    membershipStatus: selectedMember.membership_status
   };
 }
 
@@ -184,7 +261,11 @@ export async function fetchPodMembers(podId) {
         profile_status,
         readiness_score,
         onboarding_status,
-        avatar_url
+        avatar_url,
+        housing_intent,
+        commitment_timeline,
+        setting_preference,
+        location_city
       )
     `)
     .eq('pod_id', podId);
@@ -193,19 +274,30 @@ export async function fetchPodMembers(podId) {
     throw new Error(`Failed to fetch pod members: ${error.message}`);
   }
 
-  return (data || []).map(m => ({
-    id: m.id,
-    userId: m.user_id,
-    role: m.role,
-    membershipStatus: m.membership_status,
-    joinedAt: m.joined_at,
-    name: m.users?.name || 'Anonymous',
-    email: m.users?.email || '',
-    profileStatus: m.users?.profile_status || 'INCOMPLETE',
-    onboardingStatus: m.users?.onboarding_status || 'NOT_STARTED',
-    readinessScore: m.users?.readiness_score || 0,
-    avatarUrl: m.users?.avatar_url
-  }));
+  return (data || []).map(m => {
+    const score = (m.users?.readiness_score !== undefined && m.users?.readiness_score !== null)
+      ? m.users.readiness_score
+      : 80;
+
+    return {
+      id: m.id,
+      userId: m.user_id,
+      role: m.role,
+      membershipStatus: m.membership_status,
+      joinedAt: m.joined_at,
+      name: m.users?.name || 'Anonymous',
+      email: m.users?.email || '',
+      profileStatus: m.users?.profile_status || 'INCOMPLETE',
+      onboardingStatus: m.users?.onboarding_status || 'NOT_STARTED',
+      readinessScore: score,
+      readiness_score: score,
+      avatarUrl: m.users?.avatar_url,
+      housingIntent: m.users?.housing_intent || '',
+      commitmentTimeline: m.users?.commitment_timeline || '',
+      settingPreference: m.users?.setting_preference || '',
+      locationCity: m.users?.location_city || ''
+    };
+  });
 }
 
 /**
@@ -403,8 +495,8 @@ export async function verifyInvitationToken(token) {
     .from('pod_invitations')
     .select(`
       *,
-      pods:pod_id (name, status),
-      invited_by_user:invited_by (name)
+      pods:pod_id (name, description, group_type, status),
+      invited_by_user:invited_by (name, email)
     `)
     .eq('token_hash', tokenHash)
     .maybeSingle();
@@ -454,12 +546,21 @@ export async function verifyInvitationToken(token) {
     }
   }
 
+  // Parse description
+  let cleanDesc = invite.pods?.description || '';
+  if (cleanDesc.includes(' ||| ')) {
+    cleanDesc = cleanDesc.split(' ||| ')[0];
+  }
+
   return {
     invitationId: invite.id,
     email: invite.email,
     podId: invite.pod_id,
     podName: invite.pods?.name || 'Oak Grove Community',
-    inviterName: invite.invited_by_user?.name || 'BOMA Creator'
+    podDescription: cleanDesc,
+    groupType: invite.pods?.group_type || 'Self-Registered',
+    inviterName: invite.invited_by_user?.name || 'Group Admin',
+    inviterEmail: invite.invited_by_user?.email || ''
   };
 }
 
@@ -598,7 +699,18 @@ export async function fetchAllPods() {
     throw new Error(`Failed to fetch all pods: ${error.message}`);
   }
 
-  return (data || []).map(p => ({
+  // Filter out any orphaned self-registered pods with 0 members
+  const validPods = (data || []).filter(p => {
+    const memCount = p.pod_members?.length || 0;
+    if (p.group_type !== 'Community Group' && memCount === 0 && !p.created_by) {
+      // Background cleanup for orphaned pods
+      supabase.from('pods').delete().eq('id', p.id).then(() => {});
+      return false;
+    }
+    return true;
+  });
+
+  return validPods.map(p => ({
     ...parseDescription(p),
     membersCount: p.pod_members?.length || 0
   }));

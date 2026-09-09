@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { customLogin } from '../../../auth';
+import { fetchUserProfile } from '../../../api/users';
 import Toast from '../../Toast';
 
 export default function LoginScreen({ 
@@ -29,14 +30,23 @@ export default function LoginScreen({
       if (user.role === 'admin') {
         throw new Error('Invalid credentials');
       }
-      setToast({ show: true, message: `Welcome back, ${user.name}!`, type: 'success' });
+
+      let fullUser = user;
+      try {
+        const freshProfile = await fetchUserProfile(user.id);
+        if (freshProfile) fullUser = freshProfile;
+      } catch (err) {
+        console.warn('Could not load fresh profile after login:', err);
+      }
+
+      setToast({ show: true, message: `Welcome back, ${fullUser.name}!`, type: 'success' });
       
-      localStorage.setItem('boma_current_user', JSON.stringify(user));
+      localStorage.setItem('boma_current_user', JSON.stringify(fullUser));
       if (setCurrentUser) {
-        setCurrentUser(user);
+        setCurrentUser(fullUser);
       }
       if (setUserOnboarded) {
-        setUserOnboarded(user.user_onboarded || false);
+        setUserOnboarded(fullUser.user_onboarded || false);
       }
       
       setTimeout(() => {
@@ -105,7 +115,7 @@ export default function LoginScreen({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4"
+            className="w-full bg-amber text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#b05d3e] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-4"
           >
             {loading ? 'Logging in...' : 'Log in'}
           </button>

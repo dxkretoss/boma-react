@@ -91,7 +91,7 @@ export default function AdminPodReview({ setActiveScreen, adminUser, showToast, 
         <button
           onClick={handleRunMatchingEngine}
           disabled={runningEngine || loading}
-          className="bg-ink hover:bg-[#2450C4] text-white rounded-xl py-2.5 px-5 text-xs font-bold transition-all shadow flex items-center gap-2 cursor-pointer disabled:opacity-85"
+          className="bg-ink hover:bg-[#b05d3e] text-white rounded-xl py-2.5 px-5 text-xs font-bold transition-all shadow flex items-center gap-2 cursor-pointer disabled:opacity-85"
         >
           {runningEngine ? (
             <>
@@ -106,11 +106,23 @@ export default function AdminPodReview({ setActiveScreen, adminUser, showToast, 
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-ink-dim font-medium">
-          <div className="flex items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-amber" />
-            Loading match proposals...
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, idx) => (
+            <div key={idx} className="border border-border rounded-2xl p-6 bg-white shadow-sm space-y-4 animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="h-5 w-40 bg-border/70 rounded" />
+                  <div className="h-3.5 w-24 bg-border/40 rounded" />
+                </div>
+                <div className="h-6 w-20 bg-border/50 rounded-full" />
+              </div>
+              <div className="h-16 bg-panel-alt/50 rounded-xl" />
+              <div className="flex items-center justify-between pt-2">
+                <div className="h-8 w-24 bg-border/40 rounded-full" />
+                <div className="h-8 w-28 bg-border/50 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : proposals.length === 0 ? (
         <div className="border border-border border-dashed rounded-2xl p-10 bg-panel-alt/25 text-center max-w-[560px] mx-auto my-6 flex flex-col items-center">
@@ -173,7 +185,7 @@ export default function AdminPodReview({ setActiveScreen, adminUser, showToast, 
                 <button
                   onClick={() => handleApprovePod(pod.id)}
                   disabled={processingAction}
-                  className="flex-1 bg-ink hover:bg-[#2450C4] text-white rounded-lg py-2 text-xs font-bold transition-colors cursor-pointer text-center disabled:opacity-80"
+                  className="flex-1 bg-ink hover:bg-[#b05d3e] text-white rounded-lg py-2 text-xs font-bold transition-colors cursor-pointer text-center disabled:opacity-80"
                 >
                   Approve Pod
                 </button>

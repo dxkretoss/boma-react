@@ -536,7 +536,12 @@ export default function OnboardingScreens({
         />
       )}
       {activeScreen === 'pod-member-onboarding' && (
-        <PodMemberOnboarding setActiveScreen={setActiveScreen} />
+        <PodMemberOnboarding 
+          setActiveScreen={setActiveScreen}
+          currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
+          showToast={showToast}
+        />
       )}
       {activeScreen === 'pod-review' && (
         <PodReview

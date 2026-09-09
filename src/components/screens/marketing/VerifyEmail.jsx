@@ -96,7 +96,7 @@ export default function VerifyEmail({
           <button
             disabled={verifying || verificationCode.length !== 6}
             onClick={handleVerify}
-            className="bg-amber text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] transition-all cursor-pointer disabled:opacity-50"
+            className="bg-amber text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] transition-all cursor-pointer disabled:opacity-50"
           >
             {verifying ? 'Verifying...' : 'Verify & Continue'}
           </button>

@@ -78,18 +78,18 @@ export default function AdminReadinessLogic({ setActiveScreen, isAdminView = tru
   return (
     <div className="w-full text-left space-y-8 animate-fade">
       {/* Header Banner */}
-      <div className="bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] text-white p-6 md:p-8 rounded-3xl shadow-custom-lg relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-[linear-gradient(135deg,#2E2330_0%,#382430_100%)] text-white p-6 md:p-8 rounded-3xl shadow-custom-lg relative overflow-hidden border border-[#F5F1EA]/10">
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-[#C46A4A]/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 bg-amber/20 border border-amber/30 text-amber-soft px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider mb-3">
-              <Gauge className="w-3.5 h-3.5" /> Readiness Scoring Engine
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-[#F5F1EA]/20 text-[#D7A27A] px-3.5 py-1 rounded-full text-xs font-mono font-semibold uppercase tracking-wider mb-3">
+              <Gauge className="w-3.5 h-3.5 text-amber" /> Readiness Scoring Engine
             </div>
-            <h2 className="font-display font-extrabold text-2xl md:text-3xl text-white mb-2">
+            <h2 className="font-serif font-bold text-2xl md:text-3xl text-white mb-2">
               Profile Readiness Score Logic
             </h2>
-            <p className="text-slate-300 text-sm max-w-[640px] leading-relaxed">
+            <p className="text-[#F5F1EA]/80 text-sm max-w-[640px] leading-relaxed font-light">
               BOMA calculates a user's profile Readiness Score (0–100) dynamically based on their onboarding choices across scored financial, governance, and commitment categories.
             </p>
           </div>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 // Import split admin screens
 import AdminLogin from './admin/AdminLogin';
 import AdminDashboard from './admin/AdminDashboard';
+import AdminAboutBoma from './admin/AdminAboutBoma';
 import AdminUsers from './admin/AdminUsers';
 import AdminMatching from './admin/AdminMatching';
 import AdminQuestions from './admin/AdminQuestions';
@@ -32,7 +33,7 @@ export default function AdminScreens({
   const [commitmentWeight, setCommitmentWeight] = useState(20);
 
   if (![
-    'admin-login', 'admin-dashboard', 'admin-users', 'admin-readiness-logic', 'admin-matching', 'admin-pod-review',
+    'admin-login', 'admin-dashboard', 'admin-about-boma', 'admin-users', 'admin-readiness-logic', 'admin-matching', 'admin-pod-review',
     'admin-pod-management', 'admin-pod-detail', 'admin-existing-pod-queue', 'admin-questions', 'admin-waitlist', 'admin-village-test'
   ].includes(activeScreen)) {
     return null;
@@ -54,20 +55,31 @@ export default function AdminScreens({
     setActiveScreen('admin-pod-detail');
   };
 
+  if (activeScreen === 'admin-login') {
+    return (
+      <AdminLogin
+        setActiveScreen={setActiveScreen}
+        setAdminUser={setAdminUser}
+        currentScreen={activeScreen}
+      />
+    );
+  }
+
   return (
     <div className="w-full text-left py-12 px-6 md:px-8 max-w-[1180px] mx-auto animate-fade">
-      {activeScreen === 'admin-login' && (
-        <AdminLogin
-          setActiveScreen={setActiveScreen}
-          setAdminUser={setAdminUser}
-          currentScreen={activeScreen}
-        />
-      )}
       {activeScreen === 'admin-dashboard' && (
         <AdminDashboard
           adminUser={adminUser}
           setActiveScreen={setActiveScreen}
           handleViewAdminPod={handleViewAdminPod}
+        />
+      )}
+      {activeScreen === 'admin-about-boma' && (
+        <AdminAboutBoma
+          setActiveScreen={setActiveScreen}
+          adminUser={adminUser}
+          showToast={showToast}
+          showConfirm={showConfirm}
         />
       )}
       {activeScreen === 'admin-users' && (

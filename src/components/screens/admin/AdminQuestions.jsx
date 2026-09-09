@@ -488,7 +488,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast, 
               <div className="pt-4 border-t border-border flex justify-end">
                 <button
                   onClick={handleSaveQuestionDetails}
-                  className="bg-amber text-white font-bold text-xs rounded-lg px-4.5 py-2.5 shadow hover:bg-[#2450C4] transition-colors"
+                  className="bg-amber text-white font-bold text-xs rounded-lg px-4.5 py-2.5 shadow hover:bg-[#b05d3e] transition-colors"
                 >
                   Save Question Details
                 </button>
@@ -742,7 +742,7 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast, 
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className="text-[10px] font-mono font-bold bg-[#E0F2FE] text-sky-700 px-2 py-0.5 rounded-md">
+                                  <span className="text-[10px] font-mono font-bold bg-amber-soft text-amber px-2 py-0.5 rounded-md border border-amber/20">
                                     {opt.scoring_points || 0} pts
                                   </span>
                                   <button

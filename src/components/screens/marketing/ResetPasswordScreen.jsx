@@ -17,7 +17,7 @@ export default function ResetPasswordScreen({ setActiveScreen }) {
         </div>
         <button
           onClick={() => setActiveScreen('login')}
-          className="w-full bg-ink text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#2450C4] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md"
+          className="w-full bg-amber text-white rounded-lg px-4 py-2.5 text-sm font-bold hover:bg-[#b05d3e] hover:-translate-y-[1px] transition-all cursor-pointer shadow-md"
         >
           Reset password
         </button>

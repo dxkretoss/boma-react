@@ -16,14 +16,14 @@ export function PodSuggestion({
             {suggestedPod.members.map((m, i) => (
               <div
                 key={i}
-                className="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[11px] font-display border-2 border-white"
+                className="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#C46A4A_0%,#2E2330_100%)] flex items-center justify-center text-white font-extrabold text-[11px] font-display border-2 border-white"
               >
                 {(m.name || 'U').substring(0, 1).toUpperCase()}
               </div>
             ))}
           </div>
           <h4 className="font-display font-extrabold text-[17px] text-ink leading-tight">
-            {suggestedPod.name} — {suggestedPod.members.length + 1} members
+            {suggestedPod.name} — {suggestedPod.members.length} members
           </h4>
         </div>
 
@@ -81,7 +81,7 @@ export function PodSuggestion({
 
         <button
           onClick={() => setActiveScreen('pod-preview')}
-          className="bg-amber text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer w-full text-center"
+          className="bg-amber hover:bg-[#b05d3e] text-white font-semibold text-sm px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all cursor-pointer w-full text-center"
         >
           View Pod
         </button>
@@ -107,11 +107,18 @@ export function PodPreview({
         {suggestedPod.members.map((m, idx) => (
           <div key={idx} className="flex justify-between items-center gap-3 border-b border-border/70 last:border-b-0 pb-3.5 last:pb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#0E4C8C_0%,#0B1E38_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border">
+              <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#C46A4A_0%,#2E2330_100%)] flex items-center justify-center text-white font-extrabold text-[12px] font-display border border-border">
                 {(m.name || 'U').substring(0, 1).toUpperCase()}
               </div>
               <div className="flex flex-col">
-                <b className="text-sm font-bold text-ink leading-tight">{m.name}</b>
+                <div className="flex items-center gap-2">
+                  <b className="text-sm font-bold text-ink leading-tight">{m.name}</b>
+                  {m.isSelf && (
+                    <span className="bg-amber-soft text-amber text-[9.5px] font-bold px-2 py-0.5 rounded-full uppercase font-mono tracking-wider border border-amber/20">
+                      YOU
+                    </span>
+                  )}
+                </div>
                 <span className="text-[11.5px] text-ink-dim font-semibold mt-0.5">{m.detail}</span>
               </div>
             </div>
@@ -131,7 +138,7 @@ export function PodPreview({
         </button>
         <button
           onClick={handleAcceptSuggestedPod}
-          className="bg-amber text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer"
+          className="bg-amber hover:bg-[#b05d3e] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
         >
           Join Pod
         </button>
@@ -186,13 +193,13 @@ export function ConfirmJoin({
                   </div>
                   <span className="font-semibold text-ink">{m.name}</span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${m.membership_status === 'ACCEPTED'
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${(m.membershipStatus || m.membership_status) === 'ACCEPTED'
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                  : m.membership_status === 'DECLINED'
+                  : (m.membershipStatus || m.membership_status) === 'DECLINED'
                     ? 'bg-red-50 text-red-700 border border-red-100'
                     : 'bg-amber-soft text-amber border border-amber/10'
                   }`}>
-                  {m.membership_status === 'ACCEPTED' ? 'Accepted' : m.membership_status === 'DECLINED' ? 'Declined' : 'Pending'}
+                  {(m.membershipStatus || m.membership_status) === 'ACCEPTED' ? 'Accepted' : (m.membershipStatus || m.membership_status) === 'DECLINED' ? 'Declined' : 'Pending'}
                 </span>
               </div>
             ))}
@@ -202,7 +209,7 @@ export function ConfirmJoin({
         {userPod?.status === 'ACTIVE' ? (
           <button
             onClick={() => setActiveScreen('commons-dashboard')}
-            className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer w-full text-center"
+            className="bg-amber hover:bg-[#b05d3e] text-white font-semibold text-sm px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all cursor-pointer w-full text-center"
           >
             Enter the Commons
           </button>
@@ -210,14 +217,14 @@ export function ConfirmJoin({
           <div className="flex gap-3 w-full">
             <button
               onClick={declineMatch}
-              className="bg-transparent border border-border text-ink font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+              className="bg-transparent border border-border text-ink font-semibold text-xs px-5 py-2.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
             >
               Decline Match
             </button>
             <button
               onClick={handleRefreshPodStatus}
               disabled={matchingLoading}
-              className="flex-1 bg-amber text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md hover:bg-[#2450C4] active:scale-95 transition-all cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
+              className="flex-1 bg-amber hover:bg-[#b05d3e] text-white font-semibold text-xs px-5 py-2.5 rounded-full shadow-md hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
             >
               {matchingLoading && <div className="w-3 h-3 rounded-full border border-white/30 border-t-white animate-spin" />}
               Refresh Status

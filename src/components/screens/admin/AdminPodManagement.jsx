@@ -82,18 +82,32 @@ export default function AdminPodManagement({
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-ink-dim font-medium">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-amber" />
-                      Loading pods...
-                    </div>
-                  </td>
-                </tr>
+                [...Array(6)].map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="p-4 px-6">
+                      <div className="h-4 w-36 bg-border/70 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-3.5 w-28 bg-border/50 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-3.5 w-16 bg-border/50 rounded" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="h-5 w-16 bg-border/50 rounded-full" />
+                    </td>
+                    <td className="p-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-20 bg-border/40 rounded-lg" />
+                        <div className="h-7 w-16 bg-border/40 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : pods.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-ink-dim font-medium">
-                    No active pods found in the database.
+                    No active pods found.
                   </td>
                 </tr>
               ) : (

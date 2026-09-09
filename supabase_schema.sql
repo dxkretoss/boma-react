@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS public.pods (
   group_type text,
   status text DEFAULT 'CREATING' CHECK (status IN ('CREATING', 'UNDER_REVIEW', 'ACTIVE', 'REJECTED')),
   rejection_reason text,
-  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_by uuid REFERENCES public.users(id) ON DELETE CASCADE,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -357,7 +357,7 @@ CREATE TABLE IF NOT EXISTS public.pod_invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   pod_id uuid REFERENCES public.pods(id) ON DELETE CASCADE,
   email text NOT NULL,
-  invited_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  invited_by uuid REFERENCES public.users(id) ON DELETE CASCADE,
   token_hash text NOT NULL UNIQUE,
   status text DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'CANCELLED')),
   expires_at timestamp with time zone NOT NULL,
@@ -371,3 +371,67 @@ CREATE TABLE IF NOT EXISTS public.pod_invitations (
 ALTER TABLE public.pods DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pod_members DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pod_invitations DISABLE ROW LEVEL SECURITY;
+
+-- 12. Create learning_videos table for Dynamic Learning Hub & Tutorials (Web + Mobile App)
+CREATE TABLE IF NOT EXISTS public.learning_videos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text NOT NULL,
+  video_url text NOT NULL,
+  thumbnail_url text NOT NULL,
+  tag text DEFAULT 'Getting Started',
+  order_index integer DEFAULT 0,
+  is_published boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- Disable Row Level Security to match project-wide custom auth pattern
+ALTER TABLE public.learning_videos DISABLE ROW LEVEL SECURITY;
+
+-- Seed default learning videos if table is newly created
+INSERT INTO public.learning_videos (title, description, video_url, thumbnail_url, tag, order_index, is_published)
+SELECT 
+  'Intro to BOMA Co-housing',
+  'Learn why matching neighbors first creates resilient, vibrant communities without financial risks up front.',
+  'https://www.youtube.com/embed/dQw4w9WgXcQ',
+  '/assets/pod_community_realistic.png',
+  'Getting Started',
+  1,
+  true
+WHERE NOT EXISTS (SELECT 1 FROM public.learning_videos WHERE title = 'Intro to BOMA Co-housing');
+
+INSERT INTO public.learning_videos (title, description, video_url, thumbnail_url, tag, order_index, is_published)
+SELECT 
+  'How Pod Matching Works',
+  'Discover how our transparent rules-based engine evaluates lifestyle, decision-making style, and metro radius.',
+  'https://www.youtube.com/embed/dQw4w9WgXcQ',
+  '/assets/pod_austin.png',
+  'Matching Engine',
+  2,
+  true
+WHERE NOT EXISTS (SELECT 1 FROM public.learning_videos WHERE title = 'How Pod Matching Works');
+
+INSERT INTO public.learning_videos (title, description, video_url, thumbnail_url, tag, order_index, is_published)
+SELECT 
+  'Understanding Readiness Scores',
+  'Learn how self-reported readiness tiers and commitment timelines build your transparent readiness score.',
+  'https://www.youtube.com/embed/dQw4w9WgXcQ',
+  '/assets/pod_denver.png',
+  'Scoring Guide',
+  3,
+  true
+WHERE NOT EXISTS (SELECT 1 FROM public.learning_videos WHERE title = 'Understanding Readiness Scores');
+
+INSERT INTO public.learning_videos (title, description, video_url, thumbnail_url, tag, order_index, is_published)
+SELECT 
+  'The Pod Commons & Agreements',
+  'Explore Pod chat, agreement scaffolding, and consensus decision making before moving to Phase 2.',
+  'https://www.youtube.com/embed/dQw4w9WgXcQ',
+  '/assets/pod_charleston.png',
+  'Community Commons',
+  4,
+  true
+WHERE NOT EXISTS (SELECT 1 FROM public.learning_videos WHERE title = 'The Pod Commons & Agreements');
+
+

@@ -110,7 +110,7 @@ export default function OnboardingApproval({ setActiveScreen, currentUser, setCu
             <button 
               onClick={handleGoToDashboard}
               disabled={checking}
-              className="w-full bg-amber text-white rounded-lg py-3 text-sm font-bold shadow-md hover:bg-[#2450C4] hover:-translate-y-[0.5px] transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+              className="w-full bg-amber text-white rounded-lg py-3 text-sm font-bold shadow-md hover:bg-[#b05d3e] hover:-translate-y-[0.5px] transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
             >
               {checking ? (
                 <>
