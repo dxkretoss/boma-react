@@ -77,6 +77,21 @@
     {
       "step_number": 3,
       "step_name": "Community Preferences & Group Size",
+      "step_save_payload_single_api_call": {
+        "action": "save-response",
+        "userId": "USER_UUID_HERE",
+        "stepNumber": 3,
+        "responses": [
+          {
+            "questionKey": "decision_style",
+            "answerJson": { "value": "consensus" }
+          },
+          {
+            "questionKey": "pod_size",
+            "answerJson": { "value": "7–10 households" }
+          }
+        ]
+      },
       "fields": [
         {
           "question_key": "decision_style",
@@ -90,15 +105,6 @@
           ],
           "answer_json_structure": {
             "value": "consensus"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "decision_style",
-            "stepNumber": 3,
-            "answerJson": {
-              "value": "consensus"
-            }
           }
         },
         {
@@ -113,15 +119,6 @@
           ],
           "answer_json_structure": {
             "value": "7–10 households"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "pod_size",
-            "stepNumber": 3,
-            "answerJson": {
-              "value": "7–10 households"
-            }
           }
         }
       ]
@@ -129,6 +126,25 @@
     {
       "step_number": 4,
       "step_name": "Location & Search Radius",
+      "step_save_payload_single_api_call": {
+        "action": "save-response",
+        "userId": "USER_UUID_HERE",
+        "stepNumber": 4,
+        "responses": [
+          {
+            "questionKey": "location_city",
+            "answerJson": { "value": "Atlanta, GA" }
+          },
+          {
+            "questionKey": "location_radius",
+            "answerJson": { "value": "45" }
+          },
+          {
+            "questionKey": "setting_preference",
+            "answerJson": { "value": "urban" }
+          }
+        ]
+      },
       "fields": [
         {
           "question_key": "location_city",
@@ -138,15 +154,6 @@
           "example_value": "Atlanta, GA",
           "answer_json_structure": {
             "value": "Atlanta, GA"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "location_city",
-            "stepNumber": 4,
-            "answerJson": {
-              "value": "Atlanta, GA"
-            }
           }
         },
         {
@@ -159,15 +166,6 @@
           "max": 150,
           "answer_json_structure": {
             "value": "45"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "location_radius",
-            "stepNumber": 4,
-            "answerJson": {
-              "value": "45"
-            }
           }
         },
         {
@@ -182,15 +180,6 @@
           ],
           "answer_json_structure": {
             "value": "urban"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "setting_preference",
-            "stepNumber": 4,
-            "answerJson": {
-              "value": "urban"
-            }
           }
         }
       ]
@@ -198,6 +187,25 @@
     {
       "step_number": 5,
       "step_name": "Budget & Financing Readiness",
+      "step_save_payload_single_api_call": {
+        "action": "save-response",
+        "userId": "USER_UUID_HERE",
+        "stepNumber": 5,
+        "responses": [
+          {
+            "questionKey": "budget_range",
+            "answerJson": { "value": "$350,000 – $450,000" }
+          },
+          {
+            "questionKey": "down_payment_tier",
+            "answerJson": { "value": "5–10%" }
+          },
+          {
+            "questionKey": "financing_preference",
+            "answerJson": { "value": "traditional mortgage" }
+          }
+        ]
+      },
       "fields": [
         {
           "question_key": "budget_range",
@@ -207,15 +215,6 @@
           "example_value": "$350,000 – $450,000",
           "answer_json_structure": {
             "value": "$350,000 – $450,000"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "budget_range",
-            "stepNumber": 5,
-            "answerJson": {
-              "value": "$350,000 – $450,000"
-            }
           }
         },
         {
@@ -231,15 +230,6 @@
           ],
           "answer_json_structure": {
             "value": "5–10%"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "down_payment_tier",
-            "stepNumber": 5,
-            "answerJson": {
-              "value": "5–10%"
-            }
           }
         },
         {
@@ -255,15 +245,6 @@
           ],
           "answer_json_structure": {
             "value": "traditional mortgage"
-          },
-          "example_save_payload": {
-            "action": "save-response",
-            "userId": "USER_UUID_HERE",
-            "questionKey": "financing_preference",
-            "stepNumber": 5,
-            "answerJson": {
-              "value": "traditional mortgage"
-            }
           }
         }
       ]
@@ -391,6 +372,116 @@
         "userId": "USER_UUID_HERE"
       },
       "description": "Get detailed breakdown of points and categories"
+    }
+  },
+  "user_status_enums": {
+    "entry_path": {
+      "description": "Determines which onboarding path the user belongs to",
+      "allowed_values": [
+        "MATCHING_POOL",
+        "EXISTING_POD"
+      ],
+      "value_meanings": {
+        "MATCHING_POOL": "Path A: Individual joining matching pool for algorithmic neighbor pairing",
+        "EXISTING_POD": "Path B: User creating or joining a self-formed group/pod with friends or family"
+      }
+    },
+    "onboarding_status": {
+      "description": "Tracks progress through the 9 onboarding steps",
+      "default": "NOT_STARTED",
+      "allowed_values": [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "COMPLETED"
+      ],
+      "value_meanings": {
+        "NOT_STARTED": "User has not yet saved any step response",
+        "IN_PROGRESS": "User is actively completing questions (steps 1–7)",
+        "COMPLETED": "User has finalized and submitted onboarding (step 9)"
+      }
+    },
+    "profile_status": {
+      "description": "Admin review state of user profile",
+      "default": "INCOMPLETE",
+      "allowed_values": [
+        "INCOMPLETE",
+        "UNDER_REVIEW",
+        "APPROVED",
+        "REJECTED"
+      ],
+      "value_meanings": {
+        "INCOMPLETE": "Onboarding answers are still being drafted",
+        "UNDER_REVIEW": "Submitted by user, awaiting BOMA Admin review",
+        "APPROVED": "Approved by Admin — user has full access to matching pool / pod features",
+        "REJECTED": "Admin rejected profile (check rejection_reason for details)"
+      }
+    },
+    "readiness_status": {
+      "description": "Whether the dynamic readiness score has been calculated",
+      "default": "NOT_CALCULATED",
+      "allowed_values": [
+        "NOT_CALCULATED",
+        "CALCULATED"
+      ],
+      "value_meanings": {
+        "NOT_CALCULATED": "Score not yet evaluated",
+        "CALCULATED": "Readiness score (0–100) computed using active database scoring rules"
+      }
+    },
+    "matching_status": {
+      "description": "State within the neighbor matching lifecycle",
+      "default": "NOT_ELIGIBLE",
+      "allowed_values": [
+        "NOT_ELIGIBLE",
+        "ELIGIBLE",
+        "IN_POOL",
+        "MATCHED",
+        "POD_ASSIGNED"
+      ],
+      "value_meanings": {
+        "NOT_ELIGIBLE": "Profile incomplete or not approved yet",
+        "ELIGIBLE": "Approved profile eligible for matching pool entry",
+        "IN_POOL": "Actively participating in matching pool algorithm runs",
+        "MATCHED": "Algorithm paired user with candidate neighbors",
+        "POD_ASSIGNED": "User has joined or been assigned to an active Pod"
+      }
+    },
+    "rejection_reason": {
+      "description": "Reason text provided by Admin if profile_status is REJECTED",
+      "type": "string | null",
+      "default": null
+    }
+  },
+  "pod_status_enums": {
+    "pod_status": {
+      "allowed_values": [
+        "CREATING",
+        "UNDER_REVIEW",
+        "ACTIVE",
+        "REJECTED"
+      ]
+    },
+    "pod_member_role": {
+      "allowed_values": [
+        "CREATOR",
+        "MEMBER"
+      ]
+    },
+    "pod_membership_status": {
+      "allowed_values": [
+        "ACCEPTED",
+        "PENDING",
+        "DECLINED"
+      ]
+    },
+    "pod_invitation_status": {
+      "allowed_values": [
+        "PENDING",
+        "ACCEPTED",
+        "DECLINED",
+        "EXPIRED",
+        "CANCELLED"
+      ]
     }
   }
 }

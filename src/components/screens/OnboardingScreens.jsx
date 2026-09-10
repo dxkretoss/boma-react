@@ -176,25 +176,29 @@ export default function OnboardingScreens({
     }
   };
 
-  // Helper to save current question response
-  const saveStepResponse = async (questionKey, value, stepNumber) => {
-    if (!currentUser?.id) return;
-    const question = questionnaire?.questions?.find(q => q.question_key === questionKey);
+  // Helper to save step responses (single or multiple questions in 1 API call)
+  const saveStepResponses = async (stepNumber, responsesList) => {
+    if (!currentUser?.id || !responsesList || responsesList.length === 0) return;
 
     try {
-      const isMulti = question?.question_type === 'multiple_choice' || Array.isArray(value);
-      const answerJson = isMulti ? { values: value } : { value: value };
+      const formattedResponses = responsesList.map(({ key, value }) => {
+        const question = questionnaire?.questions?.find(q => q.question_key === key);
+        const isMulti = question?.question_type === 'multiple_choice' || Array.isArray(value);
+        return {
+          questionKey: key,
+          questionId: question?.id || null,
+          answerJson: isMulti ? { values: value } : { value: value }
+        };
+      });
 
       await saveOnboardingResponse(currentUser.id, {
         questionnaireId: questionnaire?.id || 'bff45f03-5a51-4621-918e-88f7425e6cbb',
         questionnaireVersion: questionnaire?.version || 1,
-        questionId: question?.id || null,
-        questionKey,
-        answerJson,
-        stepNumber
+        stepNumber,
+        responses: formattedResponses
       });
     } catch (err) {
-      console.error(`Failed to save step ${stepNumber} response for ${questionKey}:`, err);
+      console.error(`Failed to save step ${stepNumber} responses:`, err);
     }
   };
 
@@ -276,35 +280,35 @@ export default function OnboardingScreens({
       }
     }
 
-    // 2. Persist step response with loader
+    // 2. Persist step response with loader (Single API call per step)
     if (currentUser?.id && isGoingForward) {
       setIsSavingStep(true);
       try {
         if (activeScreen === 'onboarding-age') {
-          await saveStepResponse('age_group', ageGroup, 1);
+          await saveStepResponses(1, [{ key: 'age_group', value: ageGroup }]);
         } else if (activeScreen === 'onboarding-lifestyle') {
-          await saveStepResponse('lifestyles', selectedLifestyles, 2);
+          await saveStepResponses(2, [{ key: 'lifestyles', value: selectedLifestyles }]);
         } else if (activeScreen === 'onboarding-community') {
-          await Promise.all([
-            saveStepResponse('decision_style', decisionStyle, 3),
-            saveStepResponse('pod_size', podSize, 3)
+          await saveStepResponses(3, [
+            { key: 'decision_style', value: decisionStyle },
+            { key: 'pod_size', value: podSize }
           ]);
         } else if (activeScreen === 'onboarding-location') {
-          await Promise.all([
-            saveStepResponse('location_city', locationCity, 4),
-            saveStepResponse('location_radius', locationRadius.toString(), 4),
-            saveStepResponse('setting_preference', settingPreference, 4)
+          await saveStepResponses(4, [
+            { key: 'location_city', value: locationCity },
+            { key: 'location_radius', value: locationRadius.toString() },
+            { key: 'setting_preference', value: settingPreference }
           ]);
         } else if (activeScreen === 'onboarding-budget') {
-          await Promise.all([
-            saveStepResponse('budget_range', budgetRange, 5),
-            saveStepResponse('down_payment_tier', downPaymentTier, 5),
-            saveStepResponse('financing_preference', financingPreference, 5)
+          await saveStepResponses(5, [
+            { key: 'budget_range', value: budgetRange },
+            { key: 'down_payment_tier', value: downPaymentTier },
+            { key: 'financing_preference', value: financingPreference }
           ]);
         } else if (activeScreen === 'onboarding-intent') {
-          await saveStepResponse('housing_intent', housingIntent, 6);
+          await saveStepResponses(6, [{ key: 'housing_intent', value: housingIntent }]);
         } else if (activeScreen === 'onboarding-commitment') {
-          await saveStepResponse('commitment_timeline', commitmentTimeline, 7);
+          await saveStepResponses(7, [{ key: 'commitment_timeline', value: commitmentTimeline }]);
         }
       } catch (err) {
         console.error('Error during onboarding step auto-save:', err);

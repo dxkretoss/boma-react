@@ -268,80 +268,102 @@ serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
+        // =========================================================================
+    // 3. ACTION: SAVE-RESPONSE / SAVE-STEP (Supports 1 API call per step)
     // =========================================================================
-    // 3. ACTION: SAVE-RESPONSE
-    // =========================================================================
-    if (action === 'save-response') {
-      const { userId, questionnaireId, questionnaireVersion, questionId, questionKey, answerJson, stepNumber } = body;
+    if (action === 'save-response' || action === 'save-step') {
+      const { userId, questionnaireId, questionnaireVersion, stepNumber } = body;
 
-      if (!userId || !questionKey) {
+      if (!userId) {
         return new Response(
-          JSON.stringify({ error: 'userId and questionKey are required' }),
+          JSON.stringify({ error: 'userId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Normalize items list: supports both array of responses (batch save) and single question
+      const itemsToSave: Array<{ questionKey: string; answerJson: any; questionId?: string }> = [];
+      if (Array.isArray(body.responses) && body.responses.length > 0) {
+        for (const item of body.responses) {
+          if (item.questionKey || item.question_key) {
+            itemsToSave.push({
+              questionKey: item.questionKey || item.question_key,
+              answerJson: item.answerJson ?? item.answer_json ?? { value: item.value },
+              questionId: item.questionId || item.question_id,
+            });
+          }
+        }
+      } else if (body.questionKey || body.question_key) {
+        itemsToSave.push({
+          questionKey: body.questionKey || body.question_key,
+          answerJson: body.answerJson ?? body.answer_json ?? { value: body.value },
+          questionId: body.questionId || body.question_id,
+        });
+      }
+
+      if (itemsToSave.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'At least one questionKey or responses array is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       let finalQId = questionnaireId || 'bff45f03-5a51-4621-918e-88f7425e6cbb';
-      let finalQuestionId = questionId;
 
-      // Auto-resolve question_id if not supplied
-      if (!finalQuestionId) {
-        const { data: qData } = await supabaseAdmin
-          .from('onboarding_questions')
-          .select('id, questionnaire_id')
-          .eq('question_key', questionKey)
-          .maybeSingle();
+      for (const item of itemsToSave) {
+        let finalQuestionId = item.questionId;
 
-        if (qData?.id) {
-          finalQuestionId = qData.id;
-          finalQId = qData.questionnaire_id || finalQId;
-        } else {
-          // Create question entry on the fly
-          const { data: newQ, error: createQErr } = await supabaseAdmin
+        // Auto-resolve question_id if not supplied
+        if (!finalQuestionId) {
+          const { data: qData } = await supabaseAdmin
             .from('onboarding_questions')
-            .insert({
-              questionnaire_id: finalQId,
-              question_key: questionKey,
-              step_number: stepNumber || 1,
-              title: questionKey.replace(/_/g, ' '),
-              question_type: typeof answerJson?.values !== 'undefined' ? 'multiple_choice' : 'single_choice',
-              is_required: true,
-              is_active: true,
-              display_order: (stepNumber || 1) * 2,
-              scoring_enabled: false
-            })
-            .select('id')
-            .single();
+            .select('id, questionnaire_id')
+            .eq('question_key', item.questionKey)
+            .maybeSingle();
 
-          if (!createQErr && newQ?.id) {
-            finalQuestionId = newQ.id;
+          if (qData?.id) {
+            finalQuestionId = qData.id;
+            finalQId = qData.questionnaire_id || finalQId;
+          } else {
+            // Create question entry on the fly if needed
+            const { data: newQ, error: createQErr } = await supabaseAdmin
+              .from('onboarding_questions')
+              .insert({
+                questionnaire_id: finalQId,
+                question_key: item.questionKey,
+                step_number: stepNumber || 1,
+                title: item.questionKey.replace(/_/g, ' '),
+                question_type: typeof item.answerJson?.values !== 'undefined' ? 'multiple_choice' : 'single_choice',
+                is_required: true,
+                is_active: true,
+                display_order: (stepNumber || 1) * 2,
+                scoring_enabled: false
+              })
+              .select('id')
+              .single();
+
+            if (!createQErr && newQ?.id) {
+              finalQuestionId = newQ.id;
+            }
           }
         }
+
+        if (finalQuestionId) {
+          const { error: responseError } = await supabaseAdmin
+            .from('onboarding_responses')
+            .upsert({
+              user_id: userId,
+              questionnaire_id: finalQId,
+              questionnaire_version: questionnaireVersion || 1,
+              question_id: finalQuestionId,
+              question_key: item.questionKey,
+              answer_json: item.answerJson,
+              answered_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,question_id' });
+
+          if (responseError) throw responseError;
+        }
       }
-
-      if (!finalQuestionId) {
-        return new Response(
-          JSON.stringify({ error: `Could not resolve question ID for key: ${questionKey}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Upsert answer
-      const { error: responseError } = await supabaseAdmin
-        .from('onboarding_responses')
-        .upsert({
-          user_id: userId,
-          questionnaire_id: finalQId,
-          questionnaire_version: questionnaireVersion || 1,
-          question_id: finalQuestionId,
-          question_key: questionKey,
-          answer_json: answerJson,
-          answered_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,question_id' });
-
-      if (responseError) throw responseError;
 
       // Update progress to the step being saved
       const nextStep = stepNumber || 1;
@@ -358,10 +380,14 @@ serve(async (req) => {
         }, { onConflict: 'user_id' });
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Response saved successfully.', current_step: nextStep }),
+        JSON.stringify({ 
+          success: true, 
+          message: `${itemsToSave.length} response(s) saved successfully for step ${nextStep}.`, 
+          current_step: nextStep 
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
+    }  }
 
     // =========================================================================
     // 4. ACTION: SUBMIT-ONBOARDING

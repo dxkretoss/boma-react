@@ -209,9 +209,9 @@
           }
         },
         {
-          "name": "2.3 Step 1 - Save Age Group",
+          "name": "2.3 Step 1 - Save Demographics (Age Group)",
           "request": {
-            "description": "Saves Step 1 age tier response (options: '18–30 years', '31–60 years', '61+ years').",
+            "description": "Saves Step 1 age tier in 1 API call (options: '18–30 years', '31–60 years', '61+ years').",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -219,7 +219,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"age_group\",\n  \"stepNumber\": 1,\n  \"answerJson\": {\n    \"value\": \"31–60 years\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 1,\n  \"responses\": [\n    {\n      \"questionKey\": \"age_group\",\n      \"answerJson\": { \"value\": \"31–60 years\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
@@ -227,7 +227,7 @@
         {
           "name": "2.4 Step 2 - Save Lifestyle Values",
           "request": {
-            "description": "Saves Step 2 multiple-choice lifestyle values (options: 'Quiet & low-key', 'Eco-conscious', 'Shared meals', 'Pet-friendly', 'Remote work', 'Community garden').",
+            "description": "Saves Step 2 multiple-choice lifestyle values in 1 API call (options: 'Quiet & low-key', 'Eco-conscious', 'Shared meals', 'Pet-friendly', 'Remote work', 'Community garden').",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -235,15 +235,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"lifestyles\",\n  \"stepNumber\": 2,\n  \"answerJson\": {\n    \"values\": [\"Quiet & low-key\", \"Pet-friendly\"]\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 2,\n  \"responses\": [\n    {\n      \"questionKey\": \"lifestyles\",\n      \"answerJson\": { \"values\": [\"Quiet & low-key\", \"Pet-friendly\"] }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.5 Step 3 - Save Decision Style",
+          "name": "2.5 Step 3 - Save Community Preferences (Decision Style & Pod Size in 1 Call)",
           "request": {
-            "description": "Saves Step 3 decision making style (options: 'consensus', 'delegated', 'flexible').",
+            "description": "Saves all Step 3 questions (Decision Style + Pod Size) simultaneously in 1 single API call.",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -251,15 +251,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"decision_style\",\n  \"stepNumber\": 3,\n  \"answerJson\": {\n    \"value\": \"consensus\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 3,\n  \"responses\": [\n    {\n      \"questionKey\": \"decision_style\",\n      \"answerJson\": { \"value\": \"consensus\" }\n    },\n    {\n      \"questionKey\": \"pod_size\",\n      \"answerJson\": { \"value\": \"7–10 households\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.6 Step 3 - Save Pod Size",
+          "name": "2.6 Step 4 - Save Location Bounds (City, Radius & Setting in 1 Call)",
           "request": {
-            "description": "Saves Step 3 preferred Pod size (options: '4–6 households', '7–10 households', '10+ households').",
+            "description": "Saves all Step 4 location questions (City + Search Radius + Setting Preference) simultaneously in 1 single API call.",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -267,15 +267,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"pod_size\",\n  \"stepNumber\": 3,\n  \"answerJson\": {\n    \"value\": \"7–10 households\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 4,\n  \"responses\": [\n    {\n      \"questionKey\": \"location_city\",\n      \"answerJson\": { \"value\": \"Atlanta, GA\" }\n    },\n    {\n      \"questionKey\": \"location_radius\",\n      \"answerJson\": { \"value\": \"45\" }\n    },\n    {\n      \"questionKey\": \"setting_preference\",\n      \"answerJson\": { \"value\": \"urban\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.7 Step 4 - Save Location City",
+          "name": "2.7 Step 5 - Save Budget & Financing (Budget, Down Payment & Financing in 1 Call)",
           "request": {
-            "description": "Saves Step 4 target city / metro area.",
+            "description": "Saves all Step 5 financial questions (Purchase Budget + Down Payment Tier + Financing Preference) simultaneously in 1 single API call.",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -283,15 +283,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"location_city\",\n  \"stepNumber\": 4,\n  \"answerJson\": {\n    \"value\": \"Atlanta, GA\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 5,\n  \"responses\": [\n    {\n      \"questionKey\": \"budget_range\",\n      \"answerJson\": { \"value\": \"$350,000 – $450,000\" }\n    },\n    {\n      \"questionKey\": \"down_payment_tier\",\n      \"answerJson\": { \"value\": \"5–10%\" }\n    },\n    {\n      \"questionKey\": \"financing_preference\",\n      \"answerJson\": { \"value\": \"traditional mortgage\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.8 Step 4 - Save Location Radius",
+          "name": "2.8 Step 6 - Save Primary Housing Intent",
           "request": {
-            "description": "Saves Step 4 search radius in miles (e.g. '45', range 5-150).",
+            "description": "Saves Step 6 primary housing intent in 1 API call (options: 'purchase', 'co-develop', 'investment', 'co-living').",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -299,15 +299,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"location_radius\",\n  \"stepNumber\": 4,\n  \"answerJson\": {\n    \"value\": \"45\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 6,\n  \"responses\": [\n    {\n      \"questionKey\": \"housing_intent\",\n      \"answerJson\": { \"value\": \"purchase\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.9 Step 4 - Save Setting Preference",
+          "name": "2.9 Step 7 - Save Commitment Duration",
           "request": {
-            "description": "Saves Step 4 setting preference (options: 'urban', 'suburban', 'rural').",
+            "description": "Saves Step 7 minimum commitment timeline in 1 API call (options: '2+ years', '5+ years', 'flexible').",
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
@@ -315,93 +315,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"setting_preference\",\n  \"stepNumber\": 4,\n  \"answerJson\": {\n    \"value\": \"urban\"\n  }\n}"
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"stepNumber\": 7,\n  \"responses\": [\n    {\n      \"questionKey\": \"commitment_timeline\",\n      \"answerJson\": { \"value\": \"2+ years\" }\n    }\n  ]\n}"
             },
             "url": { "raw": "{{customOnboardingUrl}}" }
           }
         },
         {
-          "name": "2.10 Step 5 - Save Budget Range",
-          "request": {
-            "description": "Saves Step 5 estimated purchase budget range.",
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "apikey", "value": "{{anonKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"budget_range\",\n  \"stepNumber\": 5,\n  \"answerJson\": {\n    \"value\": \"$350,000 – $450,000\"\n  }\n}"
-            },
-            "url": { "raw": "{{customOnboardingUrl}}" }
-          }
-        },
-        {
-          "name": "2.11 Step 5 - Save Down Payment Tier",
-          "request": {
-            "description": "Saves Step 5 down payment percentage (options: '0–5%', '5–10%', '10–20%', '20%+').",
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "apikey", "value": "{{anonKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"down_payment_tier\",\n  \"stepNumber\": 5,\n  \"answerJson\": {\n    \"value\": \"5–10%\"\n  }\n}"
-            },
-            "url": { "raw": "{{customOnboardingUrl}}" }
-          }
-        },
-        {
-          "name": "2.12 Step 5 - Save Financing Preference",
-          "request": {
-            "description": "Saves Step 5 financing preference (options: 'traditional mortgage', 'shared equity', 'co-development', 'undecided').",
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "apikey", "value": "{{anonKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"financing_preference\",\n  \"stepNumber\": 5,\n  \"answerJson\": {\n    \"value\": \"traditional mortgage\"\n  }\n}"
-            },
-            "url": { "raw": "{{customOnboardingUrl}}" }
-          }
-        },
-        {
-          "name": "2.13 Step 6 - Save Housing Intent",
-          "request": {
-            "description": "Saves Step 6 primary housing intent (options: 'purchase', 'co-develop', 'investment', 'co-living').",
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "apikey", "value": "{{anonKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"housing_intent\",\n  \"stepNumber\": 6,\n  \"answerJson\": {\n    \"value\": \"purchase\"\n  }\n}"
-            },
-            "url": { "raw": "{{customOnboardingUrl}}" }
-          }
-        },
-        {
-          "name": "2.14 Step 7 - Save Commitment Timeline",
-          "request": {
-            "description": "Saves Step 7 minimum commitment timeline (options: '2+ years', '5+ years', 'flexible').",
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "apikey", "value": "{{anonKey}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionKey\": \"commitment_timeline\",\n  \"stepNumber\": 7,\n  \"answerJson\": {\n    \"value\": \"2+ years\"\n  }\n}"
-            },
-            "url": { "raw": "{{customOnboardingUrl}}" }
-          }
-        },
-        {
-          "name": "2.15 Submit Onboarding & Compute Readiness Score",
+          "name": "2.10 Submit Onboarding & Compute Readiness Score",
           "request": {
             "description": "Submits final profile responses, sets status to UNDER_REVIEW, and automatically calculates the user's Readiness Score using active scoring rules.",
             "method": "POST",
@@ -417,7 +337,7 @@
           }
         },
         {
-          "name": "2.16 Get Score Calculation Breakdown",
+          "name": "2.11 Get Score Calculation Breakdown",
           "request": {
             "description": "Fetches category score breakdown (budget, intent, commitment, community) and total Readiness Score.",
             "method": "POST",

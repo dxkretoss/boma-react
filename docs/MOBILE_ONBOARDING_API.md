@@ -133,34 +133,48 @@ Retrieves the user's current step, progress status (`NOT_STARTED`, `IN_PROGRESS`
 
 ---
 
-### Step 3: Auto-Save Step Response (`save-response`)
-Call this whenever the user answers or navigates between steps to ensure progress is never lost.
+### Step 3: Save Step Responses (`save-response` / `save-step`)
+Call this whenever the user clicks **Continue** on any step. **All questions in the step are saved simultaneously in 1 single API call!**
 
-**Request Body (Single Choice):**
+**Request Body (Multi-Question Step - e.g. Step 3 Community Preferences):**
 ```json
 {
   "action": "save-response",
   "userId": "c1f7b0a8-3691-49e3-82b5-31f0d367f08c",
-  "questionnaireId": "a1b2c3d4-...",
-  "questionnaireVersion": 1,
-  "questionId": "q1-uuid",
-  "questionKey": "age_group",
-  "answerJson": { "value": "25-34" },
-  "stepNumber": 1
+  "stepNumber": 3,
+  "responses": [
+    {
+      "questionKey": "decision_style",
+      "answerJson": { "value": "consensus" }
+    },
+    {
+      "questionKey": "pod_size",
+      "answerJson": { "value": "7–10 households" }
+    }
+  ]
 }
 ```
 
-**Request Body (Multiple Choice - e.g. Lifestyles):**
+**Request Body (Multi-Question Step - e.g. Step 4 Location & Setting):**
 ```json
 {
   "action": "save-response",
   "userId": "c1f7b0a8-3691-49e3-82b5-31f0d367f08c",
-  "questionnaireId": "a1b2c3d4-...",
-  "questionnaireVersion": 1,
-  "questionId": "q2-uuid",
-  "questionKey": "lifestyles",
-  "answerJson": { "values": ["remote-work", "creative", "family-friendly"] },
-  "stepNumber": 2
+  "stepNumber": 4,
+  "responses": [
+    {
+      "questionKey": "location_city",
+      "answerJson": { "value": "Atlanta, GA" }
+    },
+    {
+      "questionKey": "location_radius",
+      "answerJson": { "value": "45" }
+    },
+    {
+      "questionKey": "setting_preference",
+      "answerJson": { "value": "urban" }
+    }
+  ]
 }
 ```
 
@@ -168,8 +182,8 @@ Call this whenever the user answers or navigates between steps to ensure progres
 ```json
 {
   "success": true,
-  "message": "Response saved successfully.",
-  "current_step": 2
+  "message": "3 response(s) saved successfully for step 4.",
+  "current_step": 4
 }
 ```
 
