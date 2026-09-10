@@ -235,21 +235,24 @@ Use to resume where the mobile user left off.
 }
 ```
 
-#### 2.3 Auto-Save Step Response (`save-response`)
-Save answers on each step transition or option tap.
+#### 2.3 Save Step Responses (`save-response` / `save-step`)
+Saves all answers for a given step in **1 single API call** when the user taps Continue.
 ```json
-// Request
+// Request (Multi-Question Step e.g. Step 3)
 {
   "action": "save-response",
   "userId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82",
-  "questionnaireId": "8f8b89f2-25e6cbb4-...",
-  "questionnaireVersion": 1,
-  "questionId": "q-1",
-  "questionKey": "age_group",
-  "answerJson": {
-    "value": "25-34"
-  },
-  "stepNumber": 1
+  "stepNumber": 3,
+  "responses": [
+    {
+      "questionKey": "decision_style",
+      "answerJson": { "value": "consensus" }
+    },
+    {
+      "questionKey": "pod_size",
+      "answerJson": { "value": "7–10 households" }
+    }
+  ]
 }
 ```
 
