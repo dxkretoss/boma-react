@@ -268,7 +268,9 @@ serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-        // =========================================================================
+    }
+
+    // =========================================================================
     // 3. ACTION: SAVE-RESPONSE / SAVE-STEP (Supports 1 API call per step)
     // =========================================================================
     if (action === 'save-response' || action === 'save-step') {
@@ -387,7 +389,7 @@ serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }  }
+    }
 
     // =========================================================================
     // 4. ACTION: SUBMIT-ONBOARDING
