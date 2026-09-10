@@ -386,9 +386,6 @@ function App() {
   // Determine active shell mode
   const shellMode = SHELL_MODES[activeScreen] || 'marketing';
   const isAppOrAdmin = shellMode === 'app' || (shellMode === 'admin' && !!adminUser);
-  const isExistingPodFlow = [
-    'pod-create', 'pod-member-onboarding'
-  ].includes(activeScreen);
 
   // Dynamic layout wrappers to match index.html styling hierarchy
   let shellFrameClass = "flex-1 w-full flex flex-col md:flex-row relative";
@@ -401,13 +398,8 @@ function App() {
     shellFrameClass = "flex-1 min-h-0 w-full max-w-[1180px] mx-auto grid grid-cols-1 md:grid-cols-[236px_1fr] items-stretch relative overflow-hidden";
     mainContentClass = "h-full overflow-y-auto w-full pb-16 px-1";
   } else if (shellMode === 'onboarding') {
-    if (isExistingPodFlow) {
-      shellFrameClass = "flex-1 w-full mx-auto min-h-[calc(100vh-64px)] relative px-4 md:px-6";
-      mainContentClass = "flex-1 w-full min-h-[500px] py-6";
-    } else {
-      shellFrameClass = "flex-1 w-full grid grid-cols-1 md:grid-cols-[400px_1fr] items-stretch min-h-[calc(100vh-64px)] relative";
-      mainContentClass = "flex-1 w-full min-h-[500px] flex items-center";
-    }
+    shellFrameClass = "flex-1 w-full grid grid-cols-1 md:grid-cols-[400px_1fr] items-stretch min-h-[calc(100vh-64px)] relative";
+    mainContentClass = "flex-1 w-full min-h-[500px] flex items-center";
   } else if (shellMode === 'auth') {
     shellFrameClass = "flex-1 w-full min-h-screen relative";
     mainContentClass = activeScreen === 'admin-login'
@@ -483,7 +475,7 @@ function App() {
         )}
 
         {/* Render OnbPanel if in onboarding shell */}
-        {shellMode === 'onboarding' && !isExistingPodFlow && (
+        {shellMode === 'onboarding' && (
           <OnbPanel activeScreen={activeScreen} />
         )}
 

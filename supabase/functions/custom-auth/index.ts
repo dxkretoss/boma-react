@@ -70,51 +70,162 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
 }
 
 function getEmailTemplate(type: string, email: string, code: string, podName?: string, inviterName?: string, inviteUrl?: string) {
+  const brandHeader = `
+    <!-- Brand Header -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 1px solid #EFEAE3; padding-bottom: 20px; margin-bottom: 24px;">
+      <tr>
+        <td style="vertical-align: middle;">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align: middle;">
+                <div style="background-color: #2E2330; width: 40px; height: 40px; border-radius: 10px; text-align: center; line-height: 40px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 800; color: #F7F5F0;">
+                  B
+                </div>
+              </td>
+              <td style="padding-left: 12px; vertical-align: middle;">
+                <div style="font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 800; color: #2E2330; letter-spacing: 2px; line-height: 1;">
+                  BOMA
+                </div>
+                <div style="font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #C46A4A; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
+                  Community Matching & Co-Living
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const emailWrapper = (contentHtml: string) => `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>BOMA</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #F7F5F0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F7F5F0; padding: 40px 16px;">
+        <tr>
+          <td align="center">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #FFFFFF; border: 1px solid #E5DDD2; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(46, 35, 48, 0.08);">
+              <!-- Top Terracotta Accent Bar -->
+              <tr>
+                <td height="5" style="background-color: #C46A4A; font-size: 0; line-height: 0;">&nbsp;</td>
+              </tr>
+              <!-- Inner Content -->
+              <tr>
+                <td style="padding: 32px 36px 36px 36px; text-align: left;">
+                  ${brandHeader}
+                  ${contentHtml}
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #FAF8F5; padding: 22px 36px; border-top: 1px solid #E5DDD2; text-align: center;">
+                  <p style="margin: 0 0 6px 0; font-family: 'Inter', -apple-system, sans-serif; font-size: 12px; font-weight: 600; color: #2E2330;">
+                    BOMA — Finding neighbors who actually fit.
+                  </p>
+                  <p style="margin: 0; font-family: 'Inter', -apple-system, sans-serif; font-size: 11px; color: #7A746B; line-height: 1.4;">
+                    Lifestyle Matching · Pod Formations · Co-Living Agreements
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
   if (type === 'invitation') {
     return {
       subject: `You've Been Invited to Join a BOMA Pod`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
-          <h2 style="color: #0E4C8C; margin-top: 0; font-size: 20px;">You've Been Invited to Join a BOMA Pod</h2>
-          <p style="color: #2F5FE0; font-weight: bold; font-size: 16px; margin: 8px 0;">${podName || 'A Pod'}</p>
-          <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">
-            <strong>${inviterName || 'A neighbor'}</strong> has invited you to join their existing BOMA Pod.
-          </p>
-          <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">
-            BOMA helps groups organize their community journey before moving into The Commons.
-          </p>
-          <a href="${inviteUrl || '#'}" style="display: inline-block; background: #2F5FE0; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; margin: 20px 0;">Accept Invitation</a>
-          <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this or do not wish to join, you can safely ignore this email.</p>
+      html: emailWrapper(`
+        <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 700; color: #2E2330; margin: 0 0 12px 0;">
+          You've Been Invited to Join a Pod
+        </h2>
+        <div style="background-color: #F7EDE7; border: 1px solid #EAD8CE; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; color: #C46A4A; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">POD INVITATION</span>
+          <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; font-weight: 700; color: #2E2330;">${podName || 'A BOMA Pod'}</span>
         </div>
-      `,
+        <p style="font-size: 14px; line-height: 1.6; color: #5C544E; margin: 0 0 16px 0;">
+          <strong style="color: #2E2330;">${inviterName || 'A neighbor'}</strong> has invited you to join their existing Pod on BOMA.
+        </p>
+        <p style="font-size: 13.5px; line-height: 1.6; color: #7A746B; margin: 0 0 24px 0;">
+          BOMA helps groups align on lifestyle preferences, shared governance, and co-living agreements before taking the next step into The Commons.
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${inviteUrl || '#'}" style="background-color: #C46A4A; color: #FFFFFF; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; padding: 13px 32px; border-radius: 9999px; text-decoration: none; display: inline-block; box-shadow: 0 4px 12px rgba(196, 106, 74, 0.25);">
+            Accept Pod Invitation
+          </a>
+        </div>
+        <p style="font-size: 11.5px; color: #9C968E; line-height: 1.5; margin: 24px 0 0 0; border-top: 1px solid #F2ECE4; padding-top: 16px;">
+          If you did not request this or do not wish to join, you can safely ignore this email.
+        </p>
+      `),
     };
   }
 
   if (type === 'reset') {
     return {
       subject: 'Reset your BOMA password',
-      html: `
-        <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
-          <h2 style="color: #0E4C8C; margin-top: 0;">Reset your password</h2>
-          <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Use the following verification code or click the button below to reset your BOMA password:</p>
-          <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #0E4C8C; background: #E1EBF7; padding: 12px 24px; border-radius: 8px; width: fit-content; margin: 20px 0;">${code}</div>
-          <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this password reset, you can safely ignore this email.</p>
+      html: emailWrapper(`
+        <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 700; color: #2E2330; margin: 0 0 12px 0;">
+          Reset your password
+        </h2>
+        <p style="font-size: 14px; line-height: 1.6; color: #5C544E; margin: 0 0 20px 0;">
+          We received a request to reset your BOMA password. Use the following 6-digit verification code to verify your identity and set a new password:
+        </p>
+        
+        <!-- OTP Box -->
+        <div style="text-align: center; margin: 24px 0;">
+          <div style="background-color: #F7EDE7; border: 1px solid #EAD8CE; border-radius: 12px; padding: 16px 28px; display: inline-block;">
+            <span style="font-family: 'IBM Plex Mono', 'JetBrains Mono', Courier, monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #C46A4A;">
+              ${code}
+            </span>
+          </div>
         </div>
-      `,
+
+        <p style="font-size: 13px; line-height: 1.5; color: #7A746B; margin: 0 0 16px 0; text-align: center;">
+          This code will expire in 15 minutes.
+        </p>
+        <p style="font-size: 11.5px; color: #9C968E; line-height: 1.5; margin: 24px 0 0 0; border-top: 1px solid #F2ECE4; padding-top: 16px;">
+          If you did not request a password reset, you can safely ignore this message. Your password will remain unchanged.
+        </p>
+      `),
     };
   }
 
-  // Default: verification code
+  // Default: Registration email verification code
   return {
     subject: 'Verify your BOMA email address',
-    html: `
-      <div style="font-family: sans-serif; max-width: 500px; padding: 24px; border: 1px solid #D7E2EE; border-radius: 16px;">
-        <h2 style="color: #0E4C8C; margin-top: 0;">Welcome to BOMA!</h2>
-        <p style="color: #5B6B82; font-size: 14px; line-height: 1.6;">Please use the following 6-digit code to verify your email address and continue:</p>
-        <div style="font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #0E4C8C; background: #E1EBF7; padding: 12px 24px; border-radius: 8px; width: fit-content; margin: 20px 0;">${code}</div>
-        <p style="color: #5B6B82; font-size: 12px; margin-top: 24px;">If you did not request this, you can safely ignore this email.</p>
+    html: emailWrapper(`
+      <h2 style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 700; color: #2E2330; margin: 0 0 12px 0;">
+        Welcome to BOMA
+      </h2>
+      <p style="font-size: 14px; line-height: 1.6; color: #5C544E; margin: 0 0 20px 0;">
+        Please use the following 6-digit verification code to confirm your email address and continue setting up your profile:
+      </p>
+
+      <!-- OTP Box -->
+      <div style="text-align: center; margin: 24px 0;">
+        <div style="background-color: #F7EDE7; border: 1px solid #EAD8CE; border-radius: 12px; padding: 16px 28px; display: inline-block;">
+          <span style="font-family: 'IBM Plex Mono', 'JetBrains Mono', Courier, monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #C46A4A;">
+            ${code}
+          </span>
+        </div>
       </div>
-    `,
+
+      <p style="font-size: 13px; line-height: 1.5; color: #7A746B; margin: 0 0 16px 0; text-align: center;">
+        Enter this code in your browser to verify your account.
+      </p>
+      <p style="font-size: 11.5px; color: #9C968E; line-height: 1.5; margin: 24px 0 0 0; border-top: 1px solid #F2ECE4; padding-top: 16px;">
+        If you did not create a BOMA account, you can safely ignore this email.
+      </p>
+    `),
   };
 }
 
