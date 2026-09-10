@@ -517,10 +517,6 @@ Pre-flight findings:
 3. **Status Cards & Metrics:** Metric cards must track real business or community metrics, never technical plumbing.
    - ❌ "API Sync: Live & Edge Synced"
    - ✅ "Draft Guides", "Active Members", "Total Applications"
-4. **Error & Toast Messages:** Keep errors friendly and actionable.
-   - ❌ "Failed to load matching weights from database."
-   - ✅ "Unable to load matching weights. Please try again."
-
 ## Rule 13 — Secure Password Hashing & Sensitive Data Protection (MANDATORY)
 
 **Never save or store passwords in plain text anywhere in Supabase tables, Edge Functions, or storage.** Passwords are highly sensitive credentials and must ALWAYS be securely hashed before being stored in the database.
@@ -536,6 +532,38 @@ Pre-flight findings:
 2. **Verify Hashes on Login:** During authentication / login, never compare passwords with direct string equality against raw stored values. Use `bcrypt.compare(candidatePassword, storedHash)` to verify credentials.
 3. **Never Return Passwords in API Responses:** Never expose or return user password hashes in frontend responses, API payloads, or client state.
 4. **Auto-Upgrade Legacy Records:** When authenticating legacy unhashed accounts, verify and immediately upgrade the stored record to a secure bcrypt hash upon successful login.
+
+---
+
+## Rule 14 — Git Push Policy: NEVER Run Git Push Automatically (MANDATORY)
+
+**The AI coding assistant must NEVER run `git push` directly or autonomously under any circumstances.** The USER will always review and push git commits themselves.
+
+### Why
+
+- Pushing directly to remote branches without user inspection can overwrite remote work, trigger unreviewed CI/CD pipelines, or publish work-in-progress code prematurely.
+- The user maintains complete control over when and what gets pushed to GitHub / remote repositories.
+
+### Rules
+
+1. **Never execute `git push`**: Do not run `git push` in any tool call, terminal command, or automated script.
+2. **User Push Only**: When changes or commits are completed, let the user know they are ready so the user can run `git push` themselves.
+
+---
+
+## Rule 15 — Onboarding Step & Batch API Pattern (1 Call Per Step) (MANDATORY)
+
+**When completing onboarding questionnaire steps with multiple questions (e.g. Step 3, Step 4, Step 5), the client must ALWAYS send all responses for that step in a SINGLE API call using the `responses: [ ... ]` array.** Never make multiple separate HTTP calls for individual questions in the same step.
+
+### Why
+
+- Multiple HTTP calls for a single step create redundant network latency, poor mobile UX, and risks of partial data saves.
+- Batch saving in 1 call ensures atomic step completion and seamless synchronization with Postman collections and mobile SDKs.
+
+### Rules
+
+1. **Single Request per Step**: `save-response` must be called once per step with `responses: [{ questionKey, answerJson }, ...]`.
+2. **Postman & Documentation Sync**: Whenever an Edge Function or onboarding question is added or modified, immediately update `docs/BOMA_Full_Mobile_API.postman_collection.json`, `docs/BOMA_Master_API.postman_collection.json`, `docs/mobile_onboarding_keys.json`, and `docs/MOBILE_ONBOARDING_API.md`.
 
 ---
 
@@ -556,4 +584,8 @@ Pre-flight findings:
 - [ ] **No technical jargon ("Supabase", "database", "API sync", etc.) in any user-facing text, loaders, or empty states.**
 - [ ] **All backend/data saving & dynamic operations have a corresponding Supabase Edge Function in `supabase/functions/` for mobile app developer consumption.**
 - [ ] **Never store plain text passwords in Supabase — all passwords must be hashed using secure algorithms (bcrypt) before database insertion/updating.**
+- [ ] **Multi-question onboarding steps must ALWAYS save via 1 single API call (`responses: [...]`) to `custom-onboarding`.**
+- [ ] **Keep Postman collections (`docs/BOMA_Full_Mobile_API.postman_collection.json`) and API docs updated.**
+- [ ] **NEVER execute `git push` — the user will push all changes to remote repositories manually.**
+
 
