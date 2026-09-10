@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, LogOut, User, BookOpen, Menu, X, Shield, Bell } from 'lucide-react';
 import { SHELL_MODES } from '../constants/screens';
 import { supabase } from '../supabaseClient';
+import { fetchUserProfile } from '../api/users';
+import { fetchPodDetails } from '../api/pods';
 import Avatar from './Avatar';
 
 export default function Header({
@@ -61,14 +63,14 @@ export default function Header({
       try {
         const notifs = [];
 
-        // Fetch fresh profile status to support real-time updates
-        const { data: freshUser } = await supabase
-          .from('users')
-          .select('profile_status')
-          .eq('id', currentUser.id)
-          .maybeSingle();
-
-        const currentProfileStatus = freshUser?.profile_status || currentUser.profile_status;
+        // Fetch fresh profile status to support real-time updates via manage-users edge function
+        let currentProfileStatus = currentUser.profile_status;
+        try {
+          const freshUser = await fetchUserProfile(currentUser.id);
+          if (freshUser?.profile_status) currentProfileStatus = freshUser.profile_status;
+        } catch {
+          // fallback
+        }
 
         // 1. Profile Status
         if (currentProfileStatus === 'APPROVED') {
@@ -89,25 +91,12 @@ export default function Header({
           });
         }
 
-        // 2. Fetch pod details
-        const { data: podMember } = await supabase
-          .from('pod_members')
-          .select('pod_id, membership_status')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
+        // 2. Fetch pod details via manage-pods edge function
+        const pod = await fetchPodDetails(currentUser.id);
 
-        if (podMember) {
-          const { data: pod } = await supabase
-            .from('pods')
-            .select('*')
-            .eq('id', podMember.pod_id)
-            .single();
-
-          if (pod) {
-            const { data: allMems } = await supabase
-              .from('pod_members')
-              .select('*, user:users(name)')
-              .eq('pod_id', pod.id);
+        if (pod) {
+          const allMems = pod.members || [];
+          const podMember = allMems.find(m => m.user?.id === currentUser.id || m.id === currentUser.id);
 
             // Match proposal
             if (pod.status === 'CREATING') {
@@ -172,7 +161,6 @@ export default function Header({
               });
             }
           }
-        }
 
         setNotifications(notifs);
       } catch (err) {
@@ -181,9 +169,7 @@ export default function Header({
     }
 
     loadNotifications();
-    const interval = setInterval(loadNotifications, 5000); // Poll every 5s for fast updates
-    return () => clearInterval(interval);
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.profile_status]);
 
   const handleAcctTriggerClick = (e) => {
     e.stopPropagation();

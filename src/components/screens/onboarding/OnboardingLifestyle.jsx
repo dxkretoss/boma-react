@@ -1,7 +1,7 @@
 import React from 'react';
-import { ArrowLeft, Moon, Leaf, Utensils, Dog, Briefcase, Heart, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Moon, Leaf, Utensils, Dog, Briefcase, Heart, HelpCircle, Loader2 } from 'lucide-react';
 
-export default function OnboardingLifestyle({ selectedLifestyles, toggleLifestyle, setActiveScreen, stepProgressBar, options }) {
+export default function OnboardingLifestyle({ selectedLifestyles, toggleLifestyle, setActiveScreen, stepProgressBar, options, isSavingStep }) {
   const getIconForLabel = (lbl = '') => {
     const l = lbl.toLowerCase();
     if (l.includes('quiet') || l.includes('low-key')) return Moon;
@@ -55,15 +55,24 @@ export default function OnboardingLifestyle({ selectedLifestyles, toggleLifestyl
       <div className="flex items-center gap-3.5">
         <button
           onClick={() => setActiveScreen('onboarding-age')}
-          className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-1.5 hover:bg-panel-alt transition-all cursor-pointer"
+          disabled={isSavingStep}
+          className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-3 rounded-xl flex items-center gap-1.5 hover:bg-panel-alt transition-all cursor-pointer disabled:opacity-50"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         <button
           onClick={() => setActiveScreen('onboarding-community')}
-          className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer shadow-md"
+          disabled={isSavingStep}
+          className="bg-amber text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#b05d3e] active:scale-95 transition-all cursor-pointer shadow-md disabled:opacity-75 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Continue
+          {isSavingStep ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving...</span>
+            </>
+          ) : (
+            'Continue'
+          )}
         </button>
       </div>
     </div>

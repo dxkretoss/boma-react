@@ -168,37 +168,26 @@ function App() {
         if (session?.user) {
           const email = session.user.email;
 
-          // Check if this Google user exists in our custom 'users' table
-          let { data: customUser, error: queryError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email.toLowerCase().trim())
-            .maybeSingle();
+          // Check if this Google user exists in our custom 'users' table via manage-users edge function
+          let customUser = null;
+          try {
+            customUser = await fetchUserProfile(session.user.id);
+          } catch {
+            // User not found yet
+          }
 
-          if (queryError) throw queryError;
-
-          // If they don't exist in our custom 'users' table, register them automatically!
+          // If they don't exist in our custom 'users' table, register them automatically via custom-auth
           if (!customUser) {
-            const { data: newUser, error: insertError } = await supabase
-              .from('users')
-              .insert([
-                {
-                  id: session.user.id,
-                  email: email.toLowerCase().trim(),
-                  password: 'google_oauth_sso_' + Math.random().toString(36).substring(2, 10),
-                  name: session.user.user_metadata?.full_name || 'Google User',
-                  role: 'user',
-                  user_onboarded: false,
-                  email_verified: true,
-                  profile_status: 'INCOMPLETE',
-                  matching_status: 'NOT_ELIGIBLE'
-                }
-              ])
-              .select()
-              .single();
-
-            if (insertError) throw insertError;
-            customUser = newUser;
+            try {
+              const { customRegister } = await import('./auth');
+              customUser = await customRegister(
+                email.toLowerCase().trim(),
+                'google_oauth_sso_' + Math.random().toString(36).substring(2, 10),
+                session.user.user_metadata?.full_name || 'Google User'
+              );
+            } catch (regErr) {
+              console.warn('OAuth auto-registration note:', regErr);
+            }
           }
 
           // Save session

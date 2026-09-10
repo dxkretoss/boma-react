@@ -54,6 +54,7 @@ export default function OnboardingScreens({
   // Database-driven questionnaire state
   const [questionnaire, setQuestionnaire] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSavingStep, setIsSavingStep] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittingMessage, setSubmittingMessage] = useState('Saving your answers...');
 
@@ -275,8 +276,9 @@ export default function OnboardingScreens({
       }
     }
 
-    // 2. Persist step response
-    if (currentUser?.id && questionnaire) {
+    // 2. Persist step response with loader
+    if (currentUser?.id && questionnaire && isGoingForward) {
+      setIsSavingStep(true);
       try {
         if (activeScreen === 'onboarding-age') {
           await saveStepResponse('age_group', ageGroup, 1);
@@ -300,6 +302,8 @@ export default function OnboardingScreens({
         }
       } catch (err) {
         console.error('Error during onboarding step auto-save:', err);
+      } finally {
+        setIsSavingStep(false);
       }
     }
 
@@ -411,15 +415,17 @@ export default function OnboardingScreens({
         <EntryPath setActiveScreen={setActiveScreen} currentUser={currentUser} setCurrentUser={setCurrentUser} />
       )}
       {activeScreen === 'onboarding-welcome' && (
-        <OnboardingWelcome setActiveScreen={handleOnboardingNavigation} />
+        <OnboardingWelcome setActiveScreen={handleOnboardingNavigation} isSavingStep={isSavingStep} />
       )}
       {activeScreen === 'onboarding-age' && (
         <OnboardingAge
           ageGroup={ageGroup}
+          setAgeGroup={setAgeGroup}
           handleAgeSelect={handleAgeSelect}
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
           options={getQuestionOptions('age_group')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-lifestyle' && (
@@ -429,6 +435,7 @@ export default function OnboardingScreens({
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
           options={getQuestionOptions('lifestyles')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-community' && (
@@ -441,6 +448,7 @@ export default function OnboardingScreens({
           stepProgressBar={stepProgressBar}
           decisionOptions={getQuestionOptions('decision_style')}
           podSizeOptions={getQuestionOptions('pod_size')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-location' && (
@@ -454,6 +462,7 @@ export default function OnboardingScreens({
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
           settingOptions={getQuestionOptions('setting_preference')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-budget' && (
@@ -468,6 +477,7 @@ export default function OnboardingScreens({
           stepProgressBar={stepProgressBar}
           downPaymentOptions={getQuestionOptions('down_payment_tier')}
           financingOptions={getQuestionOptions('financing_preference')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-intent' && (
@@ -477,6 +487,7 @@ export default function OnboardingScreens({
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
           options={getQuestionOptions('housing_intent')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-commitment' && (
@@ -486,6 +497,7 @@ export default function OnboardingScreens({
           setActiveScreen={handleOnboardingNavigation}
           stepProgressBar={stepProgressBar}
           options={getQuestionOptions('commitment_timeline')}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-review' && (
@@ -502,6 +514,7 @@ export default function OnboardingScreens({
           commitmentTimeline={commitmentTimeline}
           setActiveScreen={handleOnboardingNavigation}
           submitOnboarding={submitOnboarding}
+          isSavingStep={isSavingStep}
         />
       )}
       {activeScreen === 'onboarding-score' && (

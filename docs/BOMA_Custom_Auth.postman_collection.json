@@ -12,6 +12,11 @@
       "type": "string"
     },
     {
+      "key": "customOnboardingUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/custom-onboarding",
+      "type": "string"
+    },
+    {
       "key": "sendEmailUrl",
       "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/send-verification-email",
       "type": "string"

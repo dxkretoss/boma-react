@@ -481,12 +481,18 @@ export default function PodHistory({
                 </p>
               </div>
 
-              {podStatus !== 'ACTIVE' && isUserAdmin && (
+              {isUserAdmin && (
                 <button
-                  onClick={() => setShowInviteModal(!showInviteModal)}
-                  className="bg-panel hover:bg-panel-alt border border-border text-ink text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                  onClick={() => {
+                    if (setActiveScreen) {
+                      setActiveScreen('pod-invite');
+                    } else {
+                      setShowInviteModal(!showInviteModal);
+                    }
+                  }}
+                  className="bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  <Plus className="w-3.5 h-3.5 text-amber" /> Invite Member
+                  <Plus className="w-3.5 h-3.5 text-white" /> Invite Member
                 </button>
               )}
             </div>

@@ -49,58 +49,6 @@ export default function PodMemberOnboarding({
         ? 'timeline_flex'
         : 'timeline_2yr';
 
-      // 1. Sync responses in onboarding_responses so Admin screens can track them
-      try {
-        const { data: questions } = await supabase
-          .from('onboarding_questions')
-          .select('id, questionnaire_id, question_key')
-          .in('question_key', ['housing_intent', 'commitment_timeline']);
-
-        if (questions && questions.length > 0) {
-          const { data: qn } = await supabase
-            .from('onboarding_questionnaires')
-            .select('version')
-            .eq('id', questions[0].questionnaire_id)
-            .maybeSingle();
-          const version = qn?.version || 1;
-
-          const responseUpserts = [];
-          const qIntent = questions.find(x => x.question_key === 'housing_intent');
-          if (qIntent) {
-            responseUpserts.push({
-              user_id: currentUser.id,
-              questionnaire_id: qIntent.questionnaire_id,
-              questionnaire_version: version,
-              question_id: qIntent.id,
-              question_key: 'housing_intent',
-              answer_json: { value: intentKey, label: housingIntent },
-              answered_at: new Date()
-            });
-          }
-
-          const qTimeline = questions.find(x => x.question_key === 'commitment_timeline');
-          if (qTimeline) {
-            responseUpserts.push({
-              user_id: currentUser.id,
-              questionnaire_id: qTimeline.questionnaire_id,
-              questionnaire_version: version,
-              question_id: qTimeline.id,
-              question_key: 'commitment_timeline',
-              answer_json: { value: timelineKey, label: commitmentTimeline },
-              answered_at: new Date()
-            });
-          }
-
-          if (responseUpserts.length > 0) {
-            await supabase
-              .from('onboarding_responses')
-              .upsert(responseUpserts, { onConflict: 'user_id,question_id' });
-          }
-        }
-      } catch (upsertErr) {
-        console.warn('Could not sync onboarding_responses:', upsertErr);
-      }
-
       const calculatedScore = timelineKey === 'timeline_5yr' ? 90 : timelineKey === 'timeline_flex' ? 80 : 85;
 
       // 2. Update user database record

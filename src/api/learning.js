@@ -44,33 +44,27 @@ const DEFAULT_LEARNING_VIDEOS = [
 ];
 
 /**
- * Fetch all published or all learning videos.
- * Gracefully falls back to default seed tutorials if database table is not yet populated.
+ * Fetch all published or all learning videos via Edge Function.
  */
 export async function fetchLearningVideos(includeUnpublished = false) {
   try {
-    let query = supabase
-      .from('learning_videos')
-      .select('*')
-      .order('order_index', { ascending: true })
-      .order('created_at', { ascending: true });
-
-    if (!includeUnpublished) {
-      query = query.eq('is_published', true);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.functions.invoke('manage-learning-videos', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
     if (error) {
-      console.warn('Could not fetch from learning_videos table (using defaults):', error.message);
+      console.warn('Could not fetch from manage-learning-videos (using defaults):', error.message);
       return DEFAULT_LEARNING_VIDEOS;
     }
 
-    if (!data || data.length === 0) {
+    if (!data?.videos || data.videos.length === 0) {
       return DEFAULT_LEARNING_VIDEOS;
     }
 
-    return data;
+    return data.videos;
   } catch (err) {
     console.error('Error in fetchLearningVideos:', err);
     return DEFAULT_LEARNING_VIDEOS;
@@ -78,65 +72,56 @@ export async function fetchLearningVideos(includeUnpublished = false) {
 }
 
 /**
- * Create a new learning video record.
+ * Create a new learning video record via Edge Function.
  */
 export async function createLearningVideo(videoData) {
-  const payload = {
-    title: videoData.title?.trim(),
-    description: videoData.description?.trim(),
-    video_url: videoData.video_url?.trim(),
-    thumbnail_url: videoData.thumbnail_url?.trim(),
-    tag: videoData.tag?.trim() || 'Getting Started',
-    order_index: typeof videoData.order_index === 'number' ? videoData.order_index : 0,
-    is_published: videoData.is_published !== undefined ? Boolean(videoData.is_published) : true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('learning_videos')
-    .insert([payload])
-    .select()
-    .single();
+  const { data, error } = await supabase.functions.invoke('manage-learning-videos', {
+    method: 'POST',
+    body: {
+      title: videoData.title?.trim(),
+      description: videoData.description?.trim(),
+      video_url: videoData.video_url?.trim(),
+      thumbnail_url: videoData.thumbnail_url?.trim(),
+      tag: videoData.tag?.trim() || 'Getting Started',
+      order_index: typeof videoData.order_index === 'number' ? videoData.order_index : 0,
+      is_published: videoData.is_published !== undefined ? Boolean(videoData.is_published) : true,
+    }
+  });
 
   if (error) {
     throw new Error(`Failed to create learning video: ${error.message}`);
   }
 
-  return data;
+  return data?.video;
 }
 
 /**
- * Update an existing learning video record.
+ * Update an existing learning video record via Edge Function.
  */
 export async function updateLearningVideo(id, videoData) {
-  const payload = {
-    ...videoData,
-    updated_at: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('learning_videos')
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
+  const { data, error } = await supabase.functions.invoke('manage-learning-videos', {
+    method: 'PUT',
+    body: {
+      id,
+      ...videoData,
+    }
+  });
 
   if (error) {
     throw new Error(`Failed to update learning video: ${error.message}`);
   }
 
-  return data;
+  return data?.video;
 }
 
 /**
- * Delete a learning video record by ID.
+ * Delete a learning video record by ID via Edge Function.
  */
 export async function deleteLearningVideo(id) {
-  const { error } = await supabase
-    .from('learning_videos')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.functions.invoke('manage-learning-videos', {
+    method: 'DELETE',
+    body: { id }
+  });
 
   if (error) {
     throw new Error(`Failed to delete learning video: ${error.message}`);

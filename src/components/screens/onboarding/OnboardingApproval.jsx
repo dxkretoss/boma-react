@@ -28,10 +28,9 @@ export default function OnboardingApproval({ setActiveScreen, currentUser, setCu
     // Initial sync
     syncStatus();
     
-    // Polling interval every 5 seconds to auto-approve without refresh
-    const interval = setInterval(syncStatus, 5000);
+    const interval = setInterval(syncStatus, 15000); // Poll every 15s
     return () => clearInterval(interval);
-  }, [currentUser, setCurrentUser, setActiveScreen]);
+  }, [currentUser?.id]);
 
   const handleGoToDashboard = async () => {
     if (!currentUser?.id) return;

@@ -151,29 +151,9 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast, 
     loadQuestions();
   }, []);
 
-  const handleSelectEdit = async (qn) => {
+  const handleSelectEdit = (qn) => {
     setEditingQuestion({ ...qn });
     setEditingOptions(qn.options || []);
-    // Fetch readiness scores for choices
-    try {
-      const { data: scoringRules } = await supabase
-        .from('readiness_scoring_rules')
-        .select('*')
-        .eq('is_active', true);
-
-      const rulesMap = {};
-      (scoringRules || []).forEach(r => {
-        rulesMap[r.option_id] = r.score_value;
-      });
-
-      const enrichedOptions = (qn.options || []).map(opt => ({
-        ...opt,
-        scoring_points: rulesMap[opt.id] || 0
-      }));
-      setEditingOptions(enrichedOptions);
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const [activeStepTab, setActiveStepTab] = useState(1);

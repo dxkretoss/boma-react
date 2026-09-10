@@ -338,9 +338,7 @@ export default function AppScreens({
     }
 
     loadPodData();
-    const interval = setInterval(loadPodData, 5000);
-    return () => clearInterval(interval);
-  }, [currentUser, activeScreen]);
+  }, [currentUser?.id, activeScreen]);
 
   useEffect(() => {
     async function syncProfile() {

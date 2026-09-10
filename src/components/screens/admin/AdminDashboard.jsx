@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Sparkles, FileText, Activity, HelpCircle, ArrowRight, ShieldAlert, CheckCircle2, Info, SlidersHorizontal } from 'lucide-react';
-import { supabase } from '../../../supabaseClient';
+import { fetchAdminDashboardStats } from '../../../api/admin';
 
 export default function AdminDashboard({ adminUser, setActiveScreen, handleViewAdminPod }) {
   const [stats, setStats] = useState({
@@ -15,40 +15,12 @@ export default function AdminDashboard({ adminUser, setActiveScreen, handleViewA
     async function fetchStats() {
       try {
         setLoading(true);
-        // 1. Total users (excluding admins)
-        const { count: totalCount, error: err1 } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .neq('role', 'admin');
-        if (err1) throw err1;
-
-        // 2. Under Review
-        const { count: underReviewCount, error: err2 } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .eq('profile_status', 'UNDER_REVIEW')
-          .neq('role', 'admin');
-        if (err2) throw err2;
-
-        // 3. Approved
-        const { count: approvedCount, error: err3 } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .eq('profile_status', 'APPROVED')
-          .neq('role', 'admin');
-        if (err3) throw err3;
-
-        // 4. In Matching Pool
-        const { count: poolCount, error: err4 } = await supabase
-          .from('matching_pool_entries')
-          .select('*', { count: 'exact', head: true });
-        if (err4) throw err4;
-
+        const data = await fetchAdminDashboardStats();
         setStats({
-          totalUsers: totalCount || 0,
-          underReview: underReviewCount || 0,
-          approved: approvedCount || 0,
-          matchingPool: poolCount || 0
+          totalUsers: data.totalUsers || 0,
+          underReview: data.pendingReviewsCount || 0,
+          approved: data.totalUsers || 0,
+          matchingPool: data.activePods || 0
         });
       } catch (error) {
         console.error('Failed to fetch admin stats:', error);

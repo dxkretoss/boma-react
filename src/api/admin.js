@@ -1,6 +1,22 @@
 import { supabase } from '../supabaseClient';
 
 /**
+ * Fetches dashboard counts and metrics via manage-admin Edge Function.
+ */
+export async function fetchAdminDashboardStats() {
+  const { data, error } = await supabase.functions.invoke('manage-admin', {
+    body: { action: 'get-dashboard-stats' }
+  });
+  if (error) throw error;
+  return data?.stats || {
+    totalUsers: 0,
+    activePods: 0,
+    waitlistCount: 0,
+    pendingReviewsCount: 0,
+  };
+}
+
+/**
  * Fetches all registered users for admin review.
  * Supports filters and search queries.
  */

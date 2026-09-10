@@ -1,0 +1,619 @@
+{
+  "info": {
+    "_postman_id": "boma-master-platform-api-v4",
+    "name": "BOMA Platform — Master API Collection (Mobile & Web)",
+    "description": "Comprehensive Master API Collection for BOMA Mobile (Flutter/React Native/iOS/Android) and Web applications, providing complete parity across Auth, Onboarding, Pod Commons, Chat, Agreements, Matching Engine, User Profiles, and Learning Hub.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "customAuthUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/custom-auth",
+      "type": "string"
+    },
+    {
+      "key": "customOnboardingUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/custom-onboarding",
+      "type": "string"
+    },
+    {
+      "key": "managePodsUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/manage-pods",
+      "type": "string"
+    },
+    {
+      "key": "manageMatchingUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/manage-matching",
+      "type": "string"
+    },
+    {
+      "key": "manageUsersUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/manage-users",
+      "type": "string"
+    },
+    {
+      "key": "manageVideosUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/manage-learning-videos",
+      "type": "string"
+    },
+    {
+      "key": "manageAdminUrl",
+      "value": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/manage-admin",
+      "type": "string"
+    },
+    {
+      "key": "anonKey",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhc2Rzd2tnb2RoY3psYnFraXJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1Mjc0MTMsImV4cCI6MjEwMjEwMzQxM30.ejdIeWoWHBg1En2PdGXj00rAm540P1iBpBz9-NykXGI",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "PASTE_USER_UUID_HERE",
+      "type": "string"
+    },
+    {
+      "key": "podId",
+      "value": "PASTE_POD_UUID_HERE",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{anonKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Security (custom-auth)",
+      "item": [
+        {
+          "name": "1.1 Register User (Signup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"register\",\n  \"name\": \"Jordan Rivera\",\n  \"email\": \"jordan@example.com\",\n  \"password\": \"MySecurePassword123!\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.2 Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify-email\",\n  \"email\": \"jordan@example.com\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.3 Resend Verification Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"resend-verification\",\n  \"email\": \"jordan@example.com\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.4 User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"login\",\n  \"email\": \"jordan@example.com\",\n  \"password\": \"MySecurePassword123!\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.5 Request Password Reset (Send OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"request-password-reset\",\n  \"email\": \"jordan@example.com\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.6 Verify Password Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify-reset-otp\",\n  \"email\": \"jordan@example.com\",\n  \"token\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        },
+        {
+          "name": "1.7 Set New Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reset-password\",\n  \"email\": \"jordan@example.com\",\n  \"token\": \"123456\",\n  \"newPassword\": \"BrandNewPassword456!\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Onboarding & Readiness Scoring (custom-onboarding)",
+      "item": [
+        {
+          "name": "2.1 Fetch Dynamic Admin-Managed Questionnaire",
+          "request": {
+            "description": "Fetches the live published questionnaire dynamically configured by BOMA Admins. Returns questions grouped by `step_number` in `steps` array with titles, question types (single_choice, multiple_choice, text, range, number), choices, and total_steps count.",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-questionnaire\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "2.2 Fetch & Resume User Progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-progress\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "2.3 Auto-Save Step (e.g. Age Group)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionnaireId\": \"PASTE_QN_ID\",\n  \"questionnaireVersion\": 1,\n  \"questionId\": \"PASTE_Q_ID\",\n  \"questionKey\": \"age_group\",\n  \"answerJson\": {\n    \"value\": \"25-34\"\n  },\n  \"stepNumber\": 1\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "2.4 Auto-Save Multiple Choice (e.g. Lifestyles)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"save-response\",\n  \"userId\": \"{{userId}}\",\n  \"questionnaireId\": \"PASTE_QN_ID\",\n  \"questionnaireVersion\": 1,\n  \"questionId\": \"PASTE_Q_ID\",\n  \"questionKey\": \"lifestyles\",\n  \"answerJson\": {\n    \"values\": [\"remote-work\", \"sustainability\", \"creative\"]\n  },\n  \"stepNumber\": 2\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "2.5 Submit Profile & Calculate Readiness Score",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"submit-onboarding\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "2.6 Get Readiness Score Calculation Breakdown",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-score-breakdown\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Existing Pod Formation & Invites (custom-onboarding)",
+      "item": [
+        {
+          "name": "3.1 Create Existing Pod",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"create-pod\",\n  \"creatorId\": \"{{userId}}\",\n  \"name\": \"The Cedar Grove Pod\",\n  \"description\": \"4 families purchasing property in East Austin\",\n  \"groupType\": \"Friends\",\n  \"housingIntent\": \"Co-develop property\",\n  \"commitmentTimeline\": \"5+ years\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "3.2 Invite Pod Member via Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"invite-pod-member\",\n  \"podId\": \"{{podId}}\",\n  \"inviterId\": \"{{userId}}\",\n  \"email\": \"neighbor@example.com\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "3.3 Get Pod Details & Member Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-pod-details\",\n  \"podId\": \"{{podId}}\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        },
+        {
+          "name": "3.4 Submit Pod for Admin Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"submit-pod-review\",\n  \"podId\": \"{{podId}}\"\n}"
+            },
+            "url": { "raw": "{{customOnboardingUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Pod Commons, Chat & Agreements (manage-pods)",
+      "item": [
+        {
+          "name": "4.1 Get Active Pod for User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-pod\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.2 Get User Pod Memberships",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-user-pods\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.3 Update Pod Agreements",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"update-agreements\",\n  \"podId\": \"{{podId}}\",\n  \"currentDescription\": \"Our group goals\",\n  \"alignedArray\": [0, 1, 2]\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.4 Fetch Pod Chat Messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-messages\",\n  \"podId\": \"{{podId}}\",\n  \"limit\": 50\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.5 Post New Pod Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"send-message\",\n  \"podId\": \"{{podId}}\",\n  \"userId\": \"{{userId}}\",\n  \"message\": \"Hey everyone, looking forward to meeting up for the co-development review!\"\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.6 Accept Pod Match Proposal",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"accept-proposal\",\n  \"podId\": \"{{podId}}\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        },
+        {
+          "name": "4.7 Join Pod by Invitation Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"join-by-token\",\n  \"token\": \"PASTE_INVITATION_TOKEN_HERE\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{managePodsUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Real-Time Neighbor Matching Engine (manage-matching)",
+      "item": [
+        {
+          "name": "5.1 Find Neighbor Matches & Suggested Pod",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"find-matches\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{manageMatchingUrl}}" }
+          }
+        },
+        {
+          "name": "5.2 Get Algorithm Matching Weights",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-matching-weights\"\n}"
+            },
+            "url": { "raw": "{{manageMatchingUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. User Profile & Preferences (manage-users)",
+      "item": [
+        {
+          "name": "6.1 Fetch User Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-profile\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{manageUsersUrl}}" }
+          }
+        },
+        {
+          "name": "6.2 Update User Profile & Preferences",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"update-profile\",\n  \"userId\": \"{{userId}}\",\n  \"updates\": {\n    \"name\": \"Jordan Rivera\",\n    \"location_city\": \"Austin, TX\",\n    \"setting_preference\": \"suburban\",\n    \"housing_intent\": \"purchase\"\n  }\n}"
+            },
+            "url": { "raw": "{{manageUsersUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Learning Hub Video Guides (manage-learning-videos)",
+      "item": [
+        {
+          "name": "7.1 Get All Learning Videos",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{anonKey}}" }
+            ],
+            "url": { "raw": "{{manageVideosUrl}}" }
+          }
+        },
+        {
+          "name": "7.2 Create New Learning Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How Pod Governance Works\",\n  \"description\": \"Learn how consensus decision making keeps Pods stable before moving into the Commons.\",\n  \"video_url\": \"https://www.youtube.com/embed/dQw4w9WgXcQ\",\n  \"thumbnail_url\": \"/assets/pod_austin.png\",\n  \"tag\": \"Governance\",\n  \"order_index\": 5,\n  \"is_published\": true\n}"
+            },
+            "url": { "raw": "{{manageVideosUrl}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Admin Portal Operations (manage-admin)",
+      "item": [
+        {
+          "name": "8.1 Get Admin Dashboard Stats",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-dashboard-stats\"\n}"
+            },
+            "url": { "raw": "{{manageAdminUrl}}" }
+          }
+        },
+        {
+          "name": "8.2 Get Users for Review & Filtering",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-users\",\n  \"profileStatus\": \"UNDER_REVIEW\",\n  \"search\": \"\"\n}"
+            },
+            "url": { "raw": "{{manageAdminUrl}}" }
+          }
+        },
+        {
+          "name": "8.3 Review & Approve/Reject User Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"review-user-profile\",\n  \"userId\": \"{{userId}}\",\n  \"status\": \"APPROVED\",\n  \"notes\": \"All verification checks passed.\"\n}"
+            },
+            "url": { "raw": "{{manageAdminUrl}}" }
+          }
+        },
+        {
+          "name": "8.4 Get Pods for Admin Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"get-pods\",\n  \"status\": \"PENDING_REVIEW\"\n}"
+            },
+            "url": { "raw": "{{manageAdminUrl}}" }
+          }
+        }
+      ]
+    }
+  ]
+}

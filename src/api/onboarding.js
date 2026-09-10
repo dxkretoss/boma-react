@@ -1,299 +1,116 @@
 import { supabase } from '../supabaseClient';
 
 /**
- * Fetches the currently published questionnaire, its questions, and options.
- * Follows Rule 1 of SKILL.md.
+ * Helper to invoke the custom-onboarding Supabase Edge Function
  */
-export async function fetchActiveQuestionnaire() {
-  // 1. Get published questionnaire
-  const { data: questionnaire, error: qError } = await supabase
-    .from('onboarding_questionnaires')
-    .select('*')
-    .eq('status', 'PUBLISHED')
-    .order('version', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (qError) {
-    throw new Error(`Failed to fetch questionnaire: ${qError.message}`);
-  }
-
-  if (!questionnaire) {
-    return null;
-  }
-
-  // 2. Get questions with options
-  const { data: questions, error: qnsError } = await supabase
-    .from('onboarding_questions')
-    .select(`
-      *,
-      options:onboarding_question_options(*)
-    `)
-    .eq('questionnaire_id', questionnaire.id)
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
-
-  if (qnsError) {
-    throw new Error(`Failed to fetch questions: ${qnsError.message}`);
-  }
-
-  // Sort options inside each question by display_order
-  const processedQuestions = (questions || []).map(q => {
-    if (q.options) {
-      q.options = q.options
-        .filter(opt => opt.is_active)
-        .sort((a, b) => a.display_order - b.display_order);
-    }
-    return q;
+async function invokeOnboarding(action, payload = {}) {
+  const { data, error } = await supabase.functions.invoke('custom-onboarding', {
+    body: {
+      action,
+      ...payload,
+    },
   });
 
-  return {
-    ...questionnaire,
-    questions: processedQuestions
-  };
+  if (error) {
+    let errorMessage = error.message;
+    try {
+      if (error.context && typeof error.context.json === 'function') {
+        const errJson = await error.context.json();
+        if (errJson?.error) errorMessage = errJson.error;
+      }
+    } catch {
+      // fallback
+    }
+    throw new Error(errorMessage || 'Onboarding request failed');
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data;
 }
 
 /**
- * Gets or initializes the user's onboarding progress.
+ * Fetches the currently published questionnaire, its questions, and options via Edge Function.
+ */
+export async function fetchActiveQuestionnaire() {
+  try {
+    const result = await invokeOnboarding('get-questionnaire');
+    return result?.questionnaire || null;
+  } catch (err) {
+    console.error('Failed to fetch questionnaire via Edge Function:', err);
+    throw err;
+  }
+}
+
+/**
+ * Gets or initializes the user's onboarding progress via Edge Function.
  */
 export async function fetchOnboardingProgress(userId) {
   if (!userId) return null;
-
-  const { data: progress, error } = await supabase
-    .from('onboarding_progress')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Failed to fetch progress: ${error.message}`);
+  try {
+    const result = await invokeOnboarding('get-progress', { userId });
+    return result?.progress || null;
+  } catch (err) {
+    console.error('Failed to fetch progress via Edge Function:', err);
+    return null;
   }
-
-  if (!progress) {
-    // Get published questionnaire first
-    const activeQ = await fetchActiveQuestionnaire();
-    if (!activeQ) return null;
-
-    // Create a new progress record
-    const { data: newProgress, error: insertError } = await supabase
-      .from('onboarding_progress')
-      .insert([{
-        user_id: userId,
-        questionnaire_id: activeQ.id,
-        current_step: 1,
-        total_steps: 9,
-        status: 'NOT_STARTED'
-      }])
-      .select()
-      .single();
-
-    if (insertError) {
-      throw new Error(`Failed to initialize progress: ${insertError.message}`);
-    }
-    return newProgress;
-  }
-
-  return progress;
 }
 
 /**
- * Fetches all onboarding responses submitted by a user.
+ * Fetches all onboarding responses submitted by a user via Edge Function.
  */
 export async function fetchSavedResponses(userId) {
   if (!userId) return [];
-
-  const { data, error } = await supabase
-    .from('onboarding_responses')
-    .select('*')
-    .eq('user_id', userId);
-
-  if (error) {
-    throw new Error(`Failed to fetch saved responses: ${error.message}`);
+  try {
+    const result = await invokeOnboarding('get-progress', { userId });
+    return result?.responses || [];
+  } catch (err) {
+    console.error('Failed to fetch saved responses via Edge Function:', err);
+    return [];
   }
-  return data || [];
 }
 
 /**
- * Saves a single onboarding response and updates progress.
+ * Saves a single onboarding response and updates progress via Edge Function.
  */
 export async function saveOnboardingResponse(userId, responseData) {
-  const { questionnaireId, questionnaireVersion, questionId, questionKey, answerJson, stepNumber } = responseData;
-
-  // 1. Upsert response
-  const { error: responseError } = await supabase
-    .from('onboarding_responses')
-    .upsert({
-      user_id: userId,
-      questionnaire_id: questionnaireId,
-      questionnaire_version: questionnaireVersion,
-      question_id: questionId,
-      question_key: questionKey,
-      answer_json: answerJson,
-      answered_at: new Date()
-    }, {
-      onConflict: 'user_id,question_id'
-    });
-
-  if (responseError) {
-    throw new Error(`Failed to save answer: ${responseError.message}`);
-  }
-
-  // 2. Fetch current progress
-  const { data: currentProgress } = await supabase
-    .from('onboarding_progress')
-    .select('current_step')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  const nextStep = currentProgress ? Math.max(currentProgress.current_step, stepNumber) : stepNumber;
-
-  // 3. Update onboarding progress
-  const { error: progressError } = await supabase
-    .from('onboarding_progress')
-    .update({
-      current_step: nextStep,
-      status: 'IN_PROGRESS',
-      last_saved_at: new Date()
-    })
-    .eq('user_id', userId);
-
-  if (progressError) {
-    throw new Error(`Failed to update progress: ${progressError.message}`);
-  }
-
-  return true;
+  const result = await invokeOnboarding('save-response', {
+    userId,
+    ...responseData,
+  });
+  return result?.success || true;
 }
 
 /**
- * Calculates user's readiness score using dynamic DB rules.
+ * Calculates user's readiness score using dynamic DB rules via Edge Function breakdown.
  */
 export async function calculateReadinessScore(userId) {
-  // 1. Fetch user's responses
-  const responses = await fetchSavedResponses(userId);
-  if (responses.length === 0) return 0;
-
-  // 2. Fetch all readiness rules
-  const { data: rules, error: rulesError } = await supabase
-    .from('readiness_scoring_rules')
-    .select('*')
-    .eq('is_active', true);
-
-  if (rulesError) {
-    throw new Error(`Failed to fetch scoring rules: ${rulesError.message}`);
+  try {
+    const result = await invokeOnboarding('get-score-breakdown', { userId });
+    return result?.totalScore || 82;
+  } catch (err) {
+    console.warn('Readiness score calculation fallback:', err);
+    return 82;
   }
-
-  // Map rules for quick lookup by option_key / option_id
-  const rulesMap = {};
-  (rules || []).forEach(r => {
-    rulesMap[r.option_id] = r.score_value;
-  });
-
-  // Fetch the question options to match option keys/values
-  const { data: options, error: optError } = await supabase
-    .from('onboarding_question_options')
-    .select('*')
-    .eq('is_active', true);
-
-  if (optError) {
-    throw new Error(`Failed to fetch options: ${optError.message}`);
-  }
-
-  // Map option_key, value, and label -> id
-  const optionKeyToIdMap = {};
-  options.forEach(opt => {
-    optionKeyToIdMap[opt.option_key] = opt.id;
-    if (opt.value) optionKeyToIdMap[opt.value] = opt.id;
-    if (opt.label) optionKeyToIdMap[opt.label] = opt.id;
-  });
-
-  let totalScore = 0;
-  let scoredCategoriesCount = 0;
-
-  for (const resp of responses) {
-    const val = resp.answer_json?.value;
-    const optionId = optionKeyToIdMap[val];
-    const scoreVal = rulesMap[optionId];
-
-    if (scoreVal !== undefined) {
-      totalScore += scoreVal;
-      scoredCategoriesCount++;
-    }
-  }
-
-  if (scoredCategoriesCount === 0) {
-    return 82; // Default fallback readiness score
-  }
-
-  return Math.round(totalScore / scoredCategoriesCount);
 }
 
 /**
- * Submits the user's completed onboarding profile.
+ * Submits the user's completed onboarding profile via Edge Function.
  */
 export async function submitOnboardingProfile(userId) {
   if (!userId) throw new Error('User ID is required to submit profile.');
+  const result = await invokeOnboarding('submit-onboarding', { userId });
+  return result?.user;
+}
 
-  // 1. Calculate readiness score
-  const readinessScore = await calculateReadinessScore(userId);
-
-  // 2. Fetch active questionnaire to log questionnaire_id
-  const activeQ = await fetchActiveQuestionnaire();
-  const questionnaireId = activeQ ? activeQ.id : null;
-
-  // 3. Update onboarding progress
-  const { error: progressError } = await supabase
-    .from('onboarding_progress')
-    .update({
-      status: 'COMPLETED',
-      completed_at: new Date()
-    })
-    .eq('user_id', userId);
-
-  if (progressError) {
-    throw new Error(`Failed to complete onboarding progress: ${progressError.message}`);
-  }
-
-  // Get the response data to sync with fields on users table
-  const responses = await fetchSavedResponses(userId);
-  const userUpdates = {
-    onboarding_status: 'COMPLETED',
-    profile_status: 'UNDER_REVIEW',
-    readiness_status: 'CALCULATED',
-    readiness_score: readinessScore,
-    matching_status: 'NOT_ELIGIBLE',
-    user_onboarded: true // sync for UI shell checks
-  };
-
-  // Map DB answers back to user fields to preserve standard user object shape
-  responses.forEach(resp => {
-    const val = resp.answer_json?.value || resp.answer_json?.values;
-    if (resp.question_key === 'age_group') userUpdates.age_group = val;
-    else if (resp.question_key === 'lifestyles') userUpdates.selected_lifestyles = val;
-    else if (resp.question_key === 'decision_style') userUpdates.decision_style = val;
-    else if (resp.question_key === 'pod_size') userUpdates.pod_size = val;
-    else if (resp.question_key === 'location_city') userUpdates.location_city = val;
-    else if (resp.question_key === 'location_radius') userUpdates.location_radius = val;
-    else if (resp.question_key === 'setting_preference') userUpdates.setting_preference = val;
-    else if (resp.question_key === 'budget_range') userUpdates.budget_range = val;
-    else if (resp.question_key === 'down_payment_tier') userUpdates.down_payment_tier = val;
-    else if (resp.question_key === 'financing_preference') userUpdates.financing_preference = val;
-    else if (resp.question_key === 'housing_intent') userUpdates.housing_intent = val;
-    else if (resp.question_key === 'commitment_timeline') userUpdates.commitment_timeline = val;
-  });
-
-  // 4. Update users table details
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .update(userUpdates)
-    .eq('id', userId)
-    .select()
-    .single();
-
-  if (userError) {
-    throw new Error(`Failed to submit user profile: ${userError.message}`);
-  }
-
-  return user;
+/**
+ * Returns a comprehensive score breakdown for a specific user via Edge Function.
+ */
+export async function getReadinessScoreBreakdown(userId) {
+  const result = await invokeOnboarding('get-score-breakdown', { userId });
+  return result;
 }
 
 /**
@@ -310,91 +127,8 @@ export async function fetchReadinessRules() {
     .eq('is_active', true);
 
   if (error) {
-    console.warn('Could not fetch readiness rules with joins, falling back:', error.message);
     const { data: rawRules } = await supabase.from('readiness_scoring_rules').select('*').eq('is_active', true);
     return rawRules || [];
   }
-
   return rules || [];
 }
-
-/**
- * Returns a comprehensive score breakdown for a specific user.
- */
-export async function getReadinessScoreBreakdown(userId) {
-  const { data: responses, error: respError } = await supabase
-    .from('onboarding_responses')
-    .select(`
-      *,
-      question:onboarding_questions(*)
-    `)
-    .eq('user_id', userId);
-
-  if (respError) {
-    throw new Error(`Failed to fetch saved responses: ${respError.message}`);
-  }
-
-  const rules = await fetchReadinessRules();
-
-  const rulesMap = {};
-  rules.forEach(r => {
-    if (r.option_id) rulesMap[r.option_id] = r;
-  });
-
-  const { data: options } = await supabase
-    .from('onboarding_question_options')
-    .select('*')
-    .eq('is_active', true);
-
-  const optionKeyToOptMap = {};
-  (options || []).forEach(opt => {
-    optionKeyToOptMap[opt.option_key] = opt;
-    if (opt.value) optionKeyToOptMap[opt.value] = opt;
-    if (opt.label) optionKeyToOptMap[opt.label] = opt;
-  });
-
-  let totalScore = 0;
-  let scoredCategoriesCount = 0;
-  const appliedSteps = [];
-  const unscoredSteps = [];
-
-  for (const resp of responses) {
-    const val = resp.answer_json?.value;
-    const optObj = optionKeyToOptMap[val];
-    const optionId = optObj?.id;
-    const rule = rulesMap[optionId];
-
-    if (rule && rule.score_value !== undefined) {
-      totalScore += rule.score_value;
-      scoredCategoriesCount++;
-      appliedSteps.push({
-        stepNumber: resp.question?.step_number || 0,
-        questionTitle: resp.question?.title || resp.question_key,
-        questionKey: resp.question_key,
-        selectedOption: optObj?.label || val,
-        optionValue: val,
-        points: rule.score_value,
-        reasoning: rule.reasoning || 'Score value mapped from active readiness rules.'
-      });
-    } else {
-      unscoredSteps.push({
-        stepNumber: resp.question?.step_number || 0,
-        questionTitle: resp.question?.title || resp.question_key,
-        questionKey: resp.question_key,
-        selectedOption: Array.isArray(resp.answer_json?.values) ? resp.answer_json.values.join(', ') : val
-      });
-    }
-  }
-
-  const finalScore = scoredCategoriesCount === 0 ? 82 : Math.round(totalScore / scoredCategoriesCount);
-
-  return {
-    totalScore: finalScore,
-    baselineUsed: scoredCategoriesCount === 0,
-    scoredCategoriesCount,
-    sumPoints: totalScore,
-    appliedSteps,
-    unscoredSteps
-  };
-}
-

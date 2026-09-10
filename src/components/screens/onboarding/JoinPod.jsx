@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertTriangle, Loader2, ArrowRight, LogOut, UserPlus, LogIn } from 'lucide-react';
 import { verifyInvitationToken, acceptPodInvitation } from '../../../api/pods';
+import { fetchUserProfile } from '../../../api/users';
 import { supabase } from '../../../supabaseClient';
 import Toast from '../../Toast';
 
@@ -55,15 +56,11 @@ export default function JoinPod({
         const details = await verifyInvitationToken(token);
         setInviteDetails(details);
 
-        // Check if invited email is already registered in users table
+        // Check if invited email is already registered in users table via Edge Function
         let registered = false;
         try {
           if (details?.email) {
-            const { data: userRec } = await supabase
-              .from('users')
-              .select('id, email')
-              .eq('email', details.email.toLowerCase().trim())
-              .maybeSingle();
+            const userRec = await fetchUserProfile(details.email);
             if (userRec) registered = true;
           }
         } catch (checkErr) {
