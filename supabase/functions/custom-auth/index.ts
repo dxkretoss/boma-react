@@ -434,6 +434,48 @@ serve(async (req) => {
     }
 
     // ==========================================
+    // ACTION: VERIFY-RESET-OTP
+    // ==========================================
+    if (action === 'verify-reset-otp') {
+      const { email, token } = body;
+
+      if (!email || !token) {
+        return new Response(
+          JSON.stringify({ error: 'Email and verification code are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+
+      const { data: user, error } = await supabaseAdmin
+        .from('users')
+        .select('id, verification_code')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!user) {
+        return new Response(
+          JSON.stringify({ error: 'User not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!user.verification_code || user.verification_code !== String(token).trim()) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired verification code' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Verification code verified successfully.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ==========================================
     // ACTION: RESET-PASSWORD
     // ==========================================
     if (action === 'reset-password') {

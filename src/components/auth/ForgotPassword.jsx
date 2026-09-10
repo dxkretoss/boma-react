@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Loader2, CheckCircle2 } from 'lucide-react';
-import { customRequestPasswordReset, customResetPassword } from '../../auth';
+import { ArrowLeft, Eye, EyeOff, Lock, Loader2, CheckCircle2 } from 'lucide-react';
+import { customRequestPasswordReset, customVerifyResetOtp, customResetPassword } from '../../auth';
 
 export default function ForgotPassword({
   setAuthOverlay,
@@ -9,7 +9,7 @@ export default function ForgotPassword({
   setToast,
   closeAuth
 }) {
-  const [step, setStep] = useState('request'); // 'request' | 'verify'
+  const [step, setStep] = useState('request'); // 'request' | 'verify' | 'new-password'
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,7 +59,31 @@ export default function ForgotPassword({
     }
   };
 
-  // Step 2: Reset Password with OTP Code
+  // Step 2: Verify OTP Code
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLocalError('');
+    setLocalSuccess('');
+
+    const token = otpCode.trim();
+    if (!token || token.length < 6) {
+      setLocalError('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await customVerifyResetOtp(forgotEmail.trim(), token);
+      setLocalSuccess('Code verified! Please set your new password.');
+      setStep('new-password');
+    } catch (err) {
+      setLocalError(err.message || 'Invalid or expired verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 3: Set New Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setLocalError('');
@@ -67,7 +91,7 @@ export default function ForgotPassword({
 
     const token = otpCode.trim();
     if (!token) {
-      setLocalError('Please enter the 6-digit verification code.');
+      setLocalError('Verification code is missing. Please go back and enter your code.');
       return;
     }
     if (newPassword.length < 6) {
@@ -88,7 +112,7 @@ export default function ForgotPassword({
       // Return to login screen
       setAuthOverlay({ open: true, mode: 'login' });
     } catch (err) {
-      setLocalError(err.message || 'Invalid or expired verification code.');
+      setLocalError(err.message || 'Failed to reset password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -96,7 +120,8 @@ export default function ForgotPassword({
 
   return (
     <div className="text-left animate-fade">
-      {step === 'request' ? (
+      {/* STEP 1: REQUEST EMAIL */}
+      {step === 'request' && (
         <form onSubmit={handleRequestCode}>
           <h3 className="font-serif text-[26px] font-bold text-ink mb-1">
             Reset your password
@@ -150,8 +175,11 @@ export default function ForgotPassword({
             </span>
           </p>
         </form>
-      ) : (
-        <form onSubmit={handleResetPassword}>
+      )}
+
+      {/* STEP 2: VERIFY OTP CODE */}
+      {step === 'verify' && (
+        <form onSubmit={handleVerifyOtp}>
           <div className="flex items-center gap-2 mb-1">
             <button
               type="button"
@@ -187,7 +215,7 @@ export default function ForgotPassword({
           )}
 
           {/* OTP Code Input */}
-          <div className="mb-4">
+          <div className="mb-5">
             <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-1.5 font-semibold">
               6-Digit Verification Code
             </label>
@@ -201,10 +229,82 @@ export default function ForgotPassword({
                 setLocalError('');
               }}
               required 
+              autoFocus
               disabled={loading}
-              className="w-full bg-panel border border-border rounded-xl px-3.5 py-2.5 text-center font-mono text-lg font-extrabold tracking-[0.25em] text-ink focus:outline-none focus:border-amber transition-colors" 
+              className="w-full bg-panel border border-border rounded-xl px-3.5 py-3 text-center font-mono text-xl font-extrabold tracking-[0.25em] text-ink focus:outline-none focus:border-amber transition-colors" 
             />
           </div>
+
+          <button 
+            type="submit" 
+            disabled={loading || otpCode.length < 6}
+            className="w-full bg-amber text-white rounded-full px-4 py-3 text-sm font-semibold hover:bg-[#b05d3e] hover:shadow-lg hover:shadow-[#C46A4A]/25 hover:-translate-y-[1px] transition-all cursor-pointer shadow-md mb-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Verifying code...</span>
+              </>
+            ) : (
+              <span>Verify Code</span>
+            )}
+          </button>
+
+          <div className="flex items-center justify-between text-xs text-ink-dim pt-1">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={resending || loading}
+              className="text-amber hover:underline font-semibold cursor-pointer disabled:opacity-50"
+            >
+              {resending ? 'Resending code...' : 'Resend code'}
+            </button>
+            <span 
+              onClick={() => setAuthOverlay({ open: true, mode: 'login' })} 
+              className="text-ink-dim hover:text-ink underline cursor-pointer"
+            >
+              Back to log in
+            </span>
+          </div>
+        </form>
+      )}
+
+      {/* STEP 3: SET NEW PASSWORD */}
+      {step === 'new-password' && (
+        <form onSubmit={handleResetPassword}>
+          <div className="flex items-center gap-2 mb-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStep('verify');
+                setLocalError('');
+                setLocalSuccess('');
+              }}
+              className="text-ink-dim hover:text-ink cursor-pointer p-1 -ml-1 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h3 className="font-serif text-[24px] font-bold text-ink">
+              Set new password
+            </h3>
+          </div>
+
+          <p className="text-ink-dim text-[12.5px] font-medium mb-4 leading-relaxed">
+            Create a secure new password for <strong className="text-ink">{forgotEmail}</strong>.
+          </p>
+
+          {localSuccess && (
+            <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl p-3 font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{localSuccess}</span>
+            </div>
+          )}
+
+          {localError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-rust text-xs rounded-xl p-3 font-medium">
+              {localError}
+            </div>
+          )}
 
           {/* New Password */}
           <div className="mb-3.5">
@@ -221,6 +321,7 @@ export default function ForgotPassword({
                   setLocalError('');
                 }}
                 required 
+                autoFocus
                 disabled={loading}
                 className="w-full bg-panel border border-border rounded-xl px-3.5 py-2.5 pr-10 text-sm text-ink focus:outline-none focus:border-amber transition-colors font-medium" 
               />
@@ -270,22 +371,14 @@ export default function ForgotPassword({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Resetting password...</span>
+                <span>Saving new password...</span>
               </>
             ) : (
               <span>Reset Password</span>
             )}
           </button>
 
-          <div className="flex items-center justify-between text-xs text-ink-dim pt-1">
-            <button
-              type="button"
-              onClick={handleResendCode}
-              disabled={resending || loading}
-              className="text-amber hover:underline font-semibold cursor-pointer disabled:opacity-50"
-            >
-              {resending ? 'Resending code...' : 'Resend code'}
-            </button>
+          <div className="flex items-center justify-end text-xs text-ink-dim pt-1">
             <span 
               onClick={() => setAuthOverlay({ open: true, mode: 'login' })} 
               className="text-ink-dim hover:text-ink underline cursor-pointer"

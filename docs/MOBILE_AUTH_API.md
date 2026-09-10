@@ -146,7 +146,7 @@ Generates a new 6-digit code and resends the verification email.
 ---
 
 ### 5. Request Password Reset (`request-password-reset`)
-Generates a password reset code and emails it to the user.
+Generates a 6-digit password reset OTP code and emails it to the user.
 
 **Request Body:**
 ```json
@@ -165,8 +165,37 @@ Generates a password reset code and emails it to the user.
 
 ---
 
-### 6. Reset Password (`reset-password`)
-Verifies the reset token/code and sets a new password.
+### 6. Verify Password Reset OTP (`verify-reset-otp`)
+Validates the 6-digit verification code entered on the mobile OTP screen before transitioning the user to the "Set New Password" screen.
+
+**Request Body:**
+```json
+{
+  "action": "verify-reset-otp",
+  "email": "alex@example.com",
+  "token": "481920"
+}
+```
+
+**Response (Success - 200 OK):**
+```json
+{
+  "success": true,
+  "message": "Verification code verified successfully."
+}
+```
+
+**Response (Error - 400 Bad Request):**
+```json
+{
+  "error": "Invalid or expired verification code"
+}
+```
+
+---
+
+### 7. Set New Password (`reset-password`)
+Verifies the reset token/code, securely bcrypt-hashes the new password, and updates the user's password.
 
 **Request Body:**
 ```json

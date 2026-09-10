@@ -185,7 +185,35 @@
       "response": []
     },
     {
-      "name": "6. Reset Password with OTP Code",
+      "name": "6. Verify Password Reset OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "apikey",
+            "value": "{{anonKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"verify-reset-otp\",\n  \"email\": \"alex@example.com\",\n  \"token\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{customAuthUrl}}",
+          "host": [
+            "{{customAuthUrl}}"
+          ]
+        },
+        "description": "Verifies that the 6-digit OTP code entered by the user matches before allowing navigation to the Set New Password screen."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Set New Password (Reset Password)",
       "request": {
         "method": "POST",
         "header": [
@@ -213,7 +241,7 @@
       "response": []
     },
     {
-      "name": "7. Update Onboarding State",
+      "name": "8. Update Onboarding State",
       "request": {
         "method": "POST",
         "header": [
@@ -241,7 +269,7 @@
       "response": []
     },
     {
-      "name": "8. Send Pod Invitation Email",
+      "name": "9. Send Pod Invitation Email",
       "request": {
         "method": "POST",
         "header": [

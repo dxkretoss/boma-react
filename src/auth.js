@@ -87,6 +87,37 @@ export async function customRequestPasswordReset(email) {
   return true;
 }
 
+// Verify password reset OTP code
+export async function customVerifyResetOtp(email, token) {
+  try {
+    const result = await invokeAuth('verify-reset-otp', {
+      email,
+      token,
+    });
+    return result;
+  } catch (err) {
+    // If the remote Edge Function does not have the action yet, verify directly against Supabase users table
+    if (err.message && err.message.toLowerCase().includes('unknown action')) {
+      const normalizedEmail = (email || '').toLowerCase().trim();
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('id, verification_code')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!user) {
+        throw new Error('User not found.');
+      }
+      if (!user.verification_code || user.verification_code !== String(token).trim()) {
+        throw new Error('Invalid or expired verification code.');
+      }
+      return { success: true };
+    }
+    throw err;
+  }
+}
+
 // Reset password using token/code
 export async function customResetPassword(email, token, newPassword) {
   await invokeAuth('reset-password', {
