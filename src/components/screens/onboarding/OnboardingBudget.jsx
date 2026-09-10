@@ -56,21 +56,26 @@ export default function OnboardingBudget({
             </label>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {finalDownPaymentOptions.map(opt => (
-              <div 
-                key={opt}
-                onClick={() => setDownPaymentTier(opt)}
-                className={`flex flex-col items-center text-center p-3.5 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${
-                  downPaymentTier === opt 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="text-[12.5px] font-extrabold text-ink leading-tight ">
-                  {opt}
+            {finalDownPaymentOptions.map(opt => {
+              const cleanVal = (downPaymentTier || '').replace(/–/g, '-').trim();
+              const cleanOpt = (opt || '').replace(/–/g, '-').trim();
+              const isSelected = downPaymentTier && (downPaymentTier === opt || cleanVal === cleanOpt);
+              return (
+                <div 
+                  key={opt}
+                  onClick={() => setDownPaymentTier(opt)}
+                  className={`flex flex-col items-center text-center p-3.5 rounded-xl cursor-pointer transition-all duration-150 ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className={`text-[12.5px] leading-tight ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>
+                    {opt}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mb-3">
@@ -79,21 +84,32 @@ export default function OnboardingBudget({
             </label>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {finalFinancingOptions.map(opt => (
-              <div 
-                key={opt.id}
-                onClick={() => setFinancingPreference(opt.id)}
-                className={`flex flex-col items-center text-center p-3.5 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${
-                  financingPreference === opt.id 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="text-[11.5px] font-extrabold text-ink leading-tight ">
-                  {opt.label}
+            {finalFinancingOptions.map(opt => {
+              const cleanFin = (financingPreference || '').toLowerCase().trim();
+              const cleanId = (opt.id || '').toLowerCase().trim();
+              const cleanLabel = (opt.label || '').toLowerCase().trim();
+              const isSelected = financingPreference && (
+                cleanFin === cleanId || 
+                cleanFin === cleanLabel || 
+                cleanFin.includes(cleanId) || 
+                cleanLabel.includes(cleanFin)
+              );
+              return (
+                <div 
+                  key={opt.id}
+                  onClick={() => setFinancingPreference(opt.id)}
+                  className={`flex flex-col items-center text-center p-3.5 rounded-xl cursor-pointer transition-all duration-150 ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className={`text-[11.5px] leading-tight ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>
+                    {opt.label}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <p className="text-xs text-ink-dim font-medium italic mb-7">

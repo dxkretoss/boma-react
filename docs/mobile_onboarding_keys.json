@@ -1,0 +1,396 @@
+{
+  "edge_function_url": "https://uasdswkgodhczlbqkira.supabase.co/functions/v1/custom-onboarding",
+  "http_method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "apikey": "VITE_SUPABASE_ANON_KEY"
+  },
+  "summary": "Key-Value schema for mobile developers managing BOMA onboarding flow",
+  "onboarding_steps": [
+    {
+      "step_number": 1,
+      "step_name": "Demographics & Age Group",
+      "fields": [
+        {
+          "question_key": "age_group",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "18–30 years",
+            "31–60 years",
+            "61+ years"
+          ],
+          "answer_json_structure": {
+            "value": "31–60 years"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "age_group",
+            "stepNumber": 1,
+            "answerJson": {
+              "value": "31–60 years"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 2,
+      "step_name": "Lifestyle & Daily Values",
+      "fields": [
+        {
+          "question_key": "lifestyles",
+          "data_type": "array_of_strings",
+          "question_type": "multiple_choice",
+          "is_required": true,
+          "allowed_values": [
+            "Quiet & low-key",
+            "Eco-conscious",
+            "Shared meals",
+            "Pet-friendly",
+            "Remote work",
+            "Community garden"
+          ],
+          "answer_json_structure": {
+            "values": [
+              "Quiet & low-key",
+              "Pet-friendly"
+            ]
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "lifestyles",
+            "stepNumber": 2,
+            "answerJson": {
+              "values": [
+                "Quiet & low-key",
+                "Pet-friendly"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 3,
+      "step_name": "Community Preferences & Group Size",
+      "fields": [
+        {
+          "question_key": "decision_style",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "consensus",
+            "delegated",
+            "flexible"
+          ],
+          "answer_json_structure": {
+            "value": "consensus"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "decision_style",
+            "stepNumber": 3,
+            "answerJson": {
+              "value": "consensus"
+            }
+          }
+        },
+        {
+          "question_key": "pod_size",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "4–6 households",
+            "7–10 households",
+            "10+ households"
+          ],
+          "answer_json_structure": {
+            "value": "7–10 households"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "pod_size",
+            "stepNumber": 3,
+            "answerJson": {
+              "value": "7–10 households"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 4,
+      "step_name": "Location & Search Radius",
+      "fields": [
+        {
+          "question_key": "location_city",
+          "data_type": "string",
+          "question_type": "text",
+          "is_required": true,
+          "example_value": "Atlanta, GA",
+          "answer_json_structure": {
+            "value": "Atlanta, GA"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "location_city",
+            "stepNumber": 4,
+            "answerJson": {
+              "value": "Atlanta, GA"
+            }
+          }
+        },
+        {
+          "question_key": "location_radius",
+          "data_type": "string_or_number",
+          "question_type": "slider_number",
+          "is_required": true,
+          "example_value": "45",
+          "min": 5,
+          "max": 150,
+          "answer_json_structure": {
+            "value": "45"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "location_radius",
+            "stepNumber": 4,
+            "answerJson": {
+              "value": "45"
+            }
+          }
+        },
+        {
+          "question_key": "setting_preference",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "urban",
+            "suburban",
+            "rural"
+          ],
+          "answer_json_structure": {
+            "value": "urban"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "setting_preference",
+            "stepNumber": 4,
+            "answerJson": {
+              "value": "urban"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 5,
+      "step_name": "Budget & Financing Readiness",
+      "fields": [
+        {
+          "question_key": "budget_range",
+          "data_type": "string",
+          "question_type": "text",
+          "is_required": true,
+          "example_value": "$350,000 – $450,000",
+          "answer_json_structure": {
+            "value": "$350,000 – $450,000"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "budget_range",
+            "stepNumber": 5,
+            "answerJson": {
+              "value": "$350,000 – $450,000"
+            }
+          }
+        },
+        {
+          "question_key": "down_payment_tier",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "0–5%",
+            "5–10%",
+            "10–20%",
+            "20%+"
+          ],
+          "answer_json_structure": {
+            "value": "5–10%"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "down_payment_tier",
+            "stepNumber": 5,
+            "answerJson": {
+              "value": "5–10%"
+            }
+          }
+        },
+        {
+          "question_key": "financing_preference",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "traditional mortgage",
+            "shared equity",
+            "co-development",
+            "undecided"
+          ],
+          "answer_json_structure": {
+            "value": "traditional mortgage"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "financing_preference",
+            "stepNumber": 5,
+            "answerJson": {
+              "value": "traditional mortgage"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 6,
+      "step_name": "Primary Housing Intent",
+      "fields": [
+        {
+          "question_key": "housing_intent",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "purchase",
+            "co-develop",
+            "investment",
+            "co-living"
+          ],
+          "answer_json_structure": {
+            "value": "purchase"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "housing_intent",
+            "stepNumber": 6,
+            "answerJson": {
+              "value": "purchase"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 7,
+      "step_name": "Minimum Commitment Timeline",
+      "fields": [
+        {
+          "question_key": "commitment_timeline",
+          "data_type": "string",
+          "question_type": "single_choice",
+          "is_required": true,
+          "allowed_values": [
+            "2+ years",
+            "5+ years",
+            "flexible"
+          ],
+          "answer_json_structure": {
+            "value": "2+ years"
+          },
+          "example_save_payload": {
+            "action": "save-response",
+            "userId": "USER_UUID_HERE",
+            "questionKey": "commitment_timeline",
+            "stepNumber": 7,
+            "answerJson": {
+              "value": "2+ years"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step_number": 8,
+      "step_name": "Review & Confirmation",
+      "description": "Read-only summary of all saved answers before submitting final profile"
+    },
+    {
+      "step_number": 9,
+      "step_name": "Final Submission & Readiness Score Calculation",
+      "action": "submit-onboarding",
+      "example_submit_payload": {
+        "action": "submit-onboarding",
+        "userId": "USER_UUID_HERE"
+      },
+      "expected_response": {
+        "success": true,
+        "message": "Onboarding completed successfully and submitted for admin review.",
+        "user": {
+          "id": "USER_UUID_HERE",
+          "onboarding_status": "COMPLETED",
+          "profile_status": "UNDER_REVIEW",
+          "readiness_score": 88
+        }
+      }
+    }
+  ],
+  "common_actions": {
+    "get_questionnaire": {
+      "request": {
+        "action": "get-questionnaire"
+      },
+      "description": "Fetch dynamic admin questions, steps, and options"
+    },
+    "get_progress": {
+      "request": {
+        "action": "get-progress",
+        "userId": "USER_UUID_HERE"
+      },
+      "description": "Fetch user's current step and previous answers"
+    },
+    "save_response": {
+      "request": {
+        "action": "save-response",
+        "userId": "USER_UUID_HERE",
+        "questionKey": "question_key_name",
+        "stepNumber": 1,
+        "answerJson": {
+          "value": "chosen_value"
+        }
+      },
+      "description": "Save an answer for any step and auto-advance progress"
+    },
+    "submit_onboarding": {
+      "request": {
+        "action": "submit-onboarding",
+        "userId": "USER_UUID_HERE"
+      },
+      "description": "Finalize onboarding and compute score"
+    },
+    "get_score_breakdown": {
+      "request": {
+        "action": "get-score-breakdown",
+        "userId": "USER_UUID_HERE"
+      },
+      "description": "Get detailed breakdown of points and categories"
+    }
+  }
+}

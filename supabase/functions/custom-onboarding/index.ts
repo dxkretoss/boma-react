@@ -119,7 +119,18 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    const body = await req.json();
+    let body: any = {};
+    try {
+      const text = await req.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch (parseErr) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON request payload' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const { action } = body;
 
     if (!action) {
@@ -265,9 +276,54 @@ serve(async (req) => {
     if (action === 'save-response') {
       const { userId, questionnaireId, questionnaireVersion, questionId, questionKey, answerJson, stepNumber } = body;
 
-      if (!userId || !questionId || !questionKey) {
+      if (!userId || !questionKey) {
         return new Response(
-          JSON.stringify({ error: 'userId, questionId, and questionKey are required' }),
+          JSON.stringify({ error: 'userId and questionKey are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      let finalQId = questionnaireId || 'bff45f03-5a51-4621-918e-88f7425e6cbb';
+      let finalQuestionId = questionId;
+
+      // Auto-resolve question_id if not supplied
+      if (!finalQuestionId) {
+        const { data: qData } = await supabaseAdmin
+          .from('onboarding_questions')
+          .select('id, questionnaire_id')
+          .eq('question_key', questionKey)
+          .maybeSingle();
+
+        if (qData?.id) {
+          finalQuestionId = qData.id;
+          finalQId = qData.questionnaire_id || finalQId;
+        } else {
+          // Create question entry on the fly
+          const { data: newQ, error: createQErr } = await supabaseAdmin
+            .from('onboarding_questions')
+            .insert({
+              questionnaire_id: finalQId,
+              question_key: questionKey,
+              step_number: stepNumber || 1,
+              title: questionKey.replace(/_/g, ' '),
+              question_type: typeof answerJson?.values !== 'undefined' ? 'multiple_choice' : 'single_choice',
+              is_required: true,
+              is_active: true,
+              display_order: (stepNumber || 1) * 2,
+              scoring_enabled: false
+            })
+            .select('id')
+            .single();
+
+          if (!createQErr && newQ?.id) {
+            finalQuestionId = newQ.id;
+          }
+        }
+      }
+
+      if (!finalQuestionId) {
+        return new Response(
+          JSON.stringify({ error: `Could not resolve question ID for key: ${questionKey}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -277,9 +333,9 @@ serve(async (req) => {
         .from('onboarding_responses')
         .upsert({
           user_id: userId,
-          questionnaire_id: questionnaireId,
+          questionnaire_id: finalQId,
           questionnaire_version: questionnaireVersion || 1,
-          question_id: questionId,
+          question_id: finalQuestionId,
           question_key: questionKey,
           answer_json: answerJson,
           answered_at: new Date().toISOString(),
@@ -287,20 +343,14 @@ serve(async (req) => {
 
       if (responseError) throw responseError;
 
-      // Update progress
-      const { data: currentProgress } = await supabaseAdmin
-        .from('onboarding_progress')
-        .select('current_step')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      const nextStep = currentProgress ? Math.max(currentProgress.current_step, stepNumber || 1) : (stepNumber || 1);
+      // Update progress to the step being saved
+      const nextStep = stepNumber || 1;
 
       await supabaseAdmin
         .from('onboarding_progress')
         .upsert({
           user_id: userId,
-          questionnaire_id: questionnaireId,
+          questionnaire_id: finalQId,
           current_step: nextStep,
           total_steps: 9,
           status: 'IN_PROGRESS',

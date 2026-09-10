@@ -26,21 +26,32 @@ export default function OnboardingCommitment({ commitmentTimeline, setCommitment
             </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">
-            {commitmentOptions.map(opt => (
-              <div 
-                key={opt.id}
-                onClick={() => setCommitmentTimeline(opt.id)}
-                className={`flex flex-col items-center text-center p-4 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${
-                  commitmentTimeline === opt.id 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="text-[13px] font-extrabold text-ink leading-tight ">
-                  {opt.label}
+            {commitmentOptions.map(opt => {
+              const cleanComm = (commitmentTimeline || '').toLowerCase().trim();
+              const cleanId = (opt.id || '').toLowerCase().trim();
+              const cleanLabel = (opt.label || '').toLowerCase().trim();
+              const isSelected = commitmentTimeline && (
+                cleanComm === cleanId || 
+                cleanComm === cleanLabel || 
+                cleanComm.includes(cleanId) || 
+                cleanId.includes(cleanComm)
+              );
+              return (
+                <div 
+                  key={opt.id}
+                  onClick={() => setCommitmentTimeline(opt.label)}
+                  className={`flex flex-col items-center text-center p-4 rounded-xl cursor-pointer transition-all duration-150 ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className={`text-[13px] leading-tight ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>
+                    {opt.label}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <p className="text-xs text-ink-dim font-medium italic mb-7">

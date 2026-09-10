@@ -122,8 +122,9 @@ export default function OnboardingScreens({
               7: 'onboarding-commitment',
               8: 'onboarding-review'
             };
-            if (stepScreens[progress.current_step_number]) {
-              setActiveScreen(stepScreens[progress.current_step_number]);
+            const curStep = progress.current_step || progress.current_step_number;
+            if (stepScreens[curStep]) {
+              setActiveScreen(stepScreens[curStep]);
             }
           }
         }
@@ -177,24 +178,23 @@ export default function OnboardingScreens({
 
   // Helper to save current question response
   const saveStepResponse = async (questionKey, value, stepNumber) => {
-    if (!currentUser?.id || !questionnaire) return;
-    const question = questionnaire.questions.find(q => q.question_key === questionKey);
-    if (!question) return;
+    if (!currentUser?.id) return;
+    const question = questionnaire?.questions?.find(q => q.question_key === questionKey);
 
     try {
-      const isMulti = question.question_type === 'multiple_choice';
+      const isMulti = question?.question_type === 'multiple_choice' || Array.isArray(value);
       const answerJson = isMulti ? { values: value } : { value: value };
 
       await saveOnboardingResponse(currentUser.id, {
-        questionnaireId: questionnaire.id,
-        questionnaireVersion: questionnaire.version,
-        questionId: question.id,
+        questionnaireId: questionnaire?.id || 'bff45f03-5a51-4621-918e-88f7425e6cbb',
+        questionnaireVersion: questionnaire?.version || 1,
+        questionId: question?.id || null,
         questionKey,
         answerJson,
         stepNumber
       });
     } catch (err) {
-      console.error(`Failed to save step ${stepNumber} response:`, err);
+      console.error(`Failed to save step ${stepNumber} response for ${questionKey}:`, err);
     }
   };
 
@@ -277,7 +277,7 @@ export default function OnboardingScreens({
     }
 
     // 2. Persist step response with loader
-    if (currentUser?.id && questionnaire && isGoingForward) {
+    if (currentUser?.id && isGoingForward) {
       setIsSavingStep(true);
       try {
         if (activeScreen === 'onboarding-age') {
@@ -285,16 +285,22 @@ export default function OnboardingScreens({
         } else if (activeScreen === 'onboarding-lifestyle') {
           await saveStepResponse('lifestyles', selectedLifestyles, 2);
         } else if (activeScreen === 'onboarding-community') {
-          await saveStepResponse('decision_style', decisionStyle, 3);
-          await saveStepResponse('pod_size', podSize, 3);
+          await Promise.all([
+            saveStepResponse('decision_style', decisionStyle, 3),
+            saveStepResponse('pod_size', podSize, 3)
+          ]);
         } else if (activeScreen === 'onboarding-location') {
-          await saveStepResponse('location_city', locationCity, 4);
-          await saveStepResponse('location_radius', locationRadius.toString(), 4);
-          await saveStepResponse('setting_preference', settingPreference, 4);
+          await Promise.all([
+            saveStepResponse('location_city', locationCity, 4),
+            saveStepResponse('location_radius', locationRadius.toString(), 4),
+            saveStepResponse('setting_preference', settingPreference, 4)
+          ]);
         } else if (activeScreen === 'onboarding-budget') {
-          await saveStepResponse('budget_range', budgetRange, 5);
-          await saveStepResponse('down_payment_tier', downPaymentTier, 5);
-          await saveStepResponse('financing_preference', financingPreference, 5);
+          await Promise.all([
+            saveStepResponse('budget_range', budgetRange, 5),
+            saveStepResponse('down_payment_tier', downPaymentTier, 5),
+            saveStepResponse('financing_preference', financingPreference, 5)
+          ]);
         } else if (activeScreen === 'onboarding-intent') {
           await saveStepResponse('housing_intent', housingIntent, 6);
         } else if (activeScreen === 'onboarding-commitment') {

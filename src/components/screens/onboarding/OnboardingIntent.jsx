@@ -27,22 +27,33 @@ export default function OnboardingIntent({ housingIntent, setHousingIntent, setA
           </h3>
  
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-8">
-            {intentOptions.map(opt => (
-              <div 
-                key={opt.id}
-                onClick={() => setHousingIntent(opt.id)}
-                className={`flex items-center gap-3.5 p-4.5 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 text-left ${
-                  housingIntent === opt.id 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="flex flex-col leading-tight ">
-                  <span className="text-[13.5px] font-extrabold text-ink mb-1">{opt.label}</span>
-                  {opt.sub && <span className="text-[11px] text-ink-dim font-medium">{opt.sub}</span>}
+            {intentOptions.map(opt => {
+              const cleanIntent = (housingIntent || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+              const cleanId = (opt.id || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+              const cleanLabel = (opt.label || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+              const isSelected = housingIntent && (
+                cleanIntent === cleanId || 
+                cleanIntent === cleanLabel || 
+                cleanIntent.includes(cleanId) || 
+                cleanId.includes(cleanIntent)
+              );
+              return (
+                <div 
+                  key={opt.id}
+                  onClick={() => setHousingIntent(opt.id)}
+                  className={`flex items-center gap-3.5 p-4.5 rounded-xl cursor-pointer transition-all duration-150 text-left ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className="flex flex-col leading-tight ">
+                    <span className={`text-[13.5px] mb-1 ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>{opt.label}</span>
+                    {opt.sub && <span className="text-[11px] text-ink-dim font-medium">{opt.sub}</span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-3.5">

@@ -47,26 +47,32 @@ export default function OnboardingCommunity({
           </h1>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
-            {finalDecisionOptions.map(opt => (
-              <div 
-                key={opt.id}
-                onClick={() => setDecisionStyle(opt.id)}
-                className={`flex flex-col items-center text-center p-4.5 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${
-                  decisionStyle === opt.id 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="font-display text-sm font-extrabold text-ink mb-1 ">
-                  {opt.label}
-                </div>
-                {opt.sub && (
-                  <div className="text-[11px] text-ink-dim font-medium ">
-                    {opt.sub}
+            {finalDecisionOptions.map(opt => {
+              const isSelected = decisionStyle && (
+                decisionStyle.toLowerCase() === opt.id.toLowerCase() || 
+                decisionStyle.toLowerCase() === opt.label.toLowerCase()
+              );
+              return (
+                <div 
+                  key={opt.id}
+                  onClick={() => setDecisionStyle(opt.id)}
+                  className={`flex flex-col items-center text-center p-4.5 rounded-xl cursor-pointer transition-all duration-150 ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className={`font-display text-sm font-extrabold mb-1 ${isSelected ? 'text-ink font-black' : 'text-ink'}`}>
+                    {opt.label}
                   </div>
-                )}
-              </div>
-            ))}
+                  {opt.sub && (
+                    <div className="text-[11px] text-ink-dim font-medium ">
+                      {opt.sub}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="mb-3">
@@ -75,21 +81,32 @@ export default function OnboardingCommunity({
             </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
-            {finalPodSizeOptions.map(opt => (
-              <div 
-                key={opt.id}
-                onClick={() => setPodSize(opt.id)}
-                className={`flex flex-col items-center text-center p-4 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${
-                  podSize === opt.id 
-                    ? 'border-amber bg-amber-soft/85' 
-                    : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
-                }`}
-              >
-                <div className="text-[13px] font-extrabold text-ink leading-tight ">
-                  {opt.label}
+            {finalPodSizeOptions.map(opt => {
+              const cleanPod = (podSize || '').replace(/–/g, '-').toLowerCase();
+              const cleanOptId = (opt.id || '').replace(/–/g, '-').toLowerCase();
+              const cleanOptLabel = (opt.label || '').replace(/–/g, '-').toLowerCase();
+              const isSelected = podSize && (
+                cleanPod === cleanOptId || 
+                cleanPod === cleanOptLabel || 
+                cleanPod.includes(cleanOptId) || 
+                cleanOptLabel.includes(cleanPod)
+              );
+              return (
+                <div 
+                  key={opt.id}
+                  onClick={() => setPodSize(opt.label)}
+                  className={`flex flex-col items-center text-center p-4 rounded-xl cursor-pointer transition-all duration-150 ${
+                    isSelected 
+                      ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]' 
+                      : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
+                  }`}
+                >
+                  <div className={`text-[13px] leading-tight ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>
+                    {opt.label}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           <div className="flex items-center gap-3.5">

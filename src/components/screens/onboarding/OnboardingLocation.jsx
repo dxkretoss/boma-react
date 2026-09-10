@@ -130,20 +130,27 @@ export default function OnboardingLocation({
         </label>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
-        {finalSettingOptions.map(opt => (
-          <div
-            key={opt.id}
-            onClick={() => setSettingPreference(opt.id)}
-            className={`flex flex-col items-center text-center p-4 rounded-xl border cursor-pointer shadow-sm transition-all duration-150 ${settingPreference === opt.id
-                ? 'border-amber bg-amber-soft/85'
-                : 'border-border bg-white hover:border-amber hover:-translate-y-[1px]'
+        {finalSettingOptions.map(opt => {
+          const isSelected = settingPreference && (
+            settingPreference.toLowerCase() === opt.id.toLowerCase() ||
+            settingPreference.toLowerCase() === opt.label.toLowerCase()
+          );
+          return (
+            <div
+              key={opt.id}
+              onClick={() => setSettingPreference(opt.id)}
+              className={`flex flex-col items-center text-center p-4 rounded-xl cursor-pointer transition-all duration-150 ${
+                isSelected
+                  ? 'border-2 border-amber bg-amber-soft/85 ring-2 ring-amber/20 shadow-md -translate-y-[1px]'
+                  : 'border border-border bg-white hover:border-amber/80 hover:-translate-y-[1px] shadow-sm'
               }`}
-          >
-            <div className="text-[13px] font-extrabold text-ink leading-tight  uppercase tracking-wide">
-              {opt.label}
+            >
+              <div className={`text-[13px] leading-tight uppercase tracking-wide ${isSelected ? 'font-black text-ink' : 'font-extrabold text-ink'}`}>
+                {opt.label}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-3.5">
