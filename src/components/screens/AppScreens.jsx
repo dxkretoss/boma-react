@@ -286,17 +286,27 @@ export default function AppScreens({
 
             const allPreviewMembers = [...otherMembers, selfMember];
 
+            const memberScores = allPreviewMembers.map(m => Number(m.score) || 80);
+            const avgPodScore = memberScores.length > 0
+              ? Math.round(memberScores.reduce((sum, val) => sum + val, 0) / memberScores.length)
+              : (currentUser.readiness_score || 85);
+
+            const podCity = mems.find(m => m.location_city || m.locationCity)?.location_city || currentUser.location_city || 'Austin, TX';
+            const podSetting = currentUser.setting_preference || mems[0]?.settingPreference || mems[0]?.setting_preference || 'Suburban';
+            const podIntent = currentUser.housing_intent || 'Co-development';
+            const podTimeline = `${selfTimeLabel || '5+'} years commitment`;
+
             setSuggestedPod({
               id: details.id,
               name: details.name,
               tags: [
-                mems[0]?.location_city || 'Austin, TX',
-                'Suburban',
-                'Co-development',
-                '5+ years commitment'
+                podCity,
+                podSetting.charAt(0).toUpperCase() + podSetting.slice(1),
+                podIntent,
+                podTimeline
               ],
               members: allPreviewMembers,
-              matchPct: 85
+              matchPct: avgPodScore
             });
 
             const allConfirmed = mems.length >= 2 && mems.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED');

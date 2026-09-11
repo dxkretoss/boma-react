@@ -91,7 +91,7 @@ export default function Modals({
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/profile'
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://boma-react-kretoss.netlify.app'
         }
       });
       if (error) throw error;
