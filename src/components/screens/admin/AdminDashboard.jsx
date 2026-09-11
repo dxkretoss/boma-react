@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Sparkles, FileText, Activity, HelpCircle, ArrowRight, ShieldAlert, CheckCircle2, Info, SlidersHorizontal } from 'lucide-react';
+import { Users, Sparkles, FileText, Activity, HelpCircle, ArrowRight, ShieldAlert, CheckCircle2, Info, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { fetchAdminDashboardStats } from '../../../api/admin';
 
 export default function AdminDashboard({ adminUser, setActiveScreen, handleViewAdminPod }) {
@@ -10,25 +10,32 @@ export default function AdminDashboard({ adminUser, setActiveScreen, handleViewA
     matchingPool: 0
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAdminDashboardStats();
+      setStats({
+        totalUsers: data.totalUsers || 0,
+        underReview: data.pendingReviewsCount || 0,
+        approved: data.totalUsers || 0,
+        matchingPool: data.activePods || 0
+      });
+    } catch (error) {
+      console.error('Failed to fetch admin stats:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await fetchStats();
+  };
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        setLoading(true);
-        const data = await fetchAdminDashboardStats();
-        setStats({
-          totalUsers: data.totalUsers || 0,
-          underReview: data.pendingReviewsCount || 0,
-          approved: data.totalUsers || 0,
-          matchingPool: data.activePods || 0
-        });
-      } catch (error) {
-        console.error('Failed to fetch admin stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchStats();
   }, []);
 
@@ -47,6 +54,15 @@ export default function AdminDashboard({ adminUser, setActiveScreen, handleViewA
             <span className="text-[12px] text-[#D7A27A] font-mono mt-1">BOMA Administrator Portal · Systems Active</span>
           </div>
         </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={loading || refreshing}
+          className="relative z-10 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white rounded-xl px-4 py-2.5 text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          title="Refresh dashboard metrics"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-[#D7A27A] ${refreshing ? 'animate-spin' : ''}`} />
+          <span>{refreshing ? 'Refreshing...' : 'Refresh Data'}</span>
+        </button>
         {/* Subtle decorative glow */}
         <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#C46A4A]/20 blur-3xl pointer-events-none" />
       </div>

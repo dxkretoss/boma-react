@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, Phone, MapPin, Calendar, RefreshCw, UserCheck } from 'lucide-react';
+import { Search, Mail, Phone, MapPin, Calendar, RefreshCw, UserCheck, ArrowLeft } from 'lucide-react';
 import { fetchWaitlistEntries } from '../../../api/admin';
+import Pagination from '../../Pagination';
 
 export default function AdminWaitlist({ setActiveScreen, showToast }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadWaitlist = async () => {
     try {
@@ -14,15 +17,13 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
       setEntries(data);
     } catch (err) {
       console.error('Failed to load waitlist entries:', err);
-      if (showToast) {
-        showToast(err.message || 'Failed to load waitlist entries.');
-      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     loadWaitlist();
   }, [search]);
 
@@ -42,30 +43,43 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
     }
   };
 
+  const totalPages = Math.ceil(entries.length / pageSize) || 1;
+  const paginatedEntries = entries.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="w-full text-left animate-fade">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">
-            Admin / Waitlist
-          </div>
-          <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
-            Waitlist Submissions
-          </h3>
-          <p className="text-ink-dim text-sm leading-relaxed max-w-[580px]">
-            Manage and view all community members who have registered for the BOMA platform waitlist.
-          </p>
-        </div>
+      <div className="flex flex-col gap-2.5 mb-6">
         <button
-          onClick={loadWaitlist}
-          disabled={loading}
-          className="inline-flex items-center gap-2 bg-white border border-border text-ink font-bold text-xs px-3.5 py-2 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer self-start sm:self-auto"
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-ink-dim ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">
+              Admin / Waitlist
+            </div>
+            <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
+              Waitlist Submissions
+            </h3>
+            <p className="text-ink-dim text-sm leading-relaxed max-w-[580px]">
+              Manage and view all community members who have registered for the BOMA platform waitlist.
+            </p>
+          </div>
+          <button
+            onClick={loadWaitlist}
+          disabled={loading}
+          className="inline-flex items-center gap-2 bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer self-start sm:self-auto shadow-xs"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-amber ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
         </button>
       </div>
+    </div>
 
       {/* Filter and Stats Bar */}
       <div className="flex flex-wrap gap-4 mb-5 items-center justify-between bg-panel-alt/30 border border-border p-4 rounded-xl">
@@ -85,7 +99,10 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
               type="text"
               placeholder="Search name, email, city, or interest..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full bg-white border border-border rounded-lg text-xs px-3.5 py-2 pl-9 focus:outline-none focus:border-amber font-medium"
             />
           </div>
@@ -132,14 +149,14 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
                     </td>
                   </tr>
                 ))
-              ) : entries.length === 0 ? (
+              ) : paginatedEntries.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     No waitlist submissions found matching your search.
                   </td>
                 </tr>
               ) : (
-                entries.map((item) => (
+                paginatedEntries.map((item) => (
                   <tr key={item.id} className="hover:bg-panel-alt/30 transition-colors">
                     <td className="p-4 px-6 font-bold text-ink whitespace-nowrap">
                       <div className="flex items-start gap-3">
@@ -193,6 +210,18 @@ export default function AdminWaitlist({ setActiveScreen, showToast }) {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <div className="px-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={entries.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
       </div>
 
       <button

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, ShieldAlert, CheckCircle2, AlertTriangle, ShieldCheck, Info, Calendar, ArrowUpDown } from 'lucide-react';
+import { X, Search, ShieldAlert, CheckCircle2, AlertTriangle, ShieldCheck, Info, Calendar, ArrowUpDown, RefreshCw, ArrowLeft } from 'lucide-react';
 import { fetchAdminUsers, fetchUserOnboardingAnswers, submitProfileReview } from '../../../api/admin';
 import { getReadinessScoreBreakdown } from '../../../api/onboarding';
 import Avatar from '../../Avatar';
+import Pagination from '../../Pagination';
 
 export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedAnswers, setSelectedAnswers] = useState([]);
   const [loadingAnswers, setLoadingAnswers] = useState(false);
@@ -22,6 +24,8 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
   const [entryPath, setEntryPath] = useState('ALL');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('NEWEST');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadUsers = async () => {
     try {
@@ -35,7 +39,22 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
     }
   };
 
+  const handleManualRefresh = async () => {
+    try {
+      setRefreshing(true);
+      const data = await fetchAdminUsers({ profileStatus, onboardingStatus, entryPath, search });
+      setUsers(data);
+      if (showToast) showToast('User list refreshed.', 'success');
+    } catch (err) {
+      console.error('Failed to refresh admin users:', err);
+      if (showToast) showToast('Failed to refresh users.', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
+    setCurrentPage(1);
     loadUsers();
   }, [profileStatus, onboardingStatus, entryPath, search]);
 
@@ -121,15 +140,15 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
 
       if (action === 'APPROVE') {
         setSelectedUser(updatedUser || { ...selectedUser, profile_status: 'APPROVED' });
-        if (showToast) showToast('Profile approved successfully.');
+        if (showToast) showToast('Profile approved successfully.', 'success');
       } else {
         setSelectedUser(null);
-        if (showToast) showToast('Profile rejected.');
+        if (showToast) showToast('Profile rejected.', 'info');
       }
       loadUsers();
     } catch (err) {
       console.error('Failed to submit profile review:', err);
-      if (showToast) showToast(err.message || 'Failed to submit review.');
+      if (showToast) showToast(err.message || 'Failed to submit review.', 'error');
     } finally {
       setSubmittingReview(false);
     }
@@ -164,13 +183,40 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
     return <span className="text-ink font-semibold">{resp.answer_json.value}</span>;
   };
 
+  const totalPages = Math.ceil(sortedUsers.length / pageSize) || 1;
+  const paginatedUsers = sortedUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="w-full text-left ">
-      <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / User Moderation</div>
-      <h3 className="font-display font-extrabold text-2xl text-ink mb-2">User Moderation &amp; Profiles</h3>
-      <p className="text-ink-dim text-sm leading-relaxed mb-6 max-w-[560px]">
-        Review member onboarding submissions, check compatibility scoring, and moderate access to the matching pool.
-      </p>
+      {/* Header with Refresh button */}
+      <div className="flex flex-col gap-2.5 mb-6">
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / User Moderation</div>
+            <h3 className="font-display font-extrabold text-2xl text-ink mb-1">User Moderation &amp; Profiles</h3>
+            <p className="text-ink-dim text-sm leading-relaxed max-w-[560px]">
+              Review member onboarding submissions, check compatibility scoring, and moderate access to the matching pool.
+            </p>
+          </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={loading || refreshing}
+          className="self-start sm:self-auto inline-flex items-center gap-2 bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:border-amber/50 active:scale-95 shrink-0"
+          title="Refresh user list"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+          <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+        </button>
+      </div>
+    </div>
 
       {/* Filter Bar */}
       <div className="flex flex-wrap gap-3 mb-5 items-center justify-between bg-panel-alt/30 border border-border p-4 rounded-xl">
@@ -179,7 +225,10 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Profile Status</span>
             <select
               value={profileStatus}
-              onChange={(e) => setProfileStatus(e.target.value)}
+              onChange={(e) => {
+                setProfileStatus(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-white border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:border-amber"
             >
               <option value="ALL">All Statuses</option>
@@ -194,7 +243,10 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Onboarding Steps</span>
             <select
               value={onboardingStatus}
-              onChange={(e) => setOnboardingStatus(e.target.value)}
+              onChange={(e) => {
+                setOnboardingStatus(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-white border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:border-amber"
             >
               <option value="ALL">All Steps Status</option>
@@ -207,7 +259,10 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Entry Path</span>
             <select
               value={entryPath}
-              onChange={(e) => setEntryPath(e.target.value)}
+              onChange={(e) => {
+                setEntryPath(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-white border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:border-amber"
             >
               <option value="ALL">All Paths</option>
@@ -220,7 +275,10 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim mb-1 font-bold">Sort By</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-white border border-border rounded-lg text-xs font-semibold px-3 py-1.5 focus:outline-none focus:border-amber text-ink"
             >
               <option value="NEWEST">Newest First</option>
@@ -241,7 +299,10 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
               type="text"
               placeholder="Search user name or email..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full bg-white border border-border rounded-lg text-xs px-3.5 py-2 pl-9 focus:outline-none focus:border-amber font-medium"
             />
           </div>
@@ -296,14 +357,14 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                     </td>
                   </tr>
                 ))
-              ) : sortedUsers.length === 0 ? (
+              ) : paginatedUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-ink-dim font-medium whitespace-nowrap">
                     No users match current search criteria.
                   </td>
                 </tr>
               ) : (
-                sortedUsers.map((user) => (
+                paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-panel-alt/30 transition-colors">
                     <td className="p-4 px-6 font-semibold text-ink flex items-center gap-3 whitespace-nowrap">
                       <Avatar user={user} className="w-8.5 h-8.5" />
@@ -395,6 +456,18 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <div className="px-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={sortedUsers.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
       </div>
 
       <button

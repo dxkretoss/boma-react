@@ -223,120 +223,128 @@ export default function AppScreens({
     }
   }, [activeScreen, currentUser]);
 
-  useEffect(() => {
+  const loadPodData = async () => {
     if (!currentUser?.id) {
       setLoadingPod(false);
       return;
     }
 
-    async function loadPodData() {
-      try {
-        if (userPod?.is_simulated) {
-          setLoadingPod(false);
-          return;
+    try {
+      if (userPod?.is_simulated) {
+        setLoadingPod(false);
+        return;
+      }
+      const details = await fetchPodDetails(currentUser.id);
+      setUserPod(details);
+
+      if (details) {
+        if (details.aligned_agreements) {
+          setAlignedAgreements(details.aligned_agreements);
         }
-        const details = await fetchPodDetails(currentUser.id);
-        setUserPod(details);
 
-        if (details) {
-          if (details.aligned_agreements) {
-            setAlignedAgreements(details.aligned_agreements);
-          }
+        const mems = await fetchPodMembers(details.id);
+        setPodMembersList(mems);
 
-          const mems = await fetchPodMembers(details.id);
-          setPodMembersList(mems);
+        const isMatchingPool = currentUser.entry_path === 'MATCHING_POOL';
 
-          const isMatchingPool = currentUser.entry_path === 'MATCHING_POOL';
+        if (isMatchingPool) {
+          if (details.status === 'CREATING') {
+            const otherMembers = mems
+              .filter(m => (m.userId || m.user_id) !== currentUser.id)
+              .map(m => {
+                const score = m.readinessScore ?? m.readiness_score ?? 80;
+                const timeline = m.commitmentTimeline || m.commitment_timeline;
+                const setting = m.settingPreference || m.setting_preference;
+                const timeLabel = timeline === 'timeline_5yr' ? '5+' : timeline === 'timeline_2yr' ? '2+' : timeline === 'timeline_flexible' || timeline === 'timeline_flex' ? 'Flexible' : 'Flexible';
+                const settingLabel = setting ? setting.toLowerCase() : 'suburban';
 
-          if (isMatchingPool) {
-            if (details.status === 'CREATING') {
-              const otherMembers = mems
-                .filter(m => (m.userId || m.user_id) !== currentUser.id)
-                .map(m => {
-                  const score = m.readinessScore ?? m.readiness_score ?? 80;
-                  const timeline = m.commitmentTimeline || m.commitment_timeline;
-                  const setting = m.settingPreference || m.setting_preference;
-                  const timeLabel = timeline === 'timeline_5yr' ? '5+' : timeline === 'timeline_2yr' ? '2+' : timeline === 'timeline_flexible' || timeline === 'timeline_flex' ? 'Flexible' : 'Flexible';
-                  const settingLabel = setting ? setting.toLowerCase() : 'suburban';
-
-                  return {
-                    id: m.id,
-                    userId: m.userId || m.user_id,
-                    name: m.name || 'Anonymous Member',
-                    score: score,
-                    detail: `${timeLabel} years commitment · ${settingLabel}`,
-                    isSelf: false
-                  };
-                });
-
-              const selfMemberRecord = mems.find(m => (m.userId || m.user_id) === currentUser.id);
-              const selfTimeline = currentUser.commitment_timeline || selfMemberRecord?.commitmentTimeline;
-              const selfTimeLabel = selfTimeline === 'timeline_5yr' ? '5+' : selfTimeline === 'timeline_2yr' ? '2+' : 'Flexible';
-              const selfSetting = currentUser.setting_preference || selfMemberRecord?.settingPreference || 'suburban';
-
-              const selfMember = {
-                id: selfMemberRecord?.id || `self-${currentUser.id}`,
-                userId: currentUser.id,
-                name: currentUser.name || 'You',
-                score: currentUser.readiness_score ?? selfMemberRecord?.readinessScore ?? 80,
-                detail: `${selfTimeLabel} years commitment · ${selfSetting.toLowerCase()}`,
-                isSelf: true
-              };
-
-              const allPreviewMembers = [...otherMembers, selfMember];
-
-              setSuggestedPod({
-                id: details.id,
-                name: details.name,
-                tags: [
-                  mems[0]?.location_city || 'Austin, TX',
-                  'Suburban',
-                  'Co-development',
-                  '5+ years commitment'
-                ],
-                members: allPreviewMembers,
-                matchPct: 85
+                return {
+                  id: m.id,
+                  userId: m.userId || m.user_id,
+                  name: m.name || 'Anonymous Member',
+                  score: score,
+                  detail: `${timeLabel} years commitment · ${settingLabel}`,
+                  isSelf: false
+                };
               });
 
-              if (details.membershipStatus === 'PENDING') {
-                if (['matching-status'].includes(activeScreen)) {
-                  setActiveScreen('pod-suggestion');
+            const selfMemberRecord = mems.find(m => (m.userId || m.user_id) === currentUser.id);
+            const selfTimeline = currentUser.commitment_timeline || selfMemberRecord?.commitmentTimeline;
+            const selfTimeLabel = selfTimeline === 'timeline_5yr' ? '5+' : selfTimeline === 'timeline_2yr' ? '2+' : 'Flexible';
+            const selfSetting = currentUser.setting_preference || selfMemberRecord?.settingPreference || 'suburban';
+
+            const selfMember = {
+              id: selfMemberRecord?.id || `self-${currentUser.id}`,
+              userId: currentUser.id,
+              name: currentUser.name || 'You',
+              score: currentUser.readiness_score ?? selfMemberRecord?.readinessScore ?? 80,
+              detail: `${selfTimeLabel} years commitment · ${selfSetting.toLowerCase()}`,
+              isSelf: true
+            };
+
+            const allPreviewMembers = [...otherMembers, selfMember];
+
+            setSuggestedPod({
+              id: details.id,
+              name: details.name,
+              tags: [
+                mems[0]?.location_city || 'Austin, TX',
+                'Suburban',
+                'Co-development',
+                '5+ years commitment'
+              ],
+              members: allPreviewMembers,
+              matchPct: 85
+            });
+
+            const allConfirmed = mems.length >= 2 && mems.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED');
+
+            if (details.membershipStatus === 'PENDING') {
+              if (['matching-status'].includes(activeScreen)) {
+                setActiveScreen('pod-suggestion');
+              }
+            } else if (details.membershipStatus === 'ACCEPTED') {
+              if (details.status === 'ACTIVE' || allConfirmed) {
+                if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
+                  setActiveScreen('commons-dashboard');
                 }
-              } else if (details.membershipStatus === 'ACCEPTED') {
+              } else {
                 if (['matching-status', 'pod-suggestion', 'pod-preview'].includes(activeScreen)) {
                   setActiveScreen('confirm-join');
                 }
               }
-            } else if (details.status === 'UNDER_REVIEW') {
-              // Suggested pod generated but pending admin review. Do not show suggestions.
-              setSuggestedPod(null);
-              if (['pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
-                setActiveScreen('matching-status');
-              }
-            } else if (details.status === 'ACTIVE') {
-              // Active matched pod
-              setSuggestedPod(null);
-              if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
-                setActiveScreen('commons-dashboard');
-              }
             }
-          }
-        } else {
-          setPodMembersList([]);
-          if (!suggestedPod || suggestedPod.id) {
+          } else if (details.status === 'UNDER_REVIEW') {
+            // Suggested pod generated but pending admin review. Do not show suggestions.
             setSuggestedPod(null);
             if (['pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
               setActiveScreen('matching-status');
             }
+          } else if (details.status === 'ACTIVE') {
+            // Active matched pod
+            setSuggestedPod(null);
+            if (['matching-status', 'pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
+              setActiveScreen('commons-dashboard');
+            }
           }
         }
-      } catch (err) {
-        console.error('AppScreens loadPodData error:', err);
-      } finally {
-        setLoadingPod(false);
+      } else {
+        setPodMembersList([]);
+        if (!suggestedPod || suggestedPod.id) {
+          setSuggestedPod(null);
+          if (['pod-suggestion', 'pod-preview', 'confirm-join'].includes(activeScreen)) {
+            setActiveScreen('matching-status');
+          }
+        }
       }
+    } catch (err) {
+      console.error('AppScreens loadPodData error:', err);
+    } finally {
+      setLoadingPod(false);
     }
+  };
 
+  useEffect(() => {
     loadPodData();
   }, [currentUser?.id, activeScreen]);
 
@@ -461,8 +469,16 @@ export default function AppScreens({
       setMatchingLoading(true);
       if (suggestedPod.id) {
         const freshUser = await declineMatchedPod(suggestedPod.id, currentUser.id);
-        if (setCurrentUser) {
+        if (freshUser && freshUser.id && setCurrentUser) {
           setCurrentUser(freshUser);
+          localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
+        } else if (setCurrentUser) {
+          const updated = {
+            ...currentUser,
+            matching_status: 'IN_POOL'
+          };
+          setCurrentUser(updated);
+          localStorage.setItem('boma_current_user', JSON.stringify(updated));
         }
       }
       setSuggestedPod(null);
@@ -537,8 +553,16 @@ export default function AppScreens({
       } else {
         // Real database matching proposal
         const freshUser = await acceptMatchedPod(suggestedPod.id, currentUser.id);
-        if (setCurrentUser) {
+        if (freshUser && freshUser.id && setCurrentUser) {
           setCurrentUser(freshUser);
+          localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
+        } else if (setCurrentUser) {
+          const updated = {
+            ...currentUser,
+            matching_status: 'MATCHED'
+          };
+          setCurrentUser(updated);
+          localStorage.setItem('boma_current_user', JSON.stringify(updated));
         }
 
         const details = await fetchPodDetails(currentUser.id);
@@ -577,13 +601,16 @@ export default function AppScreens({
 
         const mems = await fetchPodMembers(details.id);
         setPodMembersList(mems);
-        if (details.status === 'ACTIVE') {
+        const allConfirmed = mems.length >= 2 && mems.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED');
+        if (details.status === 'ACTIVE' || allConfirmed) {
           if (setCurrentUser) {
             const freshUser = await fetchUserProfile(currentUser.id);
-            setCurrentUser(freshUser);
+            if (freshUser && freshUser.id) {
+              setCurrentUser(freshUser);
+            }
           }
           setActiveScreen('commons-dashboard');
-          showToast('Your Pod is now active!', 'success');
+          showToast('Congratulations! All members confirmed — your Pod is now active!', 'success');
         } else {
           showToast('Pod status refreshed. Still waiting for other confirmations.', 'info');
         }
@@ -599,10 +626,12 @@ export default function AppScreens({
     const podId = userPod?.id;
     if (userPod?.is_simulated) {
       if (setCurrentUser) {
-        setCurrentUser({
+        const updated = {
           ...currentUser,
           matching_status: 'IN_POOL'
-        });
+        };
+        setCurrentUser(updated);
+        localStorage.setItem('boma_current_user', JSON.stringify(updated));
       }
       setUserPod(null);
       setPodMembersList([]);
@@ -615,14 +644,22 @@ export default function AppScreens({
         setMatchingLoading(true);
         const freshUser = await leavePodApi(currentUser.id, podId);
 
-        if (setCurrentUser) {
+        if (freshUser && freshUser.id && setCurrentUser) {
           setCurrentUser(freshUser);
+          localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
+        } else if (setCurrentUser) {
+          const updated = {
+            ...currentUser,
+            matching_status: 'IN_POOL'
+          };
+          setCurrentUser(updated);
+          localStorage.setItem('boma_current_user', JSON.stringify(updated));
         }
 
         setPodHistory([{ id: podId, when: 'just now' }, ...podHistory]);
         setUserPod(null);
         setPodMembersList([]);
-        showToast("Successfully left the pod group.", "success");
+        showToast("Successfully left the pod group. You are now back in the matching pool.", "success");
       } catch (err) {
         console.error('Failed to leave pod in DB:', err);
         showToast("Failed to leave pod: " + err.message);
@@ -637,10 +674,12 @@ export default function AppScreens({
     const podId = userPod?.id;
     if (userPod?.is_simulated) {
       if (setCurrentUser) {
-        setCurrentUser({
+        const updated = {
           ...currentUser,
           matching_status: 'IN_POOL'
-        });
+        };
+        setCurrentUser(updated);
+        localStorage.setItem('boma_current_user', JSON.stringify(updated));
       }
       setUserPod(null);
       setPodMembersList([]);
@@ -653,8 +692,16 @@ export default function AppScreens({
         setMatchingLoading(true);
         const freshUser = await dissolvePod(podId, currentUser.id);
 
-        if (setCurrentUser) {
+        if (freshUser && freshUser.id && setCurrentUser) {
           setCurrentUser(freshUser);
+          localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
+        } else if (setCurrentUser) {
+          const updated = {
+            ...currentUser,
+            matching_status: 'IN_POOL'
+          };
+          setCurrentUser(updated);
+          localStorage.setItem('boma_current_user', JSON.stringify(updated));
         }
 
         setUserPod(null);
@@ -715,28 +762,46 @@ export default function AppScreens({
     }
   };
 
-  // Current Pod Data — available for active or existing/forming pod
-  const currentPod = userPod
+  const allMembersConfirmed = (podMembersList && podMembersList.length >= 2 && podMembersList.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED')) ||
+    (userPod?.members && userPod.members.length >= 2 && userPod.members.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED'));
+
+  // Determine if user has actively joined/unlocked the full Pod Commons
+  const isPodActiveInCommons = isExistingPod
+    ? Boolean(userPod && userPod.status !== 'REJECTED')
+    : Boolean(userPod && (userPod.status === 'ACTIVE' || allMembersConfirmed) && userPod.membershipStatus === 'ACCEPTED');
+
+  // Current Pod Data — available ONLY when the pod is active in The Commons
+  const currentPod = isPodActiveInCommons
     ? {
+      id: userPod.id,
       name: userPod.name,
-      location: isExistingPod ? 'Self-Registered Group' : (currentUser?.location_city || 'Austin, TX'),
+      location: isExistingPod ? 'Self-Registered Group' : (userPod.location_city || currentUser?.location_city || 'Austin, TX'),
       formed: userPod.created_at ? new Date(userPod.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
-      photo: 'assets/pod_austin.png',
+      photo: userPod.photo || 'assets/pod_austin.png',
       avgReadiness: Math.round(
-        (podMembersList || []).reduce((acc, m) => acc + (m.readinessScore || 85), 0) / ((podMembersList && podMembersList.length) || 1)
+        (podMembersList || []).reduce((acc, m) => acc + (m.readinessScore || m.readiness_score || 85), 0) / ((podMembersList && podMembersList.length) || 1)
       ),
       health: userPod.status === 'ACTIVE' ? 'Stable' : 'Forming',
-      members: (podMembersList || []).filter(m => m.userId !== currentUser?.id).map(m => ({
-        name: m.name,
-        avatarUrl: m.avatarUrl,
-        detail: `${m.role === 'CREATOR' ? 'Group Admin' : 'Member'} · Joined`,
-        score: m.readinessScore || 85,
-        joined: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : 'Recently'
-      }))
+      members: (podMembersList || []).filter(m => (m.userId || m.user_id || m.id) !== currentUser?.id).map(m => ({
+        id: m.userId || m.user_id || m.id,
+        name: m.name || m.user?.name || 'Anonymous Member',
+        avatarUrl: m.avatarUrl || m.avatar_url || m.user?.avatar_url,
+        detail: `${(isExistingPod && m.role === 'CREATOR') ? 'Group Admin' : 'Member'} · Joined`,
+        score: m.readinessScore || m.readiness_score || 85,
+        joined: m.joinedAt || m.joined_at ? new Date(m.joinedAt || m.joined_at).toLocaleDateString() : 'Recently'
+      })),
+      ...userPod
     }
     : null;
 
-  const isCreator = userPod && (userPod.created_by === currentUser?.id || userPod.memberRole === 'CREATOR');
+  const isExistingPodGroup = isExistingPod || userPod?.group_type === 'EXISTING_POD' || userPod?.group_type === 'Friends' || userPod?.group_type === 'Family' || userPod?.group_type === 'Workforce';
+  const isCreator = Boolean(
+    isExistingPodGroup && (
+      userPod?.created_by === currentUser?.id ||
+      userPod?.memberRole === 'CREATOR' ||
+      (podMembersList || []).some(m => (m.userId === currentUser?.id || m.user_id === currentUser?.id) && m.role === 'CREATOR')
+    )
+  );
 
   return (
     <div className="w-full text-left animate-fade">
@@ -829,8 +894,10 @@ export default function AppScreens({
         <MatchingStatus
           userPod={userPod}
           currentUser={currentUser}
-          matchingLoading={matchingLoading}
+          matchingLoading={loadingPod}
           setActiveScreen={setActiveScreen}
+          onRefreshPodData={loadPodData}
+          showToast={showToast}
         />
       )}
 
@@ -860,7 +927,7 @@ export default function AppScreens({
           podMembersList={podMembersList}
           matchingLoading={matchingLoading}
           declineMatch={declineMatch}
-          handleRefreshPodStatus={handleRefreshPodStatus}
+          handleRefreshPodStatus={loadPodData}
           setActiveScreen={setActiveScreen}
         />
       )}
@@ -870,6 +937,7 @@ export default function AppScreens({
         <CommonsDashboard
           currentPod={currentPod}
           userPod={userPod}
+          currentUser={currentUser}
           setActiveScreen={setActiveScreen}
         />
       )}
@@ -889,6 +957,7 @@ export default function AppScreens({
           <CommonsDashboard
             currentPod={null}
             userPod={userPod}
+            currentUser={currentUser}
             setActiveScreen={setActiveScreen}
           />
         )
@@ -907,6 +976,7 @@ export default function AppScreens({
           <CommonsDashboard
             currentPod={null}
             userPod={userPod}
+            currentUser={currentUser}
             setActiveScreen={setActiveScreen}
           />
         )
@@ -929,6 +999,7 @@ export default function AppScreens({
           <CommonsDashboard
             currentPod={null}
             userPod={userPod}
+            currentUser={currentUser}
             setActiveScreen={setActiveScreen}
           />
         )
@@ -948,6 +1019,7 @@ export default function AppScreens({
           <CommonsDashboard
             currentPod={null}
             userPod={userPod}
+            currentUser={currentUser}
             setActiveScreen={setActiveScreen}
           />
         )

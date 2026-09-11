@@ -131,20 +131,28 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast, 
   const [previewQuestion, setPreviewQuestion] = useState(null);
   const [previewAnswer, setPreviewAnswer] = useState(null);
   const [publishing, setPublishing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const loadQuestions = async () => {
+  const loadQuestions = async (isManual = false) => {
     try {
-      setLoading(true);
+      if (!isManual) setLoading(true);
       const list = await fetchAdminQuestionsList();
       setQuestions(list);
+      if (isManual) setSuccessMsg('Questions list refreshed.');
     } catch (err) {
       console.error(err);
       setErrorMsg('Failed to load questions list.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadQuestions(true);
   };
 
   useEffect(() => {
@@ -319,18 +327,41 @@ export default function AdminQuestions({ setActiveScreen, adminUser, showToast, 
     : questions.filter(q => q.step_number === activeStepTab);
 
   return (
-    <div className="w-full text-left  animate-fade">
-      <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Question Management</div>
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-display font-extrabold text-2xl text-ink">Onboarding Questionnaire Editor</h3>
-        {!editingQuestion && (
+    <div className="w-full text-left animate-fade">
+      <div className="flex flex-col gap-2.5 mb-3">
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Question Management</div>
+            <h3 className="font-display font-extrabold text-2xl text-ink">Onboarding Questionnaire Editor</h3>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
           <button
-            onClick={handleCreateNewQuestion}
-            className="bg-teal hover:bg-teal-700 text-white font-bold text-xs rounded-xl px-4.5 py-2.5 flex items-center gap-1.5 transition-all shadow cursor-pointer"
+            onClick={handleManualRefresh}
+            disabled={loading || refreshing}
+            className="bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-all duration-200 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            title="Refresh questions"
           >
-            <Plus className="w-4 h-4" /> Add Question
+            <RefreshCw className={`w-3.5 h-3.5 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
-        )}
+          {!editingQuestion && (
+            <button
+              onClick={handleCreateNewQuestion}
+              className="bg-teal hover:bg-teal-700 text-white font-bold text-xs rounded-xl px-4.5 py-2.5 flex items-center gap-1.5 transition-all shadow cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Add Question
+            </button>
+          )}
+        </div>
+      </div>
       </div>
       <p className="text-ink-dim text-sm leading-relaxed mb-6 max-w-[560px]">
         Design onboarding steps, manage question options, assign point weights for readiness score calculation, and publish questionnaire versions.

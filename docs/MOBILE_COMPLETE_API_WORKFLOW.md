@@ -175,6 +175,23 @@ Creates user account with bcrypt password hashing and generates a 6-digit OTP em
 }
 ```
 
+#### 1.8 User Logout (`logout`)
+Clears user session on mobile and reports logout to server.
+```json
+// Request
+{
+  "action": "logout",
+  "userId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82"
+}
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "User logged out successfully.",
+  "userId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82"
+}
+```
+
 ---
 
 ### Module 2: Onboarding & Questionnaire (`custom-onboarding`)
@@ -354,6 +371,49 @@ Returns detailed score contributions across categories (Lifestyle, Location, Fin
     "setting_preference": "Suburban",
     "bio": "Software engineer looking for creative community."
   }
+}
+```
+
+#### 4.3 Upload Avatar Profile Image (`upload-avatar`)
+Mobile developers can upload base64-encoded profile photos directly. The Edge Function handles decoding, uploading to the `avatars` Supabase Storage bucket, generating a public URL, and saving `users.avatar_url`.
+
+```json
+// Request
+{
+  "action": "upload-avatar",
+  "userId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82",
+  "base64Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...",
+  "fileExt": "jpg"
+}
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "Avatar uploaded and profile updated successfully.",
+  "avatarUrl": "https://uasdswkgodhczlbqkira.supabase.co/storage/v1/object/public/avatars/c89b43d2-28e4-4fa0-82a1-e0921021bc82/1789104000000.jpg",
+  "user": {
+    "id": "c89b43d2-28e4-4fa0-82a1-e0921021bc82",
+    "avatar_url": "https://uasdswkgodhczlbqkira.supabase.co/storage/v1/object/public/avatars/c89b43d2-28e4-4fa0-82a1-e0921021bc82/1789104000000.jpg"
+  }
+}
+```
+
+#### 4.4 Delete User Account (`delete-account`)
+**Mandatory for Apple App Store (Guideline 5.1.1(v)) & Google Play Store.** Permanently deletes the user account, removes active pod memberships, deletes onboarding responses, and removes authentication records.
+
+```json
+// Request
+{
+  "action": "delete-account",
+  "userId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82",
+  "confirmationText": "DELETE"
+}
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "Account and associated profile data deleted successfully.",
+  "deletedUserId": "c89b43d2-28e4-4fa0-82a1-e0921021bc82"
 }
 ```
 

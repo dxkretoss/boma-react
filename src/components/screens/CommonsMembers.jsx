@@ -10,14 +10,20 @@ export default function CommonsMembers({
   currentUser,
   setActiveScreen
 }) {
+  const isExistingPodGroup = currentUser?.entry_path === 'EXISTING_POD' || userPod?.group_type === 'EXISTING_POD' || userPod?.group_type === 'Friends' || userPod?.group_type === 'Family' || userPod?.group_type === 'Workforce';
   const isUserAdmin = Boolean(
-    isCreator ||
-    userPod?.created_by === currentUser?.id ||
-    userPod?.memberRole === 'CREATOR' ||
-    podMembersList.some(m => m.userId === currentUser?.id && m.role === 'CREATOR')
+    isExistingPodGroup && (
+      isCreator ||
+      userPod?.created_by === currentUser?.id ||
+      userPod?.memberRole === 'CREATOR' ||
+      podMembersList.some(m => (m.userId === currentUser?.id || m.user_id === currentUser?.id) && m.role === 'CREATOR')
+    )
   );
 
-  const otherMembers = currentPod?.members || [];
+  const allMembers = (podMembersList && podMembersList.length > 0)
+    ? podMembersList
+    : (userPod?.members || currentPod?.members || []);
+  const otherMembers = allMembers.filter(m => (m.userId || m.user_id || m.id) !== currentUser?.id);
   const hasOtherMembers = otherMembers.length > 0;
 
   return (

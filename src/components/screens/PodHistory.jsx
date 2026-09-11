@@ -95,12 +95,15 @@ export default function PodHistory({
     loadPodDetails();
   }, [activePod?.id, podMembersList.length]);
 
-  // Determine if current user is Pod Admin/Creator
+  // Determine if current user is Pod Admin/Creator (Only for pre-formed EXISTING_POD groups)
+  const isExistingPodGroup = activePod?.group_type === 'EXISTING_POD' || activePod?.group_type === 'Friends' || activePod?.group_type === 'Family' || activePod?.group_type === 'Workforce' || currentUser?.entry_path === 'EXISTING_POD';
   const isUserAdmin = Boolean(
-    isCreator ||
-    activePod?.created_by === currentUser?.id ||
-    activePod?.memberRole === 'CREATOR' ||
-    members.some(m => m.userId === currentUser?.id && m.role === 'CREATOR')
+    isExistingPodGroup && (
+      isCreator ||
+      activePod?.created_by === currentUser?.id ||
+      activePod?.memberRole === 'CREATOR' ||
+      members.some(m => m.userId === currentUser?.id && m.role === 'CREATOR')
+    )
   );
 
   const pendingInvites = invitations.filter(inv => inv.status === 'PENDING');
@@ -500,7 +503,7 @@ export default function PodHistory({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {members.map((m, idx) => {
                 const isCurrent = m.userId === currentUser?.id || (!m.userId && m.email === currentUser?.email);
-                const isMemAdmin = m.role === 'CREATOR';
+                const isMemAdmin = isExistingPodGroup && m.role === 'CREATOR';
                 return (
                   <div
                     key={idx}

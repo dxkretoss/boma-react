@@ -137,7 +137,8 @@ export default function ProfileDashboard({
                 </div>
               </div>
               {(() => {
-                const isPodCreator = userPod ? (userPod.memberRole === 'CREATOR' || userPod.created_by === currentUser?.id) : false;
+                const isExistingPodGroup = isExistingPod || userPod?.group_type === 'EXISTING_POD' || userPod?.group_type === 'Friends' || userPod?.group_type === 'Family' || userPod?.group_type === 'Workforce';
+                const isPodCreator = userPod && isExistingPodGroup ? (userPod.memberRole === 'CREATOR' || userPod.created_by === currentUser?.id) : false;
                 return (
                   <button
                     onClick={() => setActiveScreen(userPod?.status === 'ACTIVE' ? 'commons-dashboard' : isPodCreator ? 'pod-invite' : 'pod-history')}

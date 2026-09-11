@@ -1,30 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { fetchPodById, fetchPodMembers } from '../../../api/pods';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw, ArrowLeft } from 'lucide-react';
 import Avatar from '../../Avatar';
 
 export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
   const [pod, setPod] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadPodData = async (isManual = false) => {
+    if (!adminViewPodId) return;
+    try {
+      if (!isManual) setLoading(true);
+      const podData = await fetchPodById(adminViewPodId);
+      setPod(podData);
+      if (podData) {
+        const membersData = await fetchPodMembers(adminViewPodId);
+        setMembers(membersData);
+      }
+    } catch (err) {
+      console.error('Failed to load pod details:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadPodData(true);
+  };
 
   useEffect(() => {
-    async function loadPodData() {
-      if (!adminViewPodId) return;
-      try {
-        setLoading(true);
-        const podData = await fetchPodById(adminViewPodId);
-        setPod(podData);
-        if (podData) {
-          const membersData = await fetchPodMembers(adminViewPodId);
-          setMembers(membersData);
-        }
-      } catch (err) {
-        console.error('Failed to load pod details:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadPodData();
   }, [adminViewPodId]);
 
@@ -45,9 +53,9 @@ export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
         <p className="text-ink-dim font-medium">Pod not found.</p>
         <button 
           onClick={() => setActiveScreen('admin-pod-management')}
-          className="bg-transparent border border-border text-ink font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer mt-4"
+          className="bg-white border border-border text-ink font-bold text-xs px-4 py-2 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer mt-4 inline-flex items-center gap-1.5 shadow-xs"
         >
-          Back to Pod Management
+          <ArrowLeft className="w-4 h-4" /> Back to Pod Management
         </button>
       </div>
     );
@@ -55,12 +63,38 @@ export default function AdminPodDetail({ setActiveScreen, adminViewPodId }) {
 
   const formedDate = new Date(pod.created_at).toLocaleDateString();
   const avgReadiness = members.length
-    ? Math.round(members.reduce((acc, m) => acc + m.readinessScore, 0) / members.length)
+    ? Math.round(members.reduce((acc, m) => acc + (m.readinessScore || m.readiness_score || 85), 0) / members.length)
     : 0;
 
   return (
-    <div className="w-full text-left  animate-fade">
-      <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Pod Management / Commons View</div>
+    <div className="w-full text-left animate-fade">
+      <div className="flex flex-col gap-2.5 mb-5">
+        <button
+          onClick={() => setActiveScreen('admin-pod-management')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Pod Management"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber font-bold">Admin / Pod Management / Commons View</div>
+            <h3 className="font-display font-extrabold text-xl text-ink leading-tight">{pod.name}</h3>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          <button
+            onClick={handleManualRefresh}
+            disabled={loading || refreshing}
+            className="bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            title="Refresh pod details"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+      </div>
+    </div>
       
       <div className="w-full text-left ">
         <div className="relative w-full rounded-2xl overflow-hidden h-[240px] mb-6 shadow-custom border border-border/5">

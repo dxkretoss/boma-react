@@ -14,15 +14,6 @@ export default function CommonsSettings({
 
       <div className="space-y-4 max-w-[480px]">
         <div className="border border-border rounded-xl p-5 bg-white shadow-sm">
-          <label className="block text-xs font-mono uppercase tracking-wider text-ink-dim mb-2 font-semibold">Notifications</label>
-          <select className="w-full bg-panel border border-border rounded-lg px-3 py-2 text-sm text-ink focus:outline-none focus:border-amber cursor-pointer font-semibold">
-            <option>All activity</option>
-            <option>Mentions only</option>
-            <option>Off</option>
-          </select>
-        </div>
-
-        <div className="border border-border rounded-xl p-5 bg-white shadow-sm">
           <h4 className="font-display font-bold text-base text-rust mb-1">
             {isCreator ? 'Dissolve/Delete Pod' : 'Leave this Pod'}
           </h4>

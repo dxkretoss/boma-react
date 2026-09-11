@@ -170,6 +170,21 @@
             },
             "url": { "raw": "{{customAuthUrl}}" }
           }
+        },
+        {
+          "name": "1.8 Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"logout\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": { "raw": "{{customAuthUrl}}" }
+          }
         }
       ]
     },
@@ -578,6 +593,38 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"action\": \"update-profile\",\n  \"userId\": \"{{userId}}\",\n  \"updates\": {\n    \"name\": \"Jordan Rivera\",\n    \"location_city\": \"Austin, TX\",\n    \"setting_preference\": \"suburban\",\n    \"housing_intent\": \"purchase\"\n  }\n}"
+            },
+            "url": { "raw": "{{manageUsersUrl}}" }
+          }
+        },
+        {
+          "name": "6.3 Upload Avatar Profile Image (Base64)",
+          "request": {
+            "description": "Uploads a base64 encoded user profile picture directly to Supabase storage and immediately updates users.avatar_url in the database.",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"upload-avatar\",\n  \"userId\": \"{{userId}}\",\n  \"base64Image\": \"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...\",\n  \"fileExt\": \"jpg\"\n}"
+            },
+            "url": { "raw": "{{manageUsersUrl}}" }
+          }
+        },
+        {
+          "name": "6.4 Delete User Account (Mobile App Store Compliance)",
+          "request": {
+            "description": "Permanently deletes user account, pod memberships, onboarding responses, and auth credentials. Mandatory for Apple App Store & Google Play Store account deletion compliance.",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"delete-account\",\n  \"userId\": \"{{userId}}\",\n  \"confirmationText\": \"DELETE\"\n}"
             },
             "url": { "raw": "{{manageUsersUrl}}" }
           }

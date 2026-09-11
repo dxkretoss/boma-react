@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, X } from 'lucide-react';
+import { Info, X, RefreshCw, ArrowLeft } from 'lucide-react';
 import { fetchMatchingWeights, updateMatchingWeights } from '../../../api/admin';
 
 export default function AdminMatching({ adminUser, setActiveScreen }) {
@@ -10,33 +10,41 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
   const [commitmentWeight, setCommitmentWeight] = useState(20);
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  useEffect(() => {
-    async function loadWeights() {
-      try {
-        setLoading(true);
-        const weights = await fetchMatchingWeights();
+  const loadWeights = async (isManual = false) => {
+    try {
+      if (!isManual) setLoading(true);
+      const weights = await fetchMatchingWeights();
 
-        weights.forEach(w => {
-          if (w.variable_key === 'lifestyle') setLifestyleWeight(w.weight);
-          else if (w.variable_key === 'location') setLocationWeight(w.weight);
-          else if (w.variable_key === 'readiness') setBudgetWeight(w.weight);
-          else if (w.variable_key === 'commitment') setCommitmentWeight(w.weight);
-        });
-      } catch (err) {
-        console.error('Failed to load weights:', err);
-        setErrorMsg('Failed to load matching weights. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+      weights.forEach(w => {
+        if (w.variable_key === 'lifestyle') setLifestyleWeight(w.weight);
+        else if (w.variable_key === 'location') setLocationWeight(w.weight);
+        else if (w.variable_key === 'readiness') setBudgetWeight(w.weight);
+        else if (w.variable_key === 'commitment') setCommitmentWeight(w.weight);
+      });
+      if (isManual) setSuccessMsg('Matching weights refreshed.');
+    } catch (err) {
+      console.error('Failed to load weights:', err);
+      setErrorMsg('Failed to load matching weights. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
 
+  useEffect(() => {
     loadWeights();
   }, []);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadWeights(true);
+  };
 
   const total = lifestyleWeight + locationWeight + budgetWeight + commitmentWeight;
 
@@ -79,12 +87,35 @@ export default function AdminMatching({ adminUser, setActiveScreen }) {
   }
 
   return (
-    <div className="w-full text-left  animate-fade">
-      <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Matching Engine</div>
-      <h3 className="font-display font-extrabold text-2xl text-ink mb-2">Matching Engine Weight Controls</h3>
-      <p className="text-ink-dim text-sm leading-relaxed mb-6 max-w-[480px]">
-        Adjust weight variables across key onboarding criteria. The total sum of all weights must equal exactly 100%.
-      </p>
+    <div className="w-full text-left animate-fade">
+      <div className="flex flex-col gap-2.5 mb-5">
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Matching Engine</div>
+            <h3 className="font-display font-extrabold text-2xl text-ink mb-1">Matching Engine Weight Controls</h3>
+            <p className="text-ink-dim text-sm leading-relaxed max-w-[480px]">
+              Adjust weight variables across key onboarding criteria. The total sum of all weights must equal exactly 100%.
+            </p>
+          </div>
+          <button
+            onClick={handleManualRefresh}
+            disabled={loading || refreshing}
+            className="bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50 shrink-0 self-start sm:self-auto"
+            title="Refresh weights"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+      </div>
 
       {errorMsg && (
         <div className="bg-red-50 border border-red-100 text-rust text-xs font-semibold p-4 rounded-xl mb-5">

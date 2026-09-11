@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export default function Toast({ 
   message, 
-  type = 'error', 
+  type = 'info', 
   onClose, 
   duration = 2500 
 }) {
@@ -15,23 +15,47 @@ export default function Toast({
     return () => clearTimeout(timer);
   }, [onClose, duration]);
 
-  const isSuccess = type === 'success';
+  // Auto-detect type if positive keywords are in message
+  let resolvedType = type;
+  if (typeof message === 'string') {
+    const lower = message.toLowerCase();
+    if (lower.includes('success') || lower.includes('approved') || lower.includes('completed') || lower.includes('saved')) {
+      resolvedType = 'success';
+    }
+  }
+
+  const isSuccess = resolvedType === 'success';
+  const isInfo = resolvedType === 'info';
 
   const toastContent = (
-    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 bg-white border border-border rounded-xl p-4 shadow-custom-lg  min-w-[320px] max-w-[420px] animate-fade">
+    <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 bg-white border border-border rounded-xl p-4 shadow-custom-lg min-w-[320px] max-w-[420px] animate-fade">
       {/* Icon Indicator */}
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-        isSuccess ? 'bg-[#EAFDF8] text-sage' : 'bg-red-50 text-red-600'
+        isSuccess 
+          ? 'bg-[#EAFDF8] text-sage' 
+          : isInfo 
+            ? 'bg-amber-soft text-amber' 
+            : 'bg-red-50 text-red-600'
       }`}>
-        {isSuccess ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+        {isSuccess ? (
+          <CheckCircle2 className="w-5 h-5" />
+        ) : isInfo ? (
+          <Info className="w-5 h-5" />
+        ) : (
+          <AlertCircle className="w-5 h-5" />
+        )}
       </div>
 
       {/* Content */}
       <div className="flex-1 text-left">
         <div className={`text-xs font-mono uppercase tracking-wider font-semibold ${
-          isSuccess ? 'text-sage' : 'text-red-500'
+          isSuccess 
+            ? 'text-sage' 
+            : isInfo 
+              ? 'text-amber' 
+              : 'text-red-500'
         }`}>
-          {isSuccess ? 'Success' : 'Error'}
+          {isSuccess ? 'Success' : isInfo ? 'Notice' : 'Error'}
         </div>
         <p className="text-ink-dim text-[13.5px] font-medium mt-0.5 leading-relaxed">
           {message}

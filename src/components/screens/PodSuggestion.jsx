@@ -156,6 +156,12 @@ export function ConfirmJoin({
   handleRefreshPodStatus,
   setActiveScreen
 }) {
+  const allMembersConfirmed = Boolean(
+    podMembersList.length >= 2 &&
+    podMembersList.every(m => (m.membershipStatus || m.membership_status) === 'ACCEPTED')
+  );
+  const isPodActive = userPod?.status === 'ACTIVE' || allMembersConfirmed;
+
   return (
     <div className="max-w-[500px] mx-auto text-center py-16 animate-fade">
       <div className="w-full bg-white border border-border rounded-2xl p-10 shadow-custom flex flex-col items-center">
@@ -165,22 +171,22 @@ export function ConfirmJoin({
         </div>
 
         <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-3 font-bold">
-          {userPod?.status === 'ACTIVE' ? "You're In" : "Pod Confirmation"}
+          {isPodActive ? "You're In" : "Pod Confirmation"}
         </div>
 
         <h1 className="font-display text-[24px] font-extrabold text-ink mb-3 leading-tight">
-          {userPod?.status === 'ACTIVE' ? `Welcome to ${suggestedPod.name}` : suggestedPod.name}
+          {isPodActive ? `Welcome to ${suggestedPod?.name || userPod?.name || 'Your Pod'}` : (suggestedPod?.name || userPod?.name || 'Pod Match')}
         </h1>
 
         <p className="text-ink-dim text-sm leading-relaxed mb-6 max-w-[360px]">
-          {userPod?.status === 'ACTIVE'
-            ? "Your Pod is now active. Head to the Commons to meet your neighbors."
+          {isPodActive
+            ? "Your Pod is now active! All matched members have accepted. Head to the Commons to meet your neighbors and begin your journey."
             : "You've accepted this Pod match suggestion. We are waiting for other proposed members to accept and confirm."
           }
         </p>
 
         {/* Display confirmations list */}
-        {userPod?.status !== 'ACTIVE' && podMembersList.length > 0 && (
+        {!isPodActive && podMembersList.length > 0 && (
           <div className="w-full bg-slate-50 border border-border/60 rounded-xl p-4 mb-6 space-y-2.5 text-left">
             <span className="font-mono text-[9px] uppercase tracking-wider text-ink-dim font-bold block mb-1">
               Member Confirmations
@@ -206,12 +212,12 @@ export function ConfirmJoin({
           </div>
         )}
 
-        {userPod?.status === 'ACTIVE' ? (
+        {isPodActive ? (
           <button
             onClick={() => setActiveScreen('commons-dashboard')}
-            className="bg-amber hover:bg-[#b05d3e] text-white font-semibold text-sm px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all cursor-pointer w-full text-center"
+            className="bg-amber hover:bg-[#b05d3e] text-white font-semibold text-sm px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:shadow-[#C46A4A]/25 active:scale-95 transition-all cursor-pointer w-full text-center flex items-center justify-center gap-2"
           >
-            Enter the Commons
+            Enter the Commons →
           </button>
         ) : (
           <div className="flex gap-3 w-full">

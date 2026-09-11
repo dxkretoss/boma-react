@@ -160,51 +160,35 @@ export async function fetchUserOnboardingAnswers(userId) {
  */
 export async function submitProfileReview(reviewData) {
   const { userId, adminId, action, reason } = reviewData;
+  const newStatus = action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'UNDER_REVIEW';
 
-  // 1. Fetch current user status
-  const { data: user, error: fetchError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  try {
+    const { data, error } = await supabase.functions.invoke('manage-admin', {
+      body: {
+        action: 'review-user-profile',
+        userId,
+        adminId,
+        status: newStatus,
+        notes: reason || null
+      }
+    });
 
-  if (fetchError) throw new Error(`User not found: ${fetchError.message}`);
-
-  let newProfileStatus = 'UNDER_REVIEW';
-  let newMatchingStatus = 'NOT_ELIGIBLE';
-
-  if (action === 'APPROVE') {
-    newProfileStatus = 'APPROVED';
-    newMatchingStatus = 'IN_POOL';
-  } else if (action === 'REJECT') {
-    newProfileStatus = 'REJECTED';
-    newMatchingStatus = 'NOT_ELIGIBLE';
-  } else if (action === 'FLAG') {
-    newProfileStatus = 'UNDER_REVIEW';
-    newMatchingStatus = 'NOT_ELIGIBLE';
+    if (!error && data?.user) {
+      return data.user;
+    }
+  } catch (edgeErr) {
+    console.warn('manage-admin edge function review call failed, falling back:', edgeErr);
   }
 
-  // 2. Insert audit trail in profile_reviews
-  const { error: reviewError } = await supabase
-    .from('profile_reviews')
-    .insert([{
-      user_id: userId,
-      admin_id: adminId,
-      action: action,
-      reason: reason || null,
-      previous_status: user.profile_status,
-      new_status: newProfileStatus
-    }]);
+  // Fallback to direct update
+  const newMatchingStatus = newStatus === 'APPROVED' ? 'IN_POOL' : 'NOT_ELIGIBLE';
 
-  if (reviewError) throw new Error(`Failed to log review details: ${reviewError.message}`);
-
-  // 3. Update user profile status
   const { data: updatedUser, error: updateError } = await supabase
     .from('users')
     .update({
-      profile_status: newProfileStatus,
+      profile_status: newStatus,
       matching_status: newMatchingStatus,
-      rejection_reason: action === 'REJECT' ? reason : null
+      rejection_reason: newStatus === 'REJECTED' ? reason : null
     })
     .eq('id', userId)
     .select()
@@ -212,28 +196,30 @@ export async function submitProfileReview(reviewData) {
 
   if (updateError) throw new Error(`Failed to update user profile status: ${updateError.message}`);
 
-  // 4. Create or update matching pool entry if approved
-  if (action === 'APPROVE') {
-    const { error: poolError } = await supabase
-      .from('matching_pool_entries')
-      .upsert({
-        user_id: userId,
-        status: 'ACTIVE',
-        readiness_score: user.readiness_score || 82,
-        entry_path: user.entry_path || 'MATCHING_POOL',
-        entered_at: new Date(),
-        updated_at: new Date()
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (poolError) throw new Error(`Failed to add user to Matching Pool: ${poolError.message}`);
+  if (newStatus === 'APPROVED') {
+    try {
+      await supabase
+        .from('matching_pool_entries')
+        .upsert({
+          user_id: userId,
+          status: 'ACTIVE',
+          readiness_score: updatedUser.readiness_score || 82,
+          entry_path: updatedUser.entry_path || 'MATCHING_POOL',
+          entered_at: new Date(),
+          updated_at: new Date()
+        }, { onConflict: 'user_id' });
+    } catch (_poolErr) {
+      // ignore
+    }
   } else {
-    // De-activate matching pool entry if rejected or flagged
-    await supabase
-      .from('matching_pool_entries')
-      .delete()
-      .eq('user_id', userId);
+    try {
+      await supabase
+        .from('matching_pool_entries')
+        .delete()
+        .eq('user_id', userId);
+    } catch (_delErr) {
+      // ignore
+    }
   }
 
   return updatedUser;

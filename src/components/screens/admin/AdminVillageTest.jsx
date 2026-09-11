@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Mail, Phone, Calendar, RefreshCw, FileText, X, CheckCircle2, HelpCircle, Code } from 'lucide-react';
+import { Search, Mail, Phone, Calendar, RefreshCw, FileText, X, CheckCircle2, HelpCircle, Code, ArrowLeft } from 'lucide-react';
 import { fetchVillageTestSubmissions } from '../../../api/admin';
 
 const VILLAGE_TEST_QUESTIONS_MAP = {
@@ -30,6 +30,9 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
   const [search, setSearch] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const loadSubmissions = async () => {
     try {
       setLoading(true);
@@ -46,6 +49,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     loadSubmissions();
   }, [search]);
 
@@ -65,8 +69,9 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
     }
   };
 
-  const renderAnswerValue = (val) => {
-    if (val === null || val === undefined) return <span className="text-slate-400 font-medium">—</span>;
+  const renderValue = (val) => {
+    if (val === null || val === undefined) return <span className="text-slate-400 italic">None</span>;
+    if (typeof val === 'boolean') return <span className="font-semibold text-xs">{val ? 'Yes' : 'No'}</span>;
 
     if (typeof val === 'object') {
       if (val.label) {
@@ -107,30 +112,43 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
     return Object.keys(answers).length;
   };
 
+  const totalPages = Math.ceil(submissions.length / pageSize) || 1;
+  const paginatedSubmissions = submissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="w-full text-left animate-fade">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">
-            Admin / Village Test
-          </div>
-          <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
-            Village Test Submissions
-          </h3>
-          <p className="text-ink-dim text-sm leading-relaxed max-w-[580px]">
-            Review all quiz responses and lifestyle assessment answers submitted through the Village Test.
-          </p>
-        </div>
+      <div className="flex flex-col gap-2.5 mb-6">
         <button
-          onClick={loadSubmissions}
-          disabled={loading}
-          className="inline-flex items-center gap-2 bg-white border border-border text-ink font-bold text-xs px-3.5 py-2 rounded-xl hover:bg-panel-alt transition-colors cursor-pointer self-start sm:self-auto"
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-ink-dim ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">
+              Admin / Village Test
+            </div>
+            <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
+              Village Test Submissions
+            </h3>
+            <p className="text-ink-dim text-sm leading-relaxed max-w-[580px]">
+              Review all quiz responses and lifestyle assessment answers submitted through the Village Test.
+            </p>
+          </div>
+          <button
+            onClick={loadSubmissions}
+          disabled={loading}
+          className="inline-flex items-center gap-2 bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer self-start sm:self-auto shadow-xs"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-amber ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
         </button>
       </div>
+    </div>
 
       {/* Filter and Stats Bar */}
       <div className="flex flex-wrap gap-4 mb-5 items-center justify-between bg-panel-alt/30 border border-border p-4 rounded-xl">
@@ -148,9 +166,12 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search name, email, or company..."
+              placeholder="Search user name or email..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full bg-white border border-border rounded-lg text-xs px-3.5 py-2 pl-9 focus:outline-none focus:border-amber font-medium"
             />
           </div>
@@ -159,14 +180,14 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
 
       {/* Submissions Table */}
       <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
-        <div className="w-full overflow-hidden">
-          <table className="w-full text-sm text-left border-collapse">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-sm text-left border-collapse min-w-[760px]">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-border text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                <th className="py-3.5 px-4 sm:px-6">Member Details</th>
-                <th className="py-3.5 px-4 sm:px-6">Answers Recorded</th>
-                <th className="py-3.5 px-4 sm:px-6">Submitted At</th>
-                <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
+                <th className="py-4 px-4 sm:px-6 whitespace-nowrap">Participant</th>
+                <th className="py-4 px-4 sm:px-6 whitespace-nowrap">Responses</th>
+                <th className="py-4 px-4 sm:px-6 whitespace-nowrap">Submitted Date</th>
+                <th className="py-4 px-4 sm:px-6 text-right whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -174,7 +195,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
                 [...Array(6)].map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
                     <td className="py-4 px-4 sm:px-6">
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-border/70 shrink-0" />
                         <div className="flex flex-col gap-1.5">
                           <div className="h-3.5 w-32 bg-border/70 rounded" />
@@ -183,24 +204,24 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
                       </div>
                     </td>
                     <td className="py-4 px-4 sm:px-6">
-                      <div className="h-5 w-20 bg-border/50 rounded-full" />
+                      <div className="h-4 w-20 bg-border/50 rounded" />
                     </td>
                     <td className="py-4 px-4 sm:px-6">
-                      <div className="h-4 w-28 bg-border/40 rounded" />
+                      <div className="h-4 w-24 bg-border/40 rounded" />
                     </td>
                     <td className="py-4 px-4 sm:px-6 text-right">
                       <div className="h-7 w-20 bg-border/40 rounded-lg ml-auto" />
                     </td>
                   </tr>
                 ))
-              ) : submissions.length === 0 ? (
+              ) : paginatedSubmissions.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-12 text-center text-ink-dim font-medium">
                     No village test submissions match your search.
                   </td>
                 </tr>
               ) : (
-                submissions.map((item) => {
+                paginatedSubmissions.map((item) => {
                   const ansCount = getAnswerCount(item.answers);
                   return (
                     <tr key={item.id} className="hover:bg-panel-alt/30 transition-colors">
@@ -255,6 +276,18 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
             </tbody>
           </table>
         </div>
+        {!loading && (
+          <div className="px-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={submissions.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
       </div>
 
       <button

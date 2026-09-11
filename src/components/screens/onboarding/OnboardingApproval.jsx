@@ -33,23 +33,31 @@ export default function OnboardingApproval({ setActiveScreen, currentUser, setCu
   }, [currentUser?.id]);
 
   const handleGoToDashboard = async () => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id) {
+      setActiveScreen('profile');
+      return;
+    }
     setChecking(true);
     setSyncStatusMsg('');
     try {
       const freshUser = await fetchUserProfile(currentUser.id);
-      if (setCurrentUser) {
+      if (setCurrentUser && freshUser) {
         setCurrentUser(freshUser);
       }
-      if (freshUser.profile_status === 'APPROVED') {
+      if (freshUser?.profile_status === 'APPROVED') {
         setActiveScreen('profile');
       } else {
         setSyncStatusMsg("Your profile is still being reviewed by the BOMA board. We'll redirect you once approved!");
-        setTimeout(() => setSyncStatusMsg(''), 4000);
+        setTimeout(() => {
+          setActiveScreen('profile');
+        }, 1500);
       }
     } catch (err) {
       console.error(err);
-      setSyncStatusMsg('Failed to check status. Please check your connection.');
+      setSyncStatusMsg("Your profile is still being reviewed by the BOMA board. We'll redirect you once approved!");
+      setTimeout(() => {
+        setActiveScreen('profile');
+      }, 1500);
     } finally {
       setChecking(false);
     }

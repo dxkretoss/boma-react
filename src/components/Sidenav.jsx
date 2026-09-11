@@ -94,8 +94,9 @@ export default function Sidenav({
   currentUser,
   userPod
 }) {
-  const isExistingPod = currentUser?.entry_path === 'EXISTING_POD';
+  const isExistingPod = currentUser?.entry_path === 'EXISTING_POD' || userPod?.group_type === 'EXISTING_POD' || userPod?.group_type === 'Friends' || userPod?.group_type === 'Family' || userPod?.group_type === 'Workforce';
   const isPodCreator = Boolean(
+    isExistingPod &&
     userPod && (
       (userPod.memberRole && userPod.memberRole.toUpperCase() === 'CREATOR') ||
       userPod.created_by === currentUser?.id
@@ -124,9 +125,9 @@ export default function Sidenav({
       </div>
 
       <nav className="flex flex-row md:flex-col gap-1 flex-1 md:flex-initial">
-        {(sectionKey === 'matching' && currentUser?.matching_status !== 'POD_ASSIGNED'
+        {(sectionKey === 'matching' && !userPod && currentUser?.matching_status !== 'POD_ASSIGNED'
           ? cfg.items.filter(item => item.id === 'matching-status')
-          : sectionKey === 'commons' && currentUser?.matching_status !== 'MATCHED'
+          : sectionKey === 'commons' && (!userPod || userPod.status !== 'ACTIVE')
           ? cfg.items.filter(item => item.id === 'commons-dashboard')
           : sectionKey === 'profile' && isExistingPod
           ? [

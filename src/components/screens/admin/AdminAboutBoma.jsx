@@ -16,7 +16,8 @@ import {
   Layers,
   Sparkles,
   Link2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ArrowLeft
 } from 'lucide-react';
 import {
   fetchLearningVideos,
@@ -24,6 +25,7 @@ import {
   updateLearningVideo,
   deleteLearningVideo
 } from '../../../api/learning';
+import Pagination from '../../Pagination';
 
 export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, showConfirm }) {
   const [videos, setVideos] = useState([]);
@@ -32,16 +34,18 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
   const [editingVideo, setEditingVideo] = useState(null);
   const [previewVideo, setPreviewVideo] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
 
   // Lock body scroll when any modal is open
   useEffect(() => {
     if (isModalOpen || previewVideo) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
     };
   }, [isModalOpen, previewVideo]);
 
@@ -50,20 +54,19 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
     title: '',
     description: '',
     video_url: '',
-    thumbnail_url: '',
-    tag: 'Getting Started',
-    order_index: 0,
+    category: 'GETTING_STARTED',
+    sort_order: 1,
     is_published: true
   });
 
   const loadVideos = async () => {
     try {
       setLoading(true);
-      const data = await fetchLearningVideos(true);
+      const data = await fetchLearningVideos();
       setVideos(data || []);
     } catch (err) {
-      console.error('Failed to load learning videos:', err);
-      if (showToast) showToast(err.message || 'Failed to load videos.');
+      console.error('Error fetching learning videos:', err);
+      if (showToast) showToast('Failed to load learning videos.');
     } finally {
       setLoading(false);
     }
@@ -79,9 +82,8 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
       title: '',
       description: '',
       video_url: '',
-      thumbnail_url: '',
-      tag: 'Getting Started',
-      order_index: videos.length + 1,
+      category: 'GETTING_STARTED',
+      sort_order: videos.length + 1,
       is_published: true
     });
     setIsModalOpen(true);
@@ -93,10 +95,9 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
       title: video.title || '',
       description: video.description || video.desc || '',
       video_url: video.video_url || video.url || '',
-      thumbnail_url: video.thumbnail_url || video.thumb || '',
-      tag: video.tag || 'Getting Started',
-      order_index: video.order_index ?? 0,
-      is_published: video.is_published !== undefined ? video.is_published : true
+      category: video.category || video.tag || 'GETTING_STARTED',
+      sort_order: video.sort_order ?? video.order_index ?? 1,
+      is_published: video.is_published !== false
     });
     setIsModalOpen(true);
   };
@@ -106,23 +107,10 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
     setEditingVideo(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSaveVideo = async (e) => {
     e.preventDefault();
-
-    if (!formData.title.trim()) {
-      if (showToast) showToast('Please enter a video title.');
-      return;
-    }
-    if (!formData.video_url.trim()) {
-      if (showToast) showToast('Please enter a valid video link.');
-      return;
-    }
-    if (!formData.thumbnail_url.trim()) {
-      if (showToast) showToast('Please enter a thumbnail image URL or asset path.');
-      return;
-    }
-    if (!formData.description.trim()) {
-      if (showToast) showToast('Please enter a short description.');
+    if (!formData.title.trim() || !formData.video_url.trim()) {
+      if (showToast) showToast('Title and Video URL are required.');
       return;
     }
 
@@ -187,22 +175,34 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
     }
   };
 
+  const totalPages = Math.ceil(videos.length / pageSize) || 1;
+  const paginatedVideos = videos.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="w-full text-left animate-fade">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-amber" />
-            Admin / About BOMA
+      <div className="flex flex-col gap-2.5 mb-6">
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-amber" />
+              Admin / About BOMA
+            </div>
+            <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
+              About BOMA
+            </h3>
+            <p className="text-ink-dim text-sm leading-relaxed max-w-[620px]">
+              Manage educational tutorial guides and video walkthroughs displayed dynamically in the Member Learning Hub and Mobile App.
+            </p>
           </div>
-          <h3 className="font-display font-extrabold text-2xl text-ink mb-1">
-            About BOMA
-          </h3>
-          <p className="text-ink-dim text-sm leading-relaxed max-w-[620px]">
-            Manage educational tutorial guides and video walkthroughs displayed dynamically in the Member Learning Hub and Mobile App.
-          </p>
-        </div>
 
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
           <button
@@ -222,6 +222,7 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
           </button>
         </div>
       </div>
+    </div>
 
       {/* Stats and Quick Info Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -261,149 +262,165 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
       </div>
 
       {/* Video Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        {loading ? (
-          <div className="col-span-2 text-center py-16 bg-white border border-border rounded-2xl shadow-sm">
-            <RefreshCw className="w-8 h-8 text-amber animate-spin mx-auto mb-3" />
-            <p className="text-ink-dim font-medium text-sm">Loading learning videos...</p>
-          </div>
-        ) : videos.length === 0 ? (
-          <div className="col-span-2 text-center py-16 bg-white border border-border rounded-2xl shadow-sm">
-            <Video className="w-12 h-12 text-ink-dim/40 mx-auto mb-3" />
-            <h4 className="font-display font-bold text-lg text-ink mb-1">No videos added yet</h4>
-            <p className="text-ink-dim text-sm max-w-sm mx-auto mb-5">
-              Click the button below to add your first tutorial or educational video.
-            </p>
-            <button
-              onClick={handleOpenAddModal}
-              className="bg-amber text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#b05d3e] transition-colors inline-flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              Add First Video
-            </button>
-          </div>
-        ) : (
-          videos.map((video, idx) => {
-            const videoUrl = video.video_url || video.url || '';
-            const thumbUrl = video.thumbnail_url || video.thumb || '/assets/pod_community_realistic.png';
-            const desc = video.description || video.desc || '';
-            const tag = video.tag || 'Getting Started';
-            const isPublished = video.is_published !== false;
-
-            return (
-              <div
-                key={video.id || idx}
-                className="border border-border rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-all"
+      <div className="space-y-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {loading ? (
+            <div className="col-span-2 text-center py-16 bg-white border border-border rounded-2xl shadow-sm">
+              <RefreshCw className="w-8 h-8 text-amber animate-spin mx-auto mb-3" />
+              <p className="text-ink-dim font-medium text-sm">Loading learning videos...</p>
+            </div>
+          ) : paginatedVideos.length === 0 ? (
+            <div className="col-span-2 text-center py-16 bg-white border border-border rounded-2xl shadow-sm">
+              <BookOpen className="w-12 h-12 text-ink-dim/40 mx-auto mb-3" />
+              <h4 className="font-display font-bold text-lg text-ink mb-1">No videos added yet</h4>
+              <p className="text-ink-dim text-sm max-w-sm mx-auto mb-5">
+                Click the button below to add your first tutorial or educational video.
+              </p>
+              <button
+                onClick={handleOpenAddModal}
+                className="bg-amber text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#b05d3e] transition-colors inline-flex items-center gap-2 cursor-pointer"
               >
-                <div>
-                  {/* Thumbnail / Video header */}
-                  <div className="relative h-48 bg-navy-deep overflow-hidden group">
-                    <img
-                      src={thumbUrl}
-                      alt={video.title}
-                      className="w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = '/assets/pod_community_realistic.png';
-                      }}
-                    />
-                    <div
-                      onClick={() => setPreviewVideo({ title: video.title, url: videoUrl, desc })}
-                      className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors cursor-pointer"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                        <Play className="w-5 h-5 text-navy-deep fill-navy-deep ml-0.5" />
+                <Plus className="w-4 h-4" />
+                Add First Video
+              </button>
+            </div>
+          ) : (
+            paginatedVideos.map((video, idx) => {
+              const videoUrl = video.video_url || video.url || '';
+              const thumbUrl = video.thumbnail_url || video.thumb || '/assets/pod_community_realistic.png';
+              const desc = video.description || video.desc || '';
+              const tag = video.tag || 'Getting Started';
+              const isPublished = video.is_published !== false;
+
+              return (
+                <div
+                  key={video.id || idx}
+                  className="border border-border rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-all"
+                >
+                  <div>
+                    {/* Thumbnail / Video header */}
+                    <div className="relative h-48 bg-navy-deep overflow-hidden group">
+                      <img
+                        src={thumbUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover opacity-75 group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = '/assets/pod_community_realistic.png';
+                        }}
+                      />
+                      <div
+                        onClick={() => setPreviewVideo({ title: video.title, url: videoUrl, desc })}
+                        className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors cursor-pointer"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <Play className="w-5 h-5 text-navy-deep fill-navy-deep ml-0.5" />
+                        </div>
+                      </div>
+
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-navy-deep/80 backdrop-blur-md text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
+                          {tag}
+                        </span>
+                      </div>
+
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono flex items-center gap-1 ${
+                            isPublished
+                              ? 'bg-sage/90 text-white'
+                              : 'bg-rust/90 text-white'
+                          }`}
+                        >
+                          {isPublished ? 'Published' : 'Draft'}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-navy-deep/80 backdrop-blur-md text-white font-mono text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20">
-                        {tag}
-                      </span>
-                    </div>
+                    {/* Body Content */}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <h4 className="font-display font-bold text-base text-ink leading-snug">
+                          {video.title}
+                        </h4>
+                        <span className="text-[11px] font-mono text-ink-dim bg-panel-alt px-2 py-0.5 rounded shrink-0">
+                          Order #{video.order_index ?? idx + 1}
+                        </span>
+                      </div>
 
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono flex items-center gap-1 ${
-                          isPublished
-                            ? 'bg-sage/90 text-white'
-                            : 'bg-rust/90 text-white'
-                        }`}
+                      <p className="text-xs text-ink-dim leading-relaxed mb-4 line-clamp-2">
+                        {desc}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-xs font-mono text-ink-dim bg-panel-alt/60 p-2 rounded-lg border border-border/60 overflow-hidden">
+                        <Link2 className="w-3.5 h-3.5 text-amber shrink-0" />
+                        <span className="truncate text-[11px]">{videoUrl}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Actions */}
+                  <div className="p-4 border-t border-border/80 bg-[#FAFCFF] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setPreviewVideo({ title: video.title, url: videoUrl, desc })}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-ink hover:text-navy-deep px-2.5 py-1.5 rounded-lg hover:bg-panel-alt transition-colors cursor-pointer"
+                        title="Preview Video"
                       >
-                        {isPublished ? 'Published' : 'Draft'}
-                      </span>
+                        <Eye className="w-3.5 h-3.5" />
+                        Preview
+                      </button>
+                      <button
+                        onClick={() => handleTogglePublished(video)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-ink-dim hover:text-ink px-2.5 py-1.5 rounded-lg hover:bg-panel-alt transition-colors cursor-pointer"
+                        title="Toggle Publish Status"
+                      >
+                        {isPublished ? (
+                          <span className="text-rust flex items-center gap-1">
+                            <XCircle className="w-3.5 h-3.5" /> Unpublish
+                          </span>
+                        ) : (
+                          <span className="text-sage flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Publish
+                          </span>
+                        )}
+                      </button>
                     </div>
-                  </div>
 
-                  {/* Body Content */}
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <h4 className="font-display font-bold text-base text-ink leading-snug">
-                        {video.title}
-                      </h4>
-                      <span className="text-[11px] font-mono text-ink-dim bg-panel-alt px-2 py-0.5 rounded shrink-0">
-                        Order #{video.order_index ?? idx + 1}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-ink-dim leading-relaxed mb-4 line-clamp-2">
-                      {desc}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-xs font-mono text-ink-dim bg-panel-alt/60 p-2 rounded-lg border border-border/60 overflow-hidden">
-                      <Link2 className="w-3.5 h-3.5 text-amber shrink-0" />
-                      <span className="truncate text-[11px]">{videoUrl}</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEditModal(video)}
+                        className="p-1.5 text-ink-dim hover:text-amber rounded-lg hover:bg-amber-soft/50 transition-colors cursor-pointer"
+                        title="Edit Video"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(video)}
+                        className="p-1.5 text-ink-dim hover:text-rust rounded-lg hover:bg-rust/10 transition-colors cursor-pointer"
+                        title="Delete Video"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
+              );
+            })
+          )}
+        </div>
 
-                {/* Card Actions */}
-                <div className="p-4 border-t border-border/80 bg-[#FAFCFF] flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setPreviewVideo({ title: video.title, url: videoUrl, desc })}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-ink hover:text-navy-deep px-2.5 py-1.5 rounded-lg hover:bg-panel-alt transition-colors cursor-pointer"
-                      title="Preview Video"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      Preview
-                    </button>
-                    <button
-                      onClick={() => handleTogglePublished(video)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-ink-dim hover:text-ink px-2.5 py-1.5 rounded-lg hover:bg-panel-alt transition-colors cursor-pointer"
-                      title="Toggle Publish Status"
-                    >
-                      {isPublished ? (
-                        <span className="text-rust flex items-center gap-1">
-                          <XCircle className="w-3.5 h-3.5" /> Unpublish
-                        </span>
-                      ) : (
-                        <span className="text-sage flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Publish
-                        </span>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEditModal(video)}
-                      className="p-1.5 text-ink-dim hover:text-amber rounded-lg hover:bg-amber-soft/50 transition-colors cursor-pointer"
-                      title="Edit Video"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(video)}
-                      className="p-1.5 text-ink-dim hover:text-rust rounded-lg hover:bg-rust/10 transition-colors cursor-pointer"
-                      title="Delete Video"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+        {!loading && videos.length > 0 && (
+          <div className="bg-white border border-border rounded-2xl px-4 py-2 shadow-xs">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={videos.length}
+              pageSize={pageSize}
+              pageSizeOptions={[4, 6, 10, 20]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
         )}
       </div>
 

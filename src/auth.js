@@ -106,3 +106,18 @@ export async function customResetPassword(email, token, newPassword) {
   return true;
 }
 
+// Custom logout function
+export async function customLogout(userId) {
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn('Supabase auth signOut notice:', err);
+  }
+  try {
+    await invokeAuth('logout', { userId });
+  } catch (err) {
+    console.warn('Edge function logout notice:', err);
+  }
+  return true;
+}
+

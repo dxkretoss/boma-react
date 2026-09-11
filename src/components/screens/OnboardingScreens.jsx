@@ -322,21 +322,11 @@ export default function OnboardingScreens({
 
   const handleAgeSelect = async (age) => {
     setAgeGroup(age);
-    if (currentUser?.id && questionnaire) {
-      const question = questionnaire.questions.find(q => q.question_key === 'age_group');
-      if (question) {
-        try {
-          await saveOnboardingResponse(currentUser.id, {
-            questionnaireId: questionnaire.id,
-            questionnaireVersion: questionnaire.version,
-            questionId: question.id,
-            questionKey: 'age_group',
-            answerJson: { value: age },
-            stepNumber: 1
-          });
-        } catch (err) {
-          console.error('Failed to save age group:', err);
-        }
+    if (currentUser?.id) {
+      try {
+        await saveStepResponses(1, [{ key: 'age_group', value: age }]);
+      } catch (err) {
+        console.error('Failed to save age group:', err);
       }
     }
     setActiveScreen('onboarding-lifestyle');
@@ -363,11 +353,29 @@ export default function OnboardingScreens({
       }, 700);
 
       try {
-        // Save final step response
-        await saveStepResponse('commitment_timeline', commitmentTimeline, 7);
-        // Call DB submit profile (marks COMPLETED, sets status to UNDER_REVIEW, calculates score)
+        // 1. Batch save all responses to ensure DB has all step answers
+        const allResponses = [
+          { key: 'age_group', value: ageGroup },
+          { key: 'lifestyles', value: selectedLifestyles },
+          { key: 'decision_style', value: decisionStyle },
+          { key: 'pod_size', value: podSize },
+          { key: 'location_city', value: locationCity },
+          { key: 'location_radius', value: locationRadius?.toString() },
+          { key: 'setting_preference', value: settingPreference },
+          { key: 'budget_range', value: budgetRange },
+          { key: 'down_payment_tier', value: downPaymentTier },
+          { key: 'financing_preference', value: financingPreference },
+          { key: 'housing_intent', value: housingIntent },
+          { key: 'commitment_timeline', value: commitmentTimeline }
+        ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
+
+        if (allResponses.length > 0) {
+          await saveStepResponses(7, allResponses);
+        }
+
+        // 2. Call Edge Function to submit profile (marks COMPLETED, UNDER_REVIEW, calculates score)
         const updatedUser = await submitOnboardingProfile(currentUser.id);
-        if (setCurrentUser) {
+        if (setCurrentUser && updatedUser) {
           setCurrentUser(updatedUser);
         }
       } catch (err) {

@@ -96,11 +96,11 @@ export default function Header({
 
         if (pod) {
           const allMems = pod.members || [];
-          const podMember = allMems.find(m => m.user?.id === currentUser.id || m.id === currentUser.id);
+          const podMember = allMems.find(m => m.user?.id === currentUser.id || m.user_id === currentUser.id || m.userId === currentUser.id || m.id === currentUser.id);
 
             // Match proposal
             if (pod.status === 'CREATING') {
-              if (podMember.membership_status === 'PENDING') {
+              if (podMember?.membership_status === 'PENDING') {
                 notifs.push({
                   id: 'match-proposal',
                   title: 'Action Required: Match Found!',

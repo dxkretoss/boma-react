@@ -64,14 +64,15 @@ serve(async (req) => {
 
       let targetPodId = podId;
       if (!targetPodId && userId) {
-        const { data: member } = await supabaseAdmin
+        const { data: members } = await supabaseAdmin
           .from('pod_members')
-          .select('pod_id')
+          .select('pod_id, created_at')
           .eq('user_id', userId)
-          .eq('membership_status', 'ACCEPTED')
-          .maybeSingle();
+          .neq('membership_status', 'DECLINED')
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        targetPodId = member?.pod_id;
+        targetPodId = members?.[0]?.pod_id;
       }
 
       if (!targetPodId) {
@@ -95,6 +96,20 @@ serve(async (req) => {
         .eq('pod_id', targetPodId);
 
       if (memError) throw memError;
+
+      // Auto-activate pod if all members (>= 2) have accepted
+      const allMembersAccepted = (members || []).length >= 2 && (members || []).every((m: any) => m.membership_status === 'ACCEPTED');
+      if (allMembersAccepted && pod.status === 'CREATING') {
+        try {
+          await supabaseAdmin
+            .from('pods')
+            .update({ status: 'ACTIVE', updated_at: new Date().toISOString() })
+            .eq('id', targetPodId);
+          pod.status = 'ACTIVE';
+        } catch (actErr) {
+          console.warn('Auto-activate pod error:', actErr);
+        }
+      }
 
       return new Response(
         JSON.stringify({
@@ -286,8 +301,26 @@ serve(async (req) => {
         .update({ matching_status: 'MATCHED' })
         .eq('id', userId);
 
+      // Check if all members of the pod have now accepted
+      const { data: allMembers } = await supabaseAdmin
+        .from('pod_members')
+        .select('membership_status')
+        .eq('pod_id', podId);
+
+      const allAccepted = (allMembers || []).length >= 2 && (allMembers || []).every((m: any) => m.membership_status === 'ACCEPTED');
+      if (allAccepted) {
+        try {
+          await supabaseAdmin
+            .from('pods')
+            .update({ status: 'ACTIVE', updated_at: new Date().toISOString() })
+            .eq('id', podId);
+        } catch (actErr) {
+          console.warn('Auto-activate pod on accept error:', actErr);
+        }
+      }
+
       return new Response(
-        JSON.stringify({ success: true, message: 'Pod match proposal accepted.', member }),
+        JSON.stringify({ success: true, message: 'Pod match proposal accepted.', member, isPodActive: allAccepted }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

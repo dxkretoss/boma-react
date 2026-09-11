@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ArrowLeft, Users, FileText, CheckCircle2, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, FileText, CheckCircle2, XCircle, AlertCircle, MessageSquare, RefreshCw } from 'lucide-react';
 import { fetchPodsUnderReview, fetchPodMembers, approvePod, rejectPod } from '../../../api/pods';
 import Toast from '../../Toast';
+import Pagination from '../../Pagination';
 
 export default function AdminExistingPodQueue({ setActiveScreen }) {
   const [pods, setPods] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedPod, setSelectedPod] = useState(null);
   const [selectedPodMembers, setSelectedPodMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // Review Action states
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -17,21 +21,33 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
   // Load pods under review
-  const loadQueue = async () => {
-    setLoading(true);
+  const loadQueue = async (showSuccessToast = false) => {
+    if (!showSuccessToast) setLoading(true);
     try {
       const list = await fetchPodsUnderReview();
       setPods(list);
+      if (showSuccessToast) {
+        setToast({ show: true, message: 'Existing pod queue refreshed.', type: 'success' });
+      }
     } catch (err) {
       setToast({ show: true, message: err.message || 'Failed to fetch pods queue.', type: 'error' });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadQueue(true);
   };
 
   useEffect(() => {
     loadQueue();
   }, []);
+
+  const totalPages = Math.ceil(pods.length / pageSize) || 1;
+  const paginatedPods = pods.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // When selected pod changes, fetch members
   useEffect(() => {
@@ -333,11 +349,32 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
       )}
 
       {/* Header section */}
-      <div>
-        <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Moderation</div>
-        <h3 className="font-display font-extrabold text-2.5xl text-ink">Existing Pod Queue</h3>
-        <p className="text-ink-dim text-sm mt-1">Review self-formed co-living groups waiting for Board activation.</p>
+      <div className="flex flex-col gap-2.5 mb-5">
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back</span>
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-wider text-amber mb-1 font-bold">Admin / Moderation</div>
+            <h3 className="font-display font-extrabold text-2.5xl text-ink">Existing Pod Queue</h3>
+            <p className="text-ink-dim text-sm mt-1">Review self-formed co-living groups waiting for Board activation.</p>
+          </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={loading || refreshing}
+          className="self-start sm:self-auto inline-flex items-center gap-2 bg-white hover:bg-panel-alt border border-border text-ink hover:text-amber text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:border-amber/50 active:scale-95 shrink-0"
+          title="Refresh existing pod queue"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+          <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+        </button>
       </div>
+    </div>
 
       <div className="w-full space-y-4">
         {loading ? (
@@ -388,43 +425,47 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
           </div>
         ) : (
           <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-sm text-left border-collapse">
+            <div className="overflow-x-auto w-full scrollbar-thin">
+              <table className="w-full min-w-[960px] text-sm text-left border-collapse whitespace-nowrap">
                 <thead>
-                  <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider">
-                    <th className="p-4 px-6">Pod Group</th>
-                    <th className="p-4 px-6">Group Type</th>
-                    <th className="p-4 px-6">Registered Date</th>
-                    <th className="p-4 px-6">Status</th>
-                    <th className="p-4 px-6 text-right">Action</th>
+                  <tr className="bg-[#F8FAFC] border-b border-border text-ink font-semibold text-xs uppercase tracking-wider whitespace-nowrap">
+                    <th className="py-4 px-6 whitespace-nowrap">Pod Group</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Group Type</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Registered Date</th>
+                    <th className="py-4 px-6 whitespace-nowrap">Status</th>
+                    <th className="py-4 px-6 text-right whitespace-nowrap">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {pods.map(pod => (
-                    <tr key={pod.id} className="hover:bg-panel/20 transition-colors">
-                      <td className="p-4 px-6">
-                        <div className="flex flex-col text-left max-w-[320px] md:max-w-[400px]">
-                          <span className="font-bold text-ink leading-tight">{pod.name}</span>
-                          <span className="text-xs text-ink-dim mt-1.5 truncate">{pod.description}</span>
+                  {paginatedPods.map(pod => (
+                    <tr key={pod.id} className="hover:bg-panel/20 transition-colors whitespace-nowrap">
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="font-bold text-ink text-sm whitespace-nowrap">{pod.name}</span>
+                          {pod.description && (
+                            <span className="text-xs text-ink-dim font-normal whitespace-nowrap max-w-[300px] truncate">
+                              · {pod.description}
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td className="p-4 px-6 font-medium text-ink">
-                        <span className="bg-amber-soft/60 text-amber text-[9.5px] font-bold px-2.5 py-0.5 rounded font-mono uppercase tracking-wider border border-amber/10">
+                      <td className="py-4 px-6 font-medium text-ink whitespace-nowrap">
+                        <span className="bg-amber-soft/60 text-amber text-[10px] font-bold px-2.5 py-1 rounded-md font-mono uppercase tracking-wider border border-amber/10 whitespace-nowrap">
                           {pod.group_type || 'Group'}
                         </span>
                       </td>
-                      <td className="p-4 px-6 text-ink-dim text-xs">
+                      <td className="py-4 px-6 text-ink-dim text-xs whitespace-nowrap font-mono">
                         {new Date(pod.created_at).toLocaleDateString()}
                       </td>
-                      <td className="p-4 px-6 whitespace-nowrap">
-                        <span className="bg-teal-soft text-teal border border-teal/10 text-[9.5px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider font-mono whitespace-nowrap">
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <span className="bg-teal-soft text-teal border border-teal/10 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider font-mono whitespace-nowrap">
                           Review Pending
                         </span>
                       </td>
-                      <td className="p-4 px-6 text-right whitespace-nowrap">
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
                         <button
                           onClick={() => setSelectedPod(pod)}
-                          className="bg-amber hover:bg-[#b05d3e] text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+                          className="bg-white border border-border text-ink hover:bg-panel-alt font-bold text-xs px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-xs"
                         >
                           Inspect Details &rarr;
                         </button>
@@ -434,6 +475,18 @@ export default function AdminExistingPodQueue({ setActiveScreen }) {
                 </tbody>
               </table>
             </div>
+            {!loading && (
+              <div className="px-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={pods.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </div>
+            )}
           </div>
         )}
 

@@ -17,8 +17,8 @@ export default function LearningHub({
   const [videos, setVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
 
-  const isExistingPod = propIsExistingPod !== undefined ? propIsExistingPod : currentUser?.entry_path === 'EXISTING_POD';
-  const isPodCreator = userPod ? (userPod.memberRole === 'CREATOR' || userPod.created_by === currentUser?.id) : true;
+  const isExistingPod = propIsExistingPod !== undefined ? propIsExistingPod : (currentUser?.entry_path === 'EXISTING_POD' || userPod?.group_type === 'EXISTING_POD' || userPod?.group_type === 'Friends' || userPod?.group_type === 'Family' || userPod?.group_type === 'Workforce');
+  const isPodCreator = isExistingPod && userPod ? (userPod.memberRole === 'CREATOR' || userPod.created_by === currentUser?.id) : false;
 
   useEffect(() => {
     let isMounted = true;

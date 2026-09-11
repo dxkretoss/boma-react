@@ -811,6 +811,16 @@ serve(async (req) => {
       );
     }
 
+    // =========================================================================
+    // ACTION: LOGOUT
+    // =========================================================================
+    if (action === 'logout') {
+      return new Response(
+        JSON.stringify({ success: true, message: 'Logged out successfully.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Unknown action
     return new Response(
       JSON.stringify({ error: `Unknown action "${action}"` }),

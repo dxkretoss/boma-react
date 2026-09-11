@@ -147,3 +147,38 @@ export async function uploadUserAvatar(userId, file) {
 
   return publicUrl;
 }
+
+/**
+ * Uploads a base64-encoded image directly through manage-users Edge Function.
+ * Ideal for Mobile App integrations (React Native, Flutter, Swift, Kotlin).
+ * @param {string} userId
+ * @param {string} base64Image
+ * @param {string} [fileExt='jpg']
+ * @returns {Promise<{ avatarUrl: string, user: Object }>}
+ */
+export async function uploadAvatarBase64(userId, base64Image, fileExt = 'jpg') {
+  const result = await invokeUsers('upload-avatar', {
+    userId,
+    base64Image,
+    fileExt,
+  });
+  return {
+    avatarUrl: result.avatarUrl,
+    user: result.user,
+  };
+}
+
+/**
+ * Deletes user account and associated records (onboarding, pod memberships, scores).
+ * Compliant with Apple / Google mobile account deletion guidelines.
+ * @param {string} userId
+ * @param {string} [confirmationText]
+ * @returns {Promise<boolean>}
+ */
+export async function deleteUserAccount(userId, confirmationText) {
+  await invokeUsers('delete-account', {
+    userId,
+    confirmationText,
+  });
+  return true;
+}

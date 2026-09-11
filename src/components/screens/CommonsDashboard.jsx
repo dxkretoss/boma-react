@@ -15,41 +15,111 @@ import {
 export default function CommonsDashboard({
   currentPod,
   userPod,
+  currentUser,
   setActiveScreen
 }) {
-  const isPodForming = userPod?.status === 'CREATING';
+  const isExistingPod = currentUser?.entry_path === 'EXISTING_POD';
+  const isMatchingPoolUser = !isExistingPod;
+
+  const allMembersConfirmed = Boolean(
+    userPod?.members &&
+    userPod.members.length >= 2 &&
+    userPod.members.every(m => m.membershipStatus === 'ACCEPTED' || m.membership_status === 'ACCEPTED')
+  );
+
+  // Active Pod in Commons is ONLY available if:
+  // 1. For Existing Pod (Path B): pod exists and is not rejected
+  // 2. For Matching Pool (Path A): pod is ACTIVE (or all members confirmed) and user has ACCEPTED
+  const isPodActiveInCommons = isExistingPod
+    ? Boolean(userPod && userPod.status !== 'REJECTED')
+    : Boolean(userPod && (userPod.status === 'ACTIVE' || allMembersConfirmed) && userPod.membershipStatus === 'ACCEPTED');
+
+  const activePod = isPodActiveInCommons ? (currentPod || {
+    id: userPod?.id,
+    name: userPod?.name,
+    location: userPod?.location_city || 'Austin, TX',
+    formed: userPod?.created_at ? new Date(userPod.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently',
+    photo: userPod?.photo || 'assets/pod_austin.png',
+    ...userPod
+  }) : null;
+
+  const isPodForming = isExistingPod && userPod?.status === 'CREATING';
   const isPodUnderReview = userPod?.status === 'UNDER_REVIEW';
+  const isPendingMatchProposal = isMatchingPoolUser && userPod?.status === 'CREATING' && userPod?.membershipStatus === 'PENDING';
+  const isWaitingForNeighborConfirmations = isMatchingPoolUser && !allMembersConfirmed && userPod?.status === 'CREATING' && userPod?.membershipStatus === 'ACCEPTED';
 
   return (
     <div className="pad py-12 px-6 md:px-8 text-left animate-fade">
       {/* Active Pod Banner Card */}
-      {currentPod ? (
+      {activePod ? (
         <div className="relative w-full rounded-2xl overflow-hidden h-[240px] mb-6 shadow-custom border border-border/5">
-          <img src={currentPod.photo || 'assets/pod_austin.png'} className="w-full h-full object-cover" alt={currentPod.name} />
+          <img src={activePod.photo || 'assets/pod_austin.png'} className="w-full h-full object-cover" alt={activePod.name} />
           <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/95 via-navy-deep/40 to-transparent p-6 md:p-8 flex items-end text-left ">
             <div className="text-white">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="bg-white/20 backdrop-blur-md text-white text-[10.5px] font-bold px-2.5 py-0.5 rounded-full font-mono uppercase tracking-wider border border-white/20">
-                  {userPod?.group_type || 'Self-Registered Group'}
+                  {userPod?.group_type || activePod?.group_type || 'Self-Registered Group'}
                 </span>
                 <span className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded-full font-mono uppercase tracking-wider border ${
-                  userPod?.status === 'ACTIVE'
+                  (userPod?.status === 'ACTIVE' || activePod?.status === 'ACTIVE')
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                     : isPodUnderReview
                       ? 'bg-amber-500/20 text-amber-200 border-amber-500/40'
                       : 'bg-teal-500/20 text-teal-200 border-teal-500/40'
                 }`}>
-                  {userPod?.status === 'ACTIVE' ? 'Active in Commons' : isPodUnderReview ? 'Under Board Review' : 'Forming & Inviting'}
+                  {(userPod?.status === 'ACTIVE' || activePod?.status === 'ACTIVE') ? 'Active in Commons' : isPodUnderReview ? 'Under Board Review' : 'Forming & Inviting'}
                 </span>
               </div>
               <h1 className="font-display font-extrabold text-[26px] md:text-[32px] text-white leading-tight mb-1">
-                {currentPod.name}
+                {activePod.name}
               </h1>
               <span className="text-[13px] text-[#A3B3C8] font-semibold">
-                {currentPod.location} · Formed {currentPod.formed}
+                {activePod.location || 'Austin, TX'} · Formed {activePod.formed || 'Recently'}
               </span>
             </div>
           </div>
+        </div>
+      ) : isPendingMatchProposal ? (
+        <div className="border border-border rounded-2xl p-8 bg-white shadow-sm flex flex-col items-center justify-center text-center py-14 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-amber-soft text-amber flex items-center justify-center mb-4">
+            <Sparkles className="w-6 h-6 text-amber" />
+          </div>
+          <div className="font-mono text-[10.5px] uppercase tracking-wider text-amber font-bold mb-2">
+            Match Proposal Found
+          </div>
+          <h2 className="font-display font-extrabold text-xl text-ink mb-2">
+            Match Suggestion: {userPod?.name || 'Compatible Pod Match'}
+          </h2>
+          <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[440px]">
+            The BOMA Matching Engine has paired you with a compatible pod group. Review the pod members and details, then click <b>Join Pod</b> to accept the proposal and unlock The Commons.
+          </p>
+          <button
+            onClick={() => setActiveScreen('pod-suggestion')}
+            className="bg-amber text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-sm hover:bg-[#b05d3e] transition-all cursor-pointer flex items-center gap-2"
+          >
+            Review &amp; Join Pod <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : isWaitingForNeighborConfirmations ? (
+        <div className="border border-border rounded-2xl p-8 bg-white shadow-sm flex flex-col items-center justify-center text-center py-14 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-teal-soft text-teal flex items-center justify-center mb-4">
+            <Clock className="w-6 h-6 text-teal animate-pulse" />
+          </div>
+          <div className="font-mono text-[10.5px] uppercase tracking-wider text-teal font-bold mb-2">
+            Pod Invitation Accepted
+          </div>
+          <h2 className="font-display font-extrabold text-xl text-ink mb-2">
+            Waiting for Neighbor Confirmations ({userPod?.name})
+          </h2>
+          <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[440px]">
+            You have accepted this pod match proposal. The Commons workspace and Pod chat will fully activate as soon as all matched members confirm.
+          </p>
+          <button
+            onClick={() => setActiveScreen('confirm-join')}
+            className="bg-teal text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:bg-teal-700 transition-all cursor-pointer"
+          >
+            Check Confirmation Status →
+          </button>
         </div>
       ) : isPodUnderReview ? (
         <div className="border border-border rounded-2xl p-8 bg-white shadow-sm flex flex-col items-center justify-center text-center py-14 mb-6">
@@ -79,18 +149,22 @@ export default function CommonsDashboard({
           </div>
           <h2 className="font-display font-extrabold text-xl text-ink mb-2">No Active Pod Joined</h2>
           <p className="text-ink-dim text-xs leading-relaxed mb-6 max-w-[380px]">
-            Once you join or create a Pod, The Commons becomes your shared planning space for agreements, member communication, and Pod governance.
+            {isMatchingPoolUser 
+              ? 'Once the BOMA engine pairs you with a compatible Pod and you join, The Commons becomes your shared planning space for agreements and governance.' 
+              : 'Once you join or create a Pod, The Commons becomes your shared planning space for agreements, member communication, and Pod governance.'}
           </p>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveScreen('pod-create')}
-              className="bg-amber text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:bg-[#b05d3e] transition-all cursor-pointer"
-            >
-              Create Existing Pod →
-            </button>
+            {!isMatchingPoolUser && (
+              <button
+                onClick={() => setActiveScreen('pod-create')}
+                className="bg-amber text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:bg-[#b05d3e] transition-all cursor-pointer"
+              >
+                Create Existing Pod →
+              </button>
+            )}
             <button
               onClick={() => setActiveScreen('matching-status')}
-              className="bg-transparent border border-border text-ink font-bold text-xs px-5 py-2.5 rounded-full hover:bg-panel-alt transition-colors cursor-pointer"
+              className={`${isMatchingPoolUser ? 'bg-amber text-white hover:bg-[#b05d3e]' : 'bg-transparent border border-border text-ink hover:bg-panel-alt'} font-bold text-xs px-5 py-2.5 rounded-full shadow-sm transition-all cursor-pointer`}
             >
               Explore Matching Pool
             </button>
@@ -132,29 +206,31 @@ export default function CommonsDashboard({
       )}
 
       {/* KPIs */}
-      {currentPod && (
+      {activePod && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-center">
           <div className="border border-border rounded-xl p-4 bg-white shadow-sm flex flex-col">
             <div className="font-display text-[26px] font-extrabold text-ink leading-tight">
-              {(currentPod.members?.length || 0) + 1}
+              {(userPod?.members && userPod.members.length > 0)
+                ? userPod.members.length
+                : (activePod.membersCount || (activePod.members && activePod.members.length > 0 ? activePod.members.length : 1))}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-ink-dim font-semibold mt-1">Members</div>
           </div>
           <div className="border border-border rounded-xl p-4 bg-white shadow-sm flex flex-col">
             <div className="font-display text-[26px] font-extrabold text-ink leading-tight">
-              {currentPod.avgReadiness || 85}
+              {activePod.avgReadiness || 85}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-ink-dim font-semibold mt-1">Avg. Readiness</div>
           </div>
           <div className="border border-border rounded-xl p-4 bg-white shadow-sm flex flex-col">
             <div className={`font-display text-[26px] font-extrabold leading-tight ${isPodForming ? 'text-amber' : 'text-sage'}`}>
-              {currentPod.health || 'Stable'}
+              {activePod.health || (activePod.status === 'ACTIVE' ? 'Stable' : 'Forming')}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-ink-dim font-semibold mt-1">Pod Status</div>
           </div>
           <div className="border border-border rounded-xl p-4 bg-white shadow-sm flex flex-col">
             <div className="font-display text-[18px] font-extrabold text-ink leading-[32px] overflow-hidden truncate px-1">
-              {currentPod.formed}
+              {activePod.formed || (activePod.created_at ? new Date(activePod.created_at).toLocaleDateString() : 'Recently')}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-ink-dim font-semibold mt-1">Formed</div>
           </div>
@@ -162,7 +238,7 @@ export default function CommonsDashboard({
       )}
 
       {/* Commons Sub sections grid */}
-      {currentPod && (
+      {activePod && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
           {/* Box 1: Members */}
           <div className="border border-border rounded-2xl p-6 bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">

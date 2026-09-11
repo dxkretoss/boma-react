@@ -12,31 +12,41 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  ArrowLeft
 } from 'lucide-react';
 import { fetchReadinessRules } from '../../../api/onboarding';
 
 export default function AdminReadinessLogic({ setActiveScreen, isAdminView = true }) {
   const [dbRules, setDbRules] = useState([]);
   const [loadingRules, setLoadingRules] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Simulator choices state
   const [simDecision, setSimDecision] = useState('consensus');
   const [simDownPayment, setSimDownPayment] = useState('dp_5_10');
   const [simTimeline, setSimTimeline] = useState('timeline_5yr');
 
-  useEffect(() => {
-    async function loadRules() {
-      try {
-        setLoadingRules(true);
-        const data = await fetchReadinessRules();
-        setDbRules(data);
-      } catch (err) {
-        console.error('Failed to fetch DB scoring rules:', err);
-      } finally {
-        setLoadingRules(false);
-      }
+  const loadRules = async (isManual = false) => {
+    try {
+      if (!isManual) setLoadingRules(true);
+      const data = await fetchReadinessRules();
+      setDbRules(data);
+    } catch (err) {
+      console.error('Failed to fetch DB scoring rules:', err);
+    } finally {
+      setLoadingRules(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadRules(true);
+  };
+
+  useEffect(() => {
     loadRules();
   }, []);
 
@@ -76,7 +86,19 @@ export default function AdminReadinessLogic({ setActiveScreen, isAdminView = tru
   };
 
   return (
-    <div className="w-full text-left space-y-8 animate-fade">
+    <div className="w-full text-left space-y-6 animate-fade">
+      {/* Top Navigation */}
+      <div>
+        <button
+          onClick={() => setActiveScreen('admin-dashboard')}
+          className="inline-flex items-center gap-1.5 text-ink-dim hover:text-amber text-xs font-bold transition-colors cursor-pointer w-fit p-0 border-0 bg-transparent"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Dashboard</span>
+        </button>
+      </div>
+
       {/* Header Banner */}
       <div className="bg-[linear-gradient(135deg,#2E2330_0%,#382430_100%)] text-white p-6 md:p-8 rounded-3xl shadow-custom-lg relative overflow-hidden border border-[#F5F1EA]/10">
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-[#C46A4A]/15 rounded-full blur-3xl pointer-events-none" />
@@ -94,16 +116,27 @@ export default function AdminReadinessLogic({ setActiveScreen, isAdminView = tru
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4 shrink-0">
-            <div className="text-center">
-              <span className="font-mono text-[10px] uppercase text-slate-300 block font-bold">Calculation Type</span>
-              <span className="font-display font-bold text-white text-base">Arithmetic Mean</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center gap-4">
+              <div className="text-center">
+                <span className="font-mono text-[10px] uppercase text-slate-300 block font-bold">Calculation Type</span>
+                <span className="font-display font-bold text-white text-base">Arithmetic Mean</span>
+              </div>
+              <div className="h-8 w-[1px] bg-white/20" />
+              <div className="text-center">
+                <span className="font-mono text-[10px] uppercase text-slate-300 block font-bold">Default Fallback</span>
+                <span className="font-display font-extrabold text-amber text-base">82 Points</span>
+              </div>
             </div>
-            <div className="h-8 w-[1px] bg-white/20" />
-            <div className="text-center">
-              <span className="font-mono text-[10px] uppercase text-slate-300 block font-bold">Default Fallback</span>
-              <span className="font-display font-extrabold text-amber text-base">82 Points</span>
-            </div>
+            <button
+              onClick={handleManualRefresh}
+              disabled={loadingRules || refreshing}
+              className="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white rounded-2xl p-4 text-xs font-semibold backdrop-blur-md transition-all flex flex-col items-center justify-center gap-1 cursor-pointer disabled:opacity-50 h-full"
+              title="Refresh scoring rules"
+            >
+              <RefreshCw className={`w-4 h-4 text-amber ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="text-[10px] uppercase font-mono tracking-wider font-bold">Refresh</span>
+            </button>
           </div>
         </div>
       </div>

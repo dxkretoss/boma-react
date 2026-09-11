@@ -15,6 +15,7 @@ import AdminScreens from './components/screens/AdminScreens';
 import { SHELL_MODES } from './constants/screens';
 import { fetchUserProfile } from './api/users';
 import { fetchPodDetails } from './api/pods';
+import { customLogout } from './auth';
 import ConfirmModal from './components/ConfirmModal';
 import Toast from './components/Toast';
 
@@ -98,19 +99,46 @@ function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('boma_current_user');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id && parsed.email) {
+          return parsed;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
   });
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.id) {
       localStorage.setItem('boma_current_user', JSON.stringify(currentUser));
-    } else {
+    } else if (currentUser === null) {
       localStorage.removeItem('boma_current_user');
     }
   }, [currentUser]);
+
+  // Session auto-recovery if user profile in localStorage was invalid
+  useEffect(() => {
+    async function recoverSession() {
+      try {
+        if (!currentUser || !currentUser.id) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const recovered = await fetchUserProfile(session.user.id);
+            if (recovered && recovered.id) {
+              setCurrentUser(recovered);
+              localStorage.setItem('boma_current_user', JSON.stringify(recovered));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Session recovery notice:', err);
+      }
+    }
+    recoverSession();
+  }, []);
 
   const [inviteToken, setInviteToken] = useState(null);
   const [isInvitationFlow, setIsInvitationFlow] = useState(false);
@@ -131,7 +159,7 @@ function App() {
 
         setUserPod(pod || null);
 
-        if (freshUser) {
+        if (freshUser && freshUser.id) {
           if (JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
             setCurrentUser(freshUser);
             localStorage.setItem('boma_current_user', JSON.stringify(freshUser));
@@ -417,9 +445,9 @@ function App() {
   const handleLogout = async () => {
     clearToast();
     try {
-      await supabase.auth.signOut();
+      await customLogout(currentUser?.id);
     } catch (e) {
-      console.error("Supabase signOut error:", e);
+      console.error("Logout error:", e);
     }
     setUserOnboarded(false);
     setActivePodId('cedar');

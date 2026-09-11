@@ -684,6 +684,17 @@ serve(async (req) => {
     }
 
     // ==========================================
+    // ACTION: LOGOUT
+    // ==========================================
+    if (action === 'logout') {
+      const { userId } = body;
+      return new Response(
+        JSON.stringify({ success: true, message: 'User logged out successfully.', userId: userId || null }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ==========================================
     // UNKNOWN ACTION
     // ==========================================
     return new Response(
