@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Mail, Phone, Calendar, RefreshCw, FileText, X, CheckCircle2, HelpCircle, Code, ArrowLeft } from 'lucide-react';
 import { fetchVillageTestSubmissions } from '../../../api/admin';
+import Pagination from '../../Pagination';
 
 const VILLAGE_TEST_QUESTIONS_MAP = {
   1: "What type of environment feels most like home?",
@@ -69,7 +70,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
     }
   };
 
-  const renderValue = (val) => {
+  const renderAnswerValue = (val) => {
     if (val === null || val === undefined) return <span className="text-slate-400 italic">None</span>;
     if (typeof val === 'boolean') return <span className="font-semibold text-xs">{val ? 'Yes' : 'No'}</span>;
 
@@ -106,6 +107,7 @@ export default function AdminVillageTest({ setActiveScreen, showToast }) {
     }
     return <span className="text-ink font-semibold text-xs">{String(val)}</span>;
   };
+  const renderValue = renderAnswerValue;
 
   const getAnswerCount = (answers) => {
     if (!answers || typeof answers !== 'object') return 0;

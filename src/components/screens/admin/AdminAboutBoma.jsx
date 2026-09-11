@@ -17,7 +17,8 @@ import {
   Sparkles,
   Link2,
   Image as ImageIcon,
-  ArrowLeft
+  ArrowLeft,
+  Video
 } from 'lucide-react';
 import {
   fetchLearningVideos,
@@ -132,6 +133,7 @@ export default function AdminAboutBoma({ setActiveScreen, adminUser, showToast, 
       setSaving(false);
     }
   };
+  const handleSubmit = handleSaveVideo;
 
   const handleDelete = (video) => {
     if (showConfirm) {
