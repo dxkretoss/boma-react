@@ -216,7 +216,7 @@ export default function PodHistory({
                   podStatus === 'ACTIVE'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : podStatus === 'UNDER_REVIEW'
-                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      ? 'bg-amber-soft text-amber border-amber/30'
                       : podStatus === 'REJECTED'
                         ? 'bg-red-50 text-rust border-red-200'
                         : 'bg-teal-50 text-teal border-teal-200'
@@ -224,7 +224,7 @@ export default function PodHistory({
                   {podStatus === 'ACTIVE'
                     ? 'ACTIVE IN COMMONS'
                     : podStatus === 'UNDER_REVIEW'
-                      ? 'UNDER REVIEW'
+                      ? 'UNDER BOARD REVIEW'
                       : podStatus === 'REJECTED'
                         ? 'REVIEW FEEDBACK'
                         : 'FORMING'}
@@ -248,7 +248,7 @@ export default function PodHistory({
             <div className="text-xs text-ink-dim font-medium">
               {podStatus === 'UNDER_REVIEW' ? (
                 <span className="flex items-center gap-1.5 text-amber font-semibold">
-                  <Clock className="w-3.5 h-3.5" /> Under review...
+                  <Clock className="w-3.5 h-3.5 animate-pulse" /> Under Board Review · Pending Approval
                 </span>
               ) : podStatus === 'ACTIVE' ? (
                 <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
@@ -256,7 +256,7 @@ export default function PodHistory({
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-teal font-semibold">
-                  <Users className="w-3.5 h-3.5" /> Forming Pod
+                  <Users className="w-3.5 h-3.5" /> Forming Pod · Inviting Members
                 </span>
               )}
             </div>

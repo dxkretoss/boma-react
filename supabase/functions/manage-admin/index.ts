@@ -254,17 +254,49 @@ serve(async (req) => {
         );
       }
 
+      const podUpdates: any = {
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      if (body.reason || body.rejectionReason) {
+        podUpdates.rejection_reason = body.reason || body.rejectionReason;
+      }
+
       const { data: updatedPod, error } = await supabaseAdmin
         .from('pods')
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-        })
+        .update(podUpdates)
         .eq('id', podId)
         .select()
         .single();
 
       if (error) throw error;
+
+      // When pod is approved (ACTIVE), activate all members and unlock Commons
+      if (status === 'ACTIVE') {
+        const { data: members } = await supabaseAdmin
+          .from('pod_members')
+          .select('user_id')
+          .eq('pod_id', podId);
+
+        const memberIds = (members || []).map((m: any) => m.user_id).filter(Boolean);
+
+        await supabaseAdmin
+          .from('pod_members')
+          .update({ membership_status: 'ACCEPTED' })
+          .eq('pod_id', podId);
+
+        if (memberIds.length > 0) {
+          await supabaseAdmin
+            .from('users')
+            .update({
+              matching_status: 'POD_ASSIGNED',
+              onboarding_status: 'COMPLETED',
+              profile_status: 'APPROVED',
+              user_onboarded: true,
+            })
+            .in('id', memberIds);
+        }
+      }
 
       return new Response(
         JSON.stringify({ success: true, message: `Pod status updated to ${status}.`, pod: updatedPod }),

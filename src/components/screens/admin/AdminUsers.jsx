@@ -268,6 +268,7 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
               <option value="ALL">All Paths</option>
               <option value="MATCHING_POOL">Matching Pool (Path A)</option>
               <option value="EXISTING_POD">Existing Pod (Path B)</option>
+              <option value="NOT_DECIDED">Not Decided</option>
             </select>
           </div>
 
@@ -384,7 +385,7 @@ export default function AdminUsers({ setActiveScreen, adminUser, showToast }) {
                           ? 'bg-amber-soft text-amber border border-amber/25'
                           : user.entry_path === 'EXISTING_POD'
                           ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                          : 'bg-panel-alt text-ink-dim border border-border'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
                         {user.entry_path === 'MATCHING_POOL'
                           ? 'Matching Pool'

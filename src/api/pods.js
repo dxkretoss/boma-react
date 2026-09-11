@@ -94,19 +94,20 @@ async function invokeAdmin(action, payload = {}) {
   return data;
 }
 
+
 /**
  * Utility to parse aligned agreements out of a pod's description.
  */
-function parseDescription(pod) {
+export function parseDescription(pod) {
   if (!pod) return null;
   const desc = pod.description || '';
-  const parts = desc.split(' ||| ');
   let cleanDesc = desc;
   let aligned = [0, 1]; // default starting alignment
-  if (parts.length >= 2) {
-    cleanDesc = parts[0];
+  if (desc.includes('|||')) {
+    const parts = desc.split('|||');
+    cleanDesc = (parts[0] || '').trim();
     try {
-      aligned = JSON.parse(parts[1]);
+      aligned = JSON.parse((parts[1] || '').trim());
     } catch (e) {
       console.error("Failed to parse aligned agreements:", e);
     }
@@ -137,6 +138,7 @@ export async function updatePodAgreements(podId, currentDescription, alignedArra
 export async function createPod(creatorId, name, description, groupType, housingIntent = 'co-develop', commitmentTimeline = 'timeline_2yr', invites = []) {
   if (!creatorId || !name) throw new Error('Creator ID and Pod Name are required.');
 
+  const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://boma-react-kretoss.netlify.app';
   const result = await invokeOnboarding('create-existing-pod', {
     creatorId,
     name,
@@ -145,6 +147,7 @@ export async function createPod(creatorId, name, description, groupType, housing
     housingIntent,
     commitmentTimeline,
     invites,
+    appBaseUrl,
   });
 
   return parseDescription(result.pod);
@@ -168,10 +171,9 @@ export async function fetchPodDetails(userId) {
       const result = await invokePods('get-pod', { userId });
       if (result?.pod) {
         const currentMember = (result.members || []).find(m => m.user?.id === userId || m.id === userId || m.userId === userId || m.user_id === userId);
-        const allAccepted = (result.members || []).length >= 2 && (result.members || []).every(m => m.membership_status === 'ACCEPTED' || m.membershipStatus === 'ACCEPTED');
         return {
           ...result.pod,
-          status: allAccepted ? 'ACTIVE' : result.pod.status,
+          status: result.pod.status,
           memberRole: currentMember?.role || 'MEMBER',
           membershipStatus: currentMember?.membership_status || 'ACCEPTED',
           members: result.members || [],
@@ -219,19 +221,9 @@ export async function fetchPodDetails(userId) {
             user: m.user || {}
           }));
 
-          const allAccepted = membersList.length >= 2 && membersList.every(m => m.membership_status === 'ACCEPTED' || m.membershipStatus === 'ACCEPTED');
-          if (allAccepted && rawPod.status === 'CREATING') {
-            try {
-              await supabase.from('pods').update({ status: 'ACTIVE', updated_at: new Date().toISOString() }).eq('id', rawPod.id);
-              rawPod.status = 'ACTIVE';
-            } catch (e) {
-              console.warn('Auto-activate direct DB update error:', e);
-            }
-          }
-
           return {
             ...parseDescription(rawPod),
-            status: allAccepted ? 'ACTIVE' : rawPod.status,
+            status: rawPod.status,
             memberRole: validRow.role || 'MEMBER',
             membershipStatus: validRow.membership_status || 'ACCEPTED',
             members: membersList,
@@ -578,53 +570,192 @@ export async function dissolvePod(podId, creatorId) {
  */
 export async function fetchPodInvitations(podId) {
   if (!podId) return [];
-  return [];
+  try {
+    const { data, error } = await supabase
+      .from('pod_invitations')
+      .select('*')
+      .eq('pod_id', podId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('fetchPodInvitations query error:', error);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error('fetchPodInvitations exception:', err);
+    return [];
+  }
 }
 
 /**
  * Invites a user via email.
  */
 export async function createAndSendInvitation(podId, email, invitedById, inviterName, podName) {
-  return true;
+  if (!podId || !email) throw new Error('Pod ID and email address are required.');
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://boma-react-kretoss.netlify.app';
+
+  // Try Edge function first
+  try {
+    const result = await invokeOnboarding('invite-pod-member', {
+      podId,
+      inviterId: invitedById,
+      email: normalizedEmail,
+      appBaseUrl,
+    });
+    if (result?.invitation) return result.invitation;
+  } catch (err) {
+    console.warn('invokeOnboarding invite-pod-member fallback to direct DB:', err);
+  }
+
+  // Direct DB insertion
+  const rawToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  
+  const { data, error } = await supabase
+    .from('pod_invitations')
+    .insert({
+      pod_id: podId,
+      email: normalizedEmail,
+      invited_by: invitedById,
+      token_hash: rawToken,
+      status: 'PENDING',
+      expires_at: expiresAt,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 /**
  * Cancels a pending invitation.
  */
 export async function cancelInvitation(invitationId) {
+  if (!invitationId) throw new Error('Invitation ID is required.');
+  const { error } = await supabase
+    .from('pod_invitations')
+    .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+    .eq('id', invitationId);
+
+  if (error) throw error;
   return true;
 }
 
 /**
- * Resends a pending invitation.
+ * Resends a pending invitation with email delivery.
  */
 export async function resendInvitation(invitationId, inviterName, podName) {
+  if (!invitationId) throw new Error('Invitation ID is required.');
+  const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://boma-react-kretoss.netlify.app';
+
+  try {
+    const result = await invokeOnboarding('resend-invitation', {
+      invitationId,
+      appBaseUrl,
+    });
+    if (result?.success) return true;
+  } catch (err) {
+    console.warn('invokeOnboarding resend-invitation fallback:', err);
+  }
+
+  // Direct DB update fallback
+  const rawToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'tok-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from('pod_invitations')
+    .update({ token_hash: rawToken, expires_at: newExpiry, status: 'PENDING', updated_at: new Date().toISOString() })
+    .eq('id', invitationId);
+
+  if (error) throw error;
   return true;
 }
 
 /**
- * Verifies if an invitation token is valid via Edge Function.
+ * Verifies if an invitation token is valid.
  */
 export async function verifyInvitationToken(token) {
   if (!token) throw new Error('Token is required.');
+
+  const { data: inv, error } = await supabase
+    .from('pod_invitations')
+    .select('*, pod:pods(*), inviter:users!invited_by(*)')
+    .eq('token_hash', token)
+    .eq('status', 'PENDING')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!inv) throw new Error('Invalid or expired invitation token');
+
+  const parsedPod = inv.pod ? parseDescription(inv.pod) : null;
+
   return {
-    invitationId: 'inv-token',
-    email: '',
-    podId: '',
-    podName: 'BOMA Pod',
-    podDescription: 'BOMA Co-living Pod',
-    groupType: 'Self-Registered',
-    inviterName: 'Group Admin',
-    inviterEmail: ''
+    invitationId: inv.id,
+    email: inv.email,
+    podId: inv.pod_id,
+    podName: inv.pod?.name || 'BOMA Pod',
+    podDescription: parsedPod?.description || inv.pod?.description || 'BOMA Co-living Pod',
+    groupType: inv.pod?.group_type || 'Self-Registered',
+    inviterName: inv.inviter?.name || 'Group Admin',
+    inviterEmail: inv.inviter?.email || ''
   };
 }
 
 /**
- * Accepts a Pod invitation, registers membership status via Edge Function.
+ * Accepts a Pod invitation, registers membership status.
  */
 export async function acceptPodInvitation(invitationId, userId, userEmail) {
-  const result = await joinPodByInviteToken(invitationId, userId);
-  return result?.pod_id || invitationId;
+  if (!invitationId || !userId) throw new Error('Invitation ID and User ID are required.');
+
+  // 1. Fetch invitation
+  const { data: inv, error: invErr } = await supabase
+    .from('pod_invitations')
+    .select('*')
+    .or(`id.eq.${invitationId},token_hash.eq.${invitationId}`)
+    .single();
+
+  if (invErr || !inv) throw new Error('Invitation record not found.');
+
+  // 2. Add member to pod_members
+  const { error: memErr } = await supabase
+    .from('pod_members')
+    .upsert({
+      pod_id: inv.pod_id,
+      user_id: userId,
+      role: 'MEMBER',
+      membership_status: 'ACCEPTED',
+      joined_at: new Date().toISOString(),
+    }, { onConflict: 'pod_id,user_id' });
+
+  if (memErr) throw memErr;
+
+  // 3. Mark invitation as accepted
+  await supabase
+    .from('pod_invitations')
+    .update({
+      status: 'ACCEPTED',
+      accepted_by: userId,
+      accepted_at: new Date().toISOString(),
+    })
+    .eq('id', inv.id);
+
+  // 4. Update user matching and profile status
+  await supabase
+    .from('users')
+    .update({
+      entry_path: 'EXISTING_POD',
+      matching_status: 'POD_ASSIGNED',
+      profile_status: 'APPROVED',
+      onboarding_status: 'COMPLETED',
+      user_onboarded: true,
+    })
+    .eq('id', userId);
+
+  return inv.pod_id;
 }
 
 /**
@@ -693,7 +824,7 @@ export async function approvePod(podId) {
  */
 export async function rejectPod(podId, reason) {
   if (!podId) throw new Error('Pod ID is required.');
-  await invokeAdmin('review-pod', { podId, status: 'REJECTED' });
+  await invokeAdmin('review-pod', { podId, status: 'REJECTED', reason });
   return true;
 }
 

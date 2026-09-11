@@ -590,10 +590,16 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // 6. ACTION: CREATE-POD (Register Existing Pod)
+    // 6. ACTION: CREATE-POD / CREATE-EXISTING-POD (Register Existing Pod)
     // =========================================================================
-    if (action === 'create-pod') {
-      const { creatorId, name, description, groupType, housingIntent, commitmentTimeline } = body;
+    if (action === 'create-pod' || action === 'create-existing-pod') {
+      const creatorId = body.creatorId || body.userId || body.user_id;
+      const name = body.name || body.podName || body.pod_name;
+      const description = body.description;
+      const groupType = body.groupType || body.group_type || 'Friends';
+      const housingIntent = body.housingIntent || body.housing_intent;
+      const commitmentTimeline = body.commitmentTimeline || body.commitment_timeline;
+      const invites = body.invites || body.invitations || [];
 
       if (!creatorId || !name) {
         return new Response(
@@ -652,6 +658,42 @@ serve(async (req) => {
 
       if (userError) throw userError;
 
+      // 4. Process any initial invitations passed in
+      if (invites && Array.isArray(invites) && invites.length > 0) {
+        const appBaseUrl = body.appBaseUrl || Deno.env.get('APP_BASE_URL') || 'https://boma-react-kretoss.netlify.app';
+        for (const rawEmail of invites) {
+          if (!rawEmail || typeof rawEmail !== 'string') continue;
+          const email = rawEmail.toLowerCase().trim();
+          if (!email || !/\S+@\S+\.\S+/.test(email)) continue;
+
+          const rawToken = crypto.randomUUID();
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+          try {
+            await supabaseAdmin
+              .from('pod_invitations')
+              .insert({
+                pod_id: pod.id,
+                email,
+                invited_by: creatorId,
+                token_hash: rawToken,
+                status: 'PENDING',
+                expires_at: expiresAt,
+              });
+
+            const inviteUrl = `${appBaseUrl}/join-pod?token=${rawToken}`;
+            const html = getInvitationEmailTemplate(pod.name, updatedUser?.name || 'A neighbor', inviteUrl);
+            await sendEmail({
+              to: email,
+              subject: `You've Been Invited to Join ${pod.name}`,
+              html,
+            });
+          } catch (invErr) {
+            console.warn('Initial invite error in create-pod:', invErr);
+          }
+        }
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -691,7 +733,7 @@ serve(async (req) => {
         .insert({
           pod_id: podId,
           email: normalizedEmail,
-          inviter_id: inviterId,
+          invited_by: inviterId,
           token_hash: rawToken,
           status: 'PENDING',
           expires_at: expiresAt,
@@ -701,7 +743,7 @@ serve(async (req) => {
 
       if (invError) throw invError;
 
-      const appBaseUrl = Deno.env.get('APP_BASE_URL') || 'https://boma.app';
+      const appBaseUrl = body.appBaseUrl || Deno.env.get('APP_BASE_URL') || 'https://boma-react-kretoss.netlify.app';
       const inviteUrl = `${appBaseUrl}/join-pod?token=${rawToken}`;
 
       try {
@@ -723,6 +765,70 @@ serve(async (req) => {
             ...invitation,
             inviteUrl,
           },
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // =========================================================================
+    // 7b. ACTION: RESEND-INVITATION
+    // =========================================================================
+    if (action === 'resend-invitation') {
+      const { invitationId } = body;
+      if (!invitationId) {
+        return new Response(
+          JSON.stringify({ error: 'invitationId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 1. Fetch invitation with pod and inviter info
+      const { data: inv, error: invErr } = await supabaseAdmin
+        .from('pod_invitations')
+        .select('*, pod:pods(name), inviter:users!invited_by(name)')
+        .eq('id', invitationId)
+        .single();
+
+      if (invErr || !inv) {
+        return new Response(
+          JSON.stringify({ error: 'Invitation not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // 2. Generate fresh token and extended expiry
+      const rawToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      await supabaseAdmin
+        .from('pod_invitations')
+        .update({
+          token_hash: rawToken,
+          status: 'PENDING',
+          expires_at: expiresAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invitationId);
+
+      const appBaseUrl = body.appBaseUrl || Deno.env.get('APP_BASE_URL') || 'https://boma-react-kretoss.netlify.app';
+      const inviteUrl = `${appBaseUrl}/join-pod?token=${rawToken}`;
+
+      try {
+        const html = getInvitationEmailTemplate(inv.pod?.name || 'A BOMA Pod', inv.inviter?.name || 'A neighbor', inviteUrl);
+        await sendEmail({
+          to: inv.email,
+          subject: `Reminder: You've Been Invited to Join ${inv.pod?.name || 'a BOMA Pod'}`,
+          html,
+        });
+      } catch (mailErr) {
+        console.warn('Failed to resend invitation email:', mailErr);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Invitation resent and email sent successfully.',
+          inviteUrl,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

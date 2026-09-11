@@ -33,7 +33,11 @@ export async function fetchAdminUsers(filters = {}) {
     query = query.eq('onboarding_status', filters.onboardingStatus);
   }
   if (filters.entryPath && filters.entryPath !== 'ALL') {
-    query = query.eq('entry_path', filters.entryPath);
+    if (filters.entryPath === 'NOT_DECIDED') {
+      query = query.is('entry_path', null);
+    } else {
+      query = query.eq('entry_path', filters.entryPath);
+    }
   }
   if (filters.matchingStatus && filters.matchingStatus !== 'ALL') {
     query = query.eq('matching_status', filters.matchingStatus);
@@ -69,7 +73,7 @@ export async function fetchAdminUsers(filters = {}) {
 
         return {
           ...u,
-          entry_path: u.entry_path || 'MATCHING_POOL',
+          entry_path: u.entry_path || null,
           podRole: isPodAdmin ? 'CREATOR' : isPodMember ? 'MEMBER' : null,
           podName: pod?.name || null,
           podId: pod?.id || mem?.pod_id || null,

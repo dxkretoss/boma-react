@@ -21,6 +21,8 @@ import CommonsAgreement from './CommonsAgreement';
 import CommonsChat from './CommonsChat';
 import CommonsSettings from './CommonsSettings';
 import PodHistory from './PodHistory';
+import PodInvite from './onboarding/PodInvite';
+import PodPending from './onboarding/PodPending';
 
 /**
  * Format Helpers for DB option keys
@@ -419,6 +421,9 @@ export default function AppScreens({
   if (isExistingPod && !loadingPod && COMMONS_SCREENS.includes(activeScreen)) {
     if (!userPod) {
       return <CommonsDashboard currentPod={null} userPod={null} setActiveScreen={setActiveScreen} />;
+    }
+    if (userPod?.status === 'CREATING' || userPod?.status === 'UNDER_REVIEW') {
+      return <PodPending pod={userPod} currentUser={currentUser} setActiveScreen={setActiveScreen} />;
     }
     if (userPod?.status === 'REJECTED') {
       return <MemberWaitingView pod={userPod} currentUser={currentUser} setActiveScreen={setActiveScreen} />;

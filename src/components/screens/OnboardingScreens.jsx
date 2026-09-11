@@ -583,7 +583,7 @@ export default function OnboardingScreens({
         />
       )}
       {activeScreen === 'pod-pending' && (
-        <PodPending setActiveScreen={setActiveScreen} />
+        <PodPending setActiveScreen={setActiveScreen} currentUser={currentUser} />
       )}
     </div>
   );

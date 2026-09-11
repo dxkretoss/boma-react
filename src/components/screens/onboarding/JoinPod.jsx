@@ -216,7 +216,7 @@ export default function JoinPod({
                     <div>
                       <span className="text-[11px] text-ink-dim font-mono uppercase block font-bold">Pod Description</span>
                       <p className="text-xs text-ink mt-0.5 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-border/60">
-                        {inviteDetails.podDescription}
+                        {inviteDetails.podDescription.split('|||')[0].trim()}
                       </p>
                     </div>
                   )}
@@ -343,7 +343,7 @@ export default function JoinPod({
                     <div>
                       <span className="text-[11px] text-ink-dim font-mono uppercase block font-bold">Pod Description</span>
                       <p className="text-xs text-ink mt-0.5 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-border/60">
-                        {inviteDetails.podDescription}
+                        {inviteDetails.podDescription.split('|||')[0].trim()}
                       </p>
                     </div>
                   )}
